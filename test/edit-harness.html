@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe Edit Mode — harness</title>
+<!--
+  Runs the real content.js against a fake page, so Edit Mode can be exercised
+  without the build-reload-reselect cycle a packed extension needs.
+
+  This loads the actual content.css and content.js — not a mirror of them, the
+  files themselves — behind a small stub of the four chrome.* calls the content
+  script makes at load time. Everything downstream (placement, redline, the
+  token walk, the edit registry) is the shipping code path.
+
+  The page below is built to have something to find: a design system declared
+  as custom properties, utility classes that resolve to the same scale, an
+  element whose padding is set by an !important rule, and a card sitting inside
+  a flex row so spacing has something to measure against.
+
+  Serve it over HTTP — file:// blocks the stylesheet walk the token resolver
+  depends on (cssRules on a file:// sheet throws the same as cross-origin):
+
+      python3 -m http.server 8765     # then open /test/edit-harness.html
+
+  Press "p" to toggle Probe Mode. Then: click an element, click the pencil.
+-->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../content.css">
+<script>
+  // python3 -m http.server answers with a 200 and a long-lived cache, so an
+  // edit to tokens.css or content.css keeps rendering the previous version
+  // until a hard reload — which reads as "my CSS did nothing" rather than as a
+  // stale file. A dev instrument should never be able to lie about that, so
+  // every stylesheet gets a fresh URL on load. content.js is re-fetched anyway
+  // because it is loaded at the end of the body.
+  for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
+    link.href = link.getAttribute("href").split("?")[0] + "?t=" + Date.now();
+  }
+
+  // A stylesheet this page is not allowed to read, linked from the other
+  // spelling of the loopback host so the browser treats it as third-party.
+  // Same server, different origin — which is all it takes, and it means the
+  // fixture needs no second process. Skipped when opened over file://, where
+  // there is no origin to swap.
+  (function linkRemoteSheet() {
+    const alias = { "127.0.0.1": "localhost", localhost: "127.0.0.1" }[location.hostname];
+    if (!alias) return;
+    const url = new URL("./edit-harness-remote.css", location.href);
+    url.hostname = alias;
+    url.search = "?t=" + Date.now();
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = url.href;
+    document.head.appendChild(link);
+  })();
+</script>
+<style>
+  /* Must stay the first rule in this block — @import is only valid at the top.
+     The sheet it pulls in is deliberately unreachable by the stylesheet walk;
+     see the file itself for why that is the point. */
+  @import url("./edit-harness-imported.css");
+
+  /* ===== The fake page's design system =====
+     Both halves of what the resolver looks for: custom properties on :root,
+     and single-class utility rules. The two agree on the same numbers, so a
+     value can legitimately be reported as either. */
+  :root {
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 24px;
+    --space-6: 32px;
+
+    --title-sm: 18px;
+    --title-md: 22px;
+    --title-lg: 28px;
+
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+
+    /* Colour tokens, so the picker's palette has real names to offer and the
+       delta can report one instead of a hex. */
+    --ink: #1f1e1b;
+    --ink-dim: #57544c;
+    --ink-soft: #8b887e;
+    --paper: #ffffff;
+    --cream: #faf9f5;
+    --hairline: #e5e0d4;
+    --terra: #a94f30;
+    --terra-soft: #f3e4dd;
+
+    /* ===== The shapes that used to report nothing =====
+       Everything above this line is the one arrangement the first design
+       handled: px lengths and hex colours, named in a vocabulary we had
+       guessed at. A fixture made only of that cannot fail, which is exactly
+       how a detector that worked on one site looked healthy. These are the
+       rest of the field.
+
+       A Tailwind v4 spacing scale: the step is calc() over another custom
+       property, so nothing here is a bare length. */
+    --spacing: 4px;
+    --pad-1: calc(var(--spacing) * 1);
+    --pad-2: calc(var(--spacing) * 2);
+    --pad-4: calc(var(--spacing) * 4);
+    --pad-8: calc(var(--spacing) * 8);
+
+    /* A modern palette, authored in the colour space people actually write
+       now. Neither computed style nor canvas fillStyle converts these. */
+    --brand-500: oklch(0.72 0.16 35);
+    --brand-700: oklch(0.52 0.18 32);
+    --surface-raised: hsl(40 33% 98%);
+    --edge: rebeccapurple;
+
+    /* Steps outside the retired word list, in two systems that name them the
+       way real ones do rather than the way ours did. */
+    --gap-xxs: 2px;
+    --gap-small: 6px;
+    --gap-huge: 40px;
+    --sds-size-space-100: 8px;
+    --sds-size-space-200: 16px;
+    --sds-size-space-400: 32px;
+
+    /* Two names, one value. A stepper offered here would have nowhere to go,
+       so this must not become a family. */
+    --alias-a: 10px;
+    --alias-b: 10px;
+  }
+
+  /* A scope that is not :root. Collected by name, these used to resolve to ""
+     against any element outside the subtree and vanish — so which tokens the
+     panel could see depended on what you had clicked. */
+  .themed {
+    --ink: #f5f3ee;
+    --paper: #16150f;
+    --brand-500: oklch(0.78 0.14 250);
+  }
+
+  /* Grouped selectors, which every minifier produces and the single-class
+     rule used to reject outright. */
+  .lead-tight, .leading-tight { line-height: 16px; }
+  .lead-snug,  .leading-snug  { line-height: 20px; }
+  .lead-loose, .leading-loose { line-height: 28px; }
+
+  /* A card whose spacing comes through the calc() scale, so detection has a
+     declaration to find a var() in — an inline style would not do, since the
+     winning-declaration walk reads stylesheet rules. */
+  .v4-card { padding: var(--pad-4); background: var(--surface-raised); }
+
+  /* A bare element wearing nothing but a spacing utility, so the class wins its
+     own padding outright. .card.p-5 cannot serve here — .card sets padding too
+     and beats it on source order, which is the "swap would do nothing" case
+     rather than the detection case. */
+  .p-3-only { padding: 12px; }
+
+  .text-xs   { font-size: 12px; }
+  .text-sm   { font-size: 14px; }
+  .text-base { font-size: 16px; }
+  .text-lg   { font-size: 18px; }
+  .text-xl   { font-size: 20px; }
+  .text-2xl  { font-size: 24px; }
+
+  .p-1 { padding: 4px; }
+  .p-2 { padding: 8px; }
+  .p-3 { padding: 12px; }
+  .p-4 { padding: 16px; }
+  .p-5 { padding: 24px; }
+  .p-6 { padding: 32px; }
+
+  .rounded-sm { border-radius: 4px; }
+  .rounded-md { border-radius: 8px; }
+  .rounded-lg { border-radius: 12px; }
+
+  /* ===== The page itself ===== */
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 32px;
+    font: 15px/1.5 system-ui, -apple-system, sans-serif;
+    background: #faf9f5;
+    color: #141413;
+  }
+  h1 { font-size: var(--title-lg); margin: 0 0 4px; }
+  .lede { color: #57544c; margin: 0 0 28px; }
+
+  .row { display: flex; gap: var(--space-5); align-items: flex-start; flex-wrap: wrap; }
+
+  .card {
+    background: #ffffff;
+    border: 1px solid #e5e0d4;
+    border-radius: var(--radius-lg);
+    padding: var(--space-4);
+    width: 260px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    box-shadow: 0 2px 8px rgb(0 0 0 / 0.06);
+  }
+  .card h2 { font-size: var(--title-sm); margin: 0; }
+  .card p { margin: 0; color: #57544c; font-size: 14px; }
+  .tag {
+    align-self: flex-start;
+    background: #f3e4dd;
+    color: #a94f30;
+    border-radius: var(--radius-sm);
+    padding: 2px 8px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* An !important declaration, so the apply path's priority escalation has
+     something real to fight. Without matching it, an inline padding write
+     would silently do nothing.
+
+     Two classes on purpose: a single-class rule that declares a length is the
+     exact shape the token collector indexes as a utility class, which would
+     make this fixture test two things at once. This one is only about
+     !important. */
+  .card.stubborn { padding: 20px !important; }
+
+  .note {
+    margin-top: 28px;
+    padding: 12px 14px;
+    border-left: 3px solid #d6d1c4;
+    color: #57544c;
+    font-size: 13px;
+    max-width: 62ch;
+  }
+  kbd {
+    font: 12px ui-monospace, monospace;
+    background: #efece4; border: 1px solid #ddd8cb; border-bottom-width: 2px;
+    border-radius: 4px; padding: 1px 5px;
+  }
+  #hud {
+    position: fixed; left: 12px; bottom: 12px; z-index: 2147483000;
+    font: 12px/1.4 ui-monospace, monospace;
+    background: #141413; color: #faf9f5;
+    padding: 8px 10px; border-radius: 8px; opacity: 0.92;
+  }
+  #hud b { color: #d97757; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1>AI Skills for Design Engineers</h1>
+<p class="lede">For designers and engineers building better interfaces.</p>
+
+<div class="row">
+  <article class="card">
+    <span class="tag">animation</span>
+    <h2>emil-design-eng</h2>
+    <p class="text-sm">The main skill — mostly animation, plus some design advice.</p>
+  </article>
+
+  <article class="card p-5">
+    <span class="tag">audit</span>
+    <h2>improve-animations</h2>
+    <p class="text-sm">Audit the motion in your codebase and get prioritised plans.</p>
+  </article>
+
+  <article class="card stubborn">
+    <span class="tag">!important</span>
+    <h2>stubborn-card</h2>
+    <p class="text-sm">Its padding is set by an !important page rule, so editing it
+      has to escalate to match.</p>
+  </article>
+</div>
+
+<!-- Spacing through the calc() scale, so a stepper has a family to walk. -->
+<div class="v4-card">
+  <h2 class="v4-title">Tailwind v4 shapes</h2>
+</div>
+
+<!-- A local spacing utility, uncontested, so the linked padding row has a class
+     scale to find. -->
+<div class="p-3 p-3-only">
+  <h2 class="p3-title">Spacing from a utility class</h2>
+</div>
+
+<!-- Wears a utility class defined only in the cross-origin sheet. Custom
+     properties from that sheet already reach the element, so they are not what
+     the fetch buys; a class rule is invisible until the sheet is read. -->
+<div class="remote-pad-2">
+  <h2 class="remote-title">From a sheet the page can't read</h2>
+</div>
+
+<!-- A themed subtree. Selecting inside it must see .themed's overrides, not
+     :root's, because that is what the element itself actually resolves. -->
+<div class="themed" style="background: var(--paper); padding: 16px; margin-top: 24px">
+  <h2 class="themed-title" style="color: var(--ink); margin: 0">Themed heading</h2>
+  <p class="themed-body" style="color: var(--brand-500); margin: 4px 0 0">Scoped tokens live here.</p>
+</div>
+
+<!-- No text anywhere beneath: the one arrangement where a colour row would
+     have nothing to paint. The colour guard hides it here, and the cdp suite
+     asserts that it stays hidden. -->
+<div class="glyph-block" aria-hidden="true"
+     style="width: 120px; height: 40px; margin-top: 24px; border-radius: 8px;
+            background: linear-gradient(90deg, var(--terra-soft), var(--hairline))"></div>
+
+<!-- ===== Type styles =====
+     Multi-declaration single classes: the composites the style row claims.
+     type-sm and type-lg ladder on the "type" prefix; the second heading wears
+     type-lg with an inline leading override, which is the drift the conform
+     chip heals. The stem heading is set entirely through one var stem — a
+     solo style, named but unsteppable. -->
+<style>
+  .type-sm { font-size: 14px; line-height: 20px; }
+  .type-lg { font-size: 18px; line-height: 28px; }
+</style>
+<div style="margin-top: 24px">
+  <h2 class="ts-on type-lg" style="margin: 0">Wearing type-lg squarely</h2>
+  <h2 class="ts-drift type-lg" style="margin: 8px 0 0; line-height: 32px">Drifted from type-lg</h2>
+  <h2 class="stem-title"
+      style="--h-md-size: 24px; --h-md-weight: 650; --h-md-leading: 32px;
+             font-size: var(--h-md-size); font-weight: var(--h-md-weight);
+             line-height: var(--h-md-leading); margin: 8px 0 0">Stem-set heading</h2>
+</div>
+
+<p class="note">
+  <kbd>p</kbd> toggles Probe Mode. Click an element to select it, then the pencil in
+  the toolbar to edit. <kbd>Esc</kbd> steps back out one layer at a time; hold
+  <kbd>Option</kbd> with something selected to measure.
+</p>
+
+<div id="hud">probe <b id="hud-state">off</b> · press <b>p</b></div>
+
+<script>
+// ===== chrome.* stub =====
+// The four calls content.js makes. Storage is backed by localStorage so a
+// theme picked here survives a reload, the way the real one does.
+(function () {
+  const listeners = [];
+  const changeListeners = [];
+  const read = () => {
+    try { return JSON.parse(localStorage.getItem("ccp-harness-store") || "{}"); }
+    catch { return {}; }
+  };
+  const write = (obj) => localStorage.setItem("ccp-harness-store", JSON.stringify(obj));
+
+  window.chrome = {
+    runtime: {
+      onMessage: { addListener: (fn) => listeners.push(fn) },
+      sendMessage: (msg) => {
+        if (msg && msg.type === "DEACTIVATE") setState(false);
+        // Stands in for background.js's stylesheet fetcher. It cannot stand in
+        // for host permissions — nothing in a page can — so this proves the
+        // content-script half: that a blocked sheet is asked for, parsed, and
+        // folded back into the index in its original document position. The
+        // worker's own guards (scheme, content-type, size) are its business.
+        if (msg && msg.type === "FETCH_STYLESHEETS") {
+          return Promise.all((msg.urls || []).map(async (url) => {
+            try {
+              const res = await fetch(url);
+              if (!res.ok) return { url, error: "HTTP " + res.status };
+              return { url, text: await res.text() };
+            } catch (err) {
+              return { url, error: String((err && err.message) || err) };
+            }
+          })).then((sheets) => ({ sheets }));
+        }
+        return Promise.resolve(undefined);
+      },
+      openOptionsPage: () => window.open("../settings/index.html", "_blank"),
+    },
+    storage: {
+      local: {
+        get: (key, cb) => {
+          const store = read();
+          const keys = Array.isArray(key) ? key : [key];
+          const out = {};
+          for (const k of keys) if (k in store) out[k] = store[k];
+          cb(out);
+        },
+        set: (obj, cb) => {
+          const store = read();
+          const changes = {};
+          for (const [k, v] of Object.entries(obj)) {
+            changes[k] = { oldValue: store[k], newValue: v };
+            store[k] = v;
+          }
+          write(store);
+          for (const fn of changeListeners) fn(changes, "local");
+          if (cb) cb();
+        },
+      },
+      onChanged: { addListener: (fn) => changeListeners.push(fn) },
+    },
+  };
+
+  let active = false;
+  const hud = () => {
+    document.getElementById("hud-state").textContent = active ? "on" : "off";
+  };
+  function setState(next) {
+    active = next;
+    for (const fn of listeners) fn({ type: "TOGGLE_PROBE", active });
+    hud();
+  }
+
+  // "p" toggles. Probe Mode swallows clicks on the page, so a button would be
+  // unclickable the moment it was needed — the same reason the placement
+  // harness is keyboard-driven.
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      setState(!active);
+    }
+  }, true);
+
+  window.__ccpHarness = { setState, isActive: () => active };
+
+  // ===== Read-only probe, for test/cdp.mjs =====
+  // content.js is an IIFE, so an automated test cannot reach inside it to ask
+  // "how many rules did the collector actually read?" — and that number is
+  // exactly what would have caught the dead token layer. Rather than putting a
+  // debug hook in the shipping content script, the harness re-derives the same
+  // measurements from the page itself, using the same rules content.js uses.
+  //
+  // This is a measurement of the *page*, not of the extension's internals, so
+  // it cannot drift into agreeing with a broken collector: it counts what is
+  // genuinely there, and the assertion is that content.js found it too.
+  window.__ccpProbe = {
+    // The harness rewrites stylesheet hrefs on load to defeat caching, which
+    // makes the browser re-fetch them. Until those land, document.styleSheets
+    // is briefly empty and any token measurement is meaningless. cdp.mjs waits
+    // on this rather than on a guessed delay.
+    stylesheetsReady() {
+      const links = [...document.querySelectorAll('link[rel="stylesheet"]')];
+      const loaded = links.filter((l) => {
+        try { return [...document.styleSheets].some((s) => s.href === l.href && s.cssRules); }
+        catch { return true; } // readable-or-not is not what we are waiting for
+      });
+      return loaded.length === links.length && this.tokenIndexSize().rules > 0;
+    },
+
+    // What a correct collector should find on this page: rules it can read,
+    // and custom properties that are not ours.
+    tokenIndexSize() {
+      let rules = 0;
+      const varNames = new Set();
+      const walk = (list) => {
+        for (const rule of list) {
+          if (rule.selectorText && rule.style) {
+            rules++;
+            for (let i = 0; i < rule.style.length; i++) {
+              const prop = rule.style[i];
+              if (prop.startsWith("--") && !prop.startsWith("--ccp-")) varNames.add(prop);
+            }
+          }
+          if (rule.cssRules && rule.cssRules.length) walk(rule.cssRules);
+        }
+      };
+      for (const sheet of document.styleSheets) {
+        // Same exclusion content.js makes: our own stylesheets are not the
+        // page's, and on a real page they arrive as content scripts.
+        if (/\/(tokens|content)\.css(\?|$)/.test(sheet.href || "")) continue;
+        try { if (sheet.cssRules) walk(sheet.cssRules); } catch { /* cross-origin */ }
+      }
+      return { rules, varNames: varNames.size };
+    },
+  };
+
+  hud();
+})();
+</script>
+<script src="../content.js"></script>
+</body>
+</html>

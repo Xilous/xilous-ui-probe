@@ -1,0 +1,294 @@
+/* ===== Design tokens =====
+   Two tiers. :root holds the theme-invariant scales — type, space, radius,
+   motion, layers. Below that, one block per theme holds the semantic colours
+   and shadows. Only the second tier is themed; the scales never change.
+
+   Loaded before content.css (order is cascade order — see manifest.json), and
+   again by the settings page so its preview renders through the same tokens as
+   the real chrome.
+
+   DESIGN.md is the contract. test/tokens.mjs enforces it: no literal may
+   survive in content.css, every theme must declare the full set, and every
+   theme's text has to clear its contrast floor. Adding a theme means adding one
+   block here and one entry to THEMES in settings/settings.js — nothing else.
+
+   Alpha variants are derived, not declared:
+     rgb(from var(--ccp-accent) r g b / 0.25)
+   Chrome 119+. Firefox support was dropped in 1.2.0, so relative colour syntax
+   is available unconditionally. This is what keeps a theme to 19 declarations
+   instead of ~35 — every accent-at-an-alpha follows the base automatically. */
+
+/* ===== Fonts ===== */
+@import url('https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400;500;600&display=swap');
+
+/* ===== Tier 1: theme-invariant scales ===== */
+:root {
+  /* Type. One stack, previously repeated at six sites. */
+  --ccp-font: "Geist Mono", "SF Mono", "Fira Code", "Consolas", monospace;
+  --ccp-text-lg: 12px;      /* identity line */
+  --ccp-text-base: 11px;    /* label body, buttons, toast */
+  --ccp-text-sm: 10px;      /* size, props, breadcrumb */
+  --ccp-weight-medium: 500;
+  --ccp-weight-bold: 600;
+  --ccp-leading-tight: 1.4; /* buttons, toast */
+  --ccp-leading-base: 1.5;  /* label */
+  --ccp-tracking-wide: 0.05em;
+  --ccp-tracking-num: 0.02em;
+
+  /* Space. */
+  --ccp-xs: 4px;
+  --ccp-sm: 6px;
+  --ccp-md: 10px;
+  --ccp-lg: 14px;
+  --ccp-gap-tight: 2px;
+  --ccp-gap-pair: 3px;
+  --ccp-gap-base: 5px;
+  --ccp-gap-section: 8px;
+  --ccp-btn-y: 7px;
+  --ccp-btn-x: 12px;
+
+  /* Sizes that aren't spacing. */
+  --ccp-icon: 14px;
+  --ccp-swatch: 9px;
+  --ccp-ring: 2px;          /* selection stroke thickness */
+  --ccp-toast-inset: 24px;  /* toast's corner offset when there is no toolbar */
+
+  /* Radius. */
+  --ccp-radius-xs: 2px;     /* colour swatch */
+  --ccp-radius-sm: 7px;     /* bar buttons */
+  --ccp-radius-md: 8px;     /* label */
+  --ccp-radius-lg: 10px;    /* bar, parent button, toast, gear */
+
+  /* Motion. The curve was repeated at four sites. */
+  --ccp-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ccp-duration: 0.15s;
+  --ccp-duration-fast: 0.12s;
+  --ccp-duration-slow: 0.2s;
+
+  /* Layers. Read by JS for the toast, which is positioned entirely from script. */
+  --ccp-z-overlay: 2147483646;
+  --ccp-z-chrome: 2147483647;
+
+  /* States. --ccp-opacity-loading is read by JS in setButtonLoading(). */
+  --ccp-opacity-disabled: 0.35;
+  --ccp-opacity-loading: 0.7;
+
+  /* Two colours that are deliberately NOT themed, kept here so no literal
+     survives in content.css and so the reason travels with the value.
+
+     --ccp-mask is a stencil, not a colour: mask-image only reads its alpha, so
+     any fully opaque value does. Theming it would do nothing but could break
+     the mask if a theme ever set it translucent.
+
+     --ccp-checker is the chequerboard behind a translucent colour swatch. The
+     swatch reports the *inspected page's* colour, so its backdrop has to stay a
+     neutral reference — tinting it per theme would make the tool misreport what
+     it is looking at. Same reason the swatch fill itself is never themed. */
+  --ccp-mask: #000;
+  --ccp-checker: #555;
+
+  /* The colour picker's three constants, non-themed for the same reason as
+     --ccp-checker: they are not decoration, they are the colour space itself.
+     The saturation square is white toward one edge and black toward the other
+     because that is what saturation and value mean, and the hue rail runs the
+     spectrum because that is what hue is. Tinting any of them per theme would
+     make the picker report a colour the page will not actually get. */
+  --ccp-picker-white: #fff;
+  --ccp-picker-black: #000;
+  --ccp-hue-ramp: linear-gradient(to right,
+    #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+
+  /* Clawd's two fixed features. The body and legs are themed (see below); these
+     two are not, because they have to work against whatever the theme makes the
+     body. A dark eye reads on every accent in the roster, and a cast shadow
+     falls on the host page rather than on our chrome, so it stays neutral. */
+  --ccp-clawd-eye: #141413;
+  --ccp-clawd-shadow: rgb(0 0 0 / 0.15);
+}
+
+/* ===== Tier 2: themes =====
+   Nineteen declarations each. Ordered surface → text ramp → accent → syntax →
+   status → shadows → mascot, the same order in every block so they diff cleanly.
+
+   `--ccp-text-faint` is the one value that does not reach WCAG AA against its
+   surface in most of these palettes — it is a 10px de-emphasised grey and
+   raising it to 4.5:1 would flatten the label's text hierarchy entirely. The
+   checker holds it to 3:1 and reports the shortfall rather than hiding it; see
+   DESIGN.md. It is a pre-existing property of the shipped design, not something
+   these themes introduced. */
+
+/* Terracotta Dark — the default, and the look shipped before this token layer
+   existed. Every value here is lifted verbatim from the old content.css, so the
+   default renders pixel-identical to 1.2.0. Do not "tidy" these numbers. */
+:root,
+[data-ccp-theme="terracotta-dark"] {
+  --ccp-surface: #141413;
+  --ccp-text: #faf9f5;
+  --ccp-text-dim: #c8c5bc;
+  --ccp-text-muted: #8a8780;
+  --ccp-text-faint: #6a6a64;
+  --ccp-sep: #3a3a35;
+  --ccp-accent: #d97757;
+  --ccp-accent-dark: #b06848;
+  --ccp-accent-light: #ffd9c7;
+  --ccp-on-accent: #1a0d07;
+  --ccp-syntax-id: #6a9bcc;
+  --ccp-syntax-class: #788c5d;
+  --ccp-error: #dc2626;
+  --ccp-on-error: #ffffff;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(20, 20, 19, 0.4);
+  --ccp-shadow-bar: 0 4px 16px rgba(20, 20, 19, 0.6);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-clawd-body: #c27c5c;
+  --ccp-clawd-leg: #8b5a42;
+}
+
+/* Terracotta Light — same accent family, inverted ground. The shadows are
+   re-tuned rather than inverted: the dark theme's rgba(20,20,19,.6) reads as a
+   smudge on a light surface, so these are lighter, tighter, and warm-tinted. */
+[data-ccp-theme="terracotta-light"] {
+  --ccp-surface: #faf9f5;
+  --ccp-text: #141413;
+  --ccp-text-dim: #3a3a35;
+  --ccp-text-muted: #5c5952;
+  --ccp-text-faint: #6f6c64;
+  --ccp-sep: #ddd9cf;
+  --ccp-accent: #a94f30;
+  --ccp-accent-dark: #8c3f24;
+  --ccp-accent-light: #e8c4b2;
+  --ccp-on-accent: #fff8f4;
+  --ccp-syntax-id: #2f6291;
+  --ccp-syntax-class: #4d6a36;
+  --ccp-error: #b91c1c;
+  --ccp-on-error: #ffffff;
+  --ccp-shadow-card: 0 8px 24px -10px rgba(60, 45, 35, 0.28), 0 1px 3px rgba(60, 45, 35, 0.14);
+  --ccp-shadow-bar: 0 4px 14px rgba(60, 45, 35, 0.18);
+  --ccp-swatch-border: rgba(0, 0, 0, 0.2);
+  --ccp-clawd-body: #c27c5c;
+  --ccp-clawd-leg: #8b5a42;
+}
+
+/* Dracula. The label already colours tag / #id / .class separately, which is
+   exactly what an editor theme defines — so these map onto the palette's own
+   roles rather than being approximated: purple for the tag, cyan for the id,
+   green for the class. Same reasoning in each theme below. */
+[data-ccp-theme="dracula"] {
+  --ccp-surface: #282a36;
+  --ccp-text: #f8f8f2;
+  --ccp-text-dim: #cfd0e0;
+  --ccp-text-muted: #8b93bd;
+  --ccp-text-faint: #6272a4;
+  --ccp-sep: #44475a;
+  --ccp-accent: #bd93f9;
+  --ccp-accent-dark: #9a6ee0;
+  --ccp-accent-light: #e0d0ff;
+  --ccp-on-accent: #1a1626;
+  --ccp-syntax-id: #8be9fd;
+  --ccp-syntax-class: #50fa7b;
+  --ccp-error: #ff5555;
+  --ccp-on-error: #1a1626;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(20, 20, 30, 0.45);
+  --ccp-shadow-bar: 0 4px 16px rgba(20, 20, 30, 0.65);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-clawd-body: #bd93f9;
+  --ccp-clawd-leg: #6272a4;
+}
+
+/* Monokai. */
+[data-ccp-theme="monokai"] {
+  --ccp-surface: #272822;
+  --ccp-text: #f8f8f2;
+  --ccp-text-dim: #d9d8cd;
+  --ccp-text-muted: #a29e88;
+  --ccp-text-faint: #8a866f;
+  --ccp-sep: #3e3d32;
+  --ccp-accent: #f92672;
+  --ccp-accent-dark: #cc1f5d;
+  --ccp-accent-light: #ffb3ce;
+  --ccp-on-accent: #2a0512;
+  --ccp-syntax-id: #66d9ef;
+  --ccp-syntax-class: #a6e22e;
+  --ccp-error: #ff6188;
+  --ccp-on-error: #2a0512;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(20, 20, 15, 0.45);
+  --ccp-shadow-bar: 0 4px 16px rgba(20, 20, 15, 0.65);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-clawd-body: #f92672;
+  --ccp-clawd-leg: #8a866f;
+}
+
+/* Nord. */
+[data-ccp-theme="nord"] {
+  --ccp-surface: #2e3440;
+  --ccp-text: #eceff4;
+  --ccp-text-dim: #d8dee9;
+  --ccp-text-muted: #9aa5bb;
+  --ccp-text-faint: #7b88a1;
+  --ccp-sep: #3b4252;
+  --ccp-accent: #88c0d0;
+  --ccp-accent-dark: #5e81ac;
+  --ccp-accent-light: #d3e6ec;
+  --ccp-on-accent: #16202b;
+  --ccp-syntax-id: #81a1c1;
+  --ccp-syntax-class: #a3be8c;
+  --ccp-error: #dd8a92;
+  --ccp-on-error: #2e3440;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(20, 25, 35, 0.4);
+  --ccp-shadow-bar: 0 4px 16px rgba(20, 25, 35, 0.6);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-clawd-body: #88c0d0;
+  --ccp-clawd-leg: #5e81ac;
+}
+
+/* Solarized Dark. base03 ground with the documented accent roles; the greys are
+   base01/base00/base0 shifted up slightly to clear the contrast floor. */
+[data-ccp-theme="solarized-dark"] {
+  --ccp-surface: #002b36;
+  --ccp-text: #eee8d5;
+  --ccp-text-dim: #b8c3c3;
+  --ccp-text-muted: #93a1a1;
+  --ccp-text-faint: #7a8c8c;
+  --ccp-sep: #073642;
+  --ccp-accent: #e5762f;
+  --ccp-accent-dark: #cf6726;
+  --ccp-accent-light: #f5c6ac;
+  --ccp-on-accent: #04202a;
+  --ccp-syntax-id: #3a9ae0;
+  --ccp-syntax-class: #859900;
+  --ccp-error: #e8524f;
+  --ccp-on-error: #04202a;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 20, 25, 0.45);
+  --ccp-shadow-bar: 0 4px 16px rgba(0, 20, 25, 0.65);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-clawd-body: #cb4b16;
+  --ccp-clawd-leg: #7a8c8c;
+}
+
+/* Tokyo Night. */
+[data-ccp-theme="tokyo-night"] {
+  --ccp-surface: #1a1b26;
+  --ccp-text: #c0caf5;
+  --ccp-text-dim: #a9b1d6;
+  --ccp-text-muted: #8b93b8;
+  --ccp-text-faint: #6d75a0;
+  --ccp-sep: #292e42;
+  --ccp-accent: #bb9af7;
+  --ccp-accent-dark: #9a78d8;
+  --ccp-accent-light: #e2d4ff;
+  --ccp-on-accent: #16111f;
+  --ccp-syntax-id: #7aa2f7;
+  --ccp-syntax-class: #9ece6a;
+  --ccp-error: #f7768e;
+  --ccp-on-error: #16111f;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(15, 15, 25, 0.45);
+  --ccp-shadow-bar: 0 4px 16px rgba(15, 15, 25, 0.65);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-clawd-body: #bb9af7;
+  --ccp-clawd-leg: #6d75a0;
+}
+
+/* `system` has no block of its own. content.js resolves it through
+   matchMedia("(prefers-color-scheme: dark)") and writes the resolved id —
+   terracotta-dark or terracotta-light — into data-ccp-theme. Duplicating every
+   block inside an @media query would double this file and put two copies of
+   each palette out of step the first time one was edited. */

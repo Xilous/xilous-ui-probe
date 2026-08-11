@@ -1,0 +1,1519 @@
+<meta charset="utf-8">
+<title>Claude Code Probe — Edit-mode association prototypes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* ============================================================
+   GALLERY SHELL
+   Same quiet frame as the earlier galleries: the twelve
+   prototypes carry every bit of colour on this page.
+   ============================================================ */
+:root {
+  --g-ground:  #f7f6f2;
+  --g-raised:  #ffffff;
+  --g-ink:     #17160f;
+  --g-dim:     #56534a;
+  --g-muted:   #8d8a80;
+  --g-rule:    #e0ddd3;
+  --g-rule-hi: #cbc7ba;
+  --g-accent:  #b8542f;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.25rem;
+  --step-3: 1.75rem;
+  --step-4: 2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-ground:  #131210;
+    --g-raised:  #1b1a17;
+    --g-ink:     #ece9e1;
+    --g-dim:     #a5a196;
+    --g-muted:   #7d7a71;
+    --g-rule:    #2a2824;
+    --g-rule-hi: #3d3a34;
+    --g-accent:  #e08b68;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--g-ground);
+  color: var(--g-ink);
+  font-family: var(--sans);
+  font-size: var(--step-1);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--g-ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--g-rule);
+}
+.topbar-in { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 0; flex-wrap: wrap; }
+.topbar-title {
+  font-family: var(--mono); font-size: var(--step-0);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--g-dim); margin: 0; white-space: nowrap;
+}
+.jump { display: flex; gap: 0.25rem; margin-left: auto; flex-wrap: wrap; }
+.jump a {
+  font-family: var(--mono); font-size: 0.75rem;
+  text-decoration: none; color: var(--g-dim);
+  border: 1px solid var(--g-rule); border-radius: 6px;
+  width: 2rem; height: 2rem; display: grid; place-items: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.jump a:hover, .jump a:focus-visible {
+  background: var(--g-accent); border-color: var(--g-accent); color: var(--g-ground);
+  outline: none;
+}
+
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 2rem; border-bottom: 1px solid var(--g-rule); }
+.eyebrow {
+  font-family: var(--mono); font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--g-accent); margin: 0 0 1rem;
+}
+h1 {
+  font-family: var(--mono); font-weight: 500;
+  font-size: clamp(1.75rem, 4.5vw, var(--step-4));
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin: 0 0 1.25rem; text-wrap: balance;
+}
+.lede { font-size: var(--step-2); line-height: 1.5; color: var(--g-dim); max-width: 62ch; margin: 0 0 2rem; }
+.lede b { color: var(--g-ink); font-weight: 600; }
+.howto {
+  display: grid; gap: 0.75rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  font-size: var(--step-0); color: var(--g-dim);
+  border-top: 1px solid var(--g-rule); padding-top: 1.5rem;
+}
+.howto p { margin: 0; }
+.howto strong { color: var(--g-ink); font-weight: 600; }
+
+.family {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--g-muted);
+  padding: 2.5rem 0 0; margin: 0;
+}
+.family span { color: var(--g-accent); }
+
+.proto { padding: clamp(2rem, 5vw, 3.5rem) 0; border-bottom: 1px solid var(--g-rule); scroll-margin-top: 4.5rem; }
+.proto-head { display: grid; grid-template-columns: auto 1fr; gap: 0 1.25rem; align-items: baseline; margin-bottom: 1.75rem; }
+.proto-num {
+  font-family: var(--mono); font-size: var(--step-3); font-weight: 500;
+  color: var(--g-rule-hi); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.proto-head h2 { font-family: var(--mono); font-weight: 500; font-size: var(--step-2); margin: 0; letter-spacing: -0.01em; line-height: 1.25; }
+.thesis { grid-column: 2; margin: 0.5rem 0 0; color: var(--g-dim); max-width: 68ch; }
+
+.viewport {
+  position: relative;
+  background: var(--page);
+  border: 1px solid var(--g-rule-hi);
+  border-radius: 10px;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.viewport-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+  border-bottom: 1px solid var(--sep);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); opacity: 0.6; }
+.viewport-url { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-left: 0.5rem; letter-spacing: 0.02em; }
+.bar-sp { flex: 1; }
+.offbtn {
+  font: 500 9px var(--mono); letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 8px; border-radius: 6px; cursor: pointer;
+  background: transparent; border: 1px solid var(--sep); color: var(--muted);
+}
+.offbtn:hover { border-color: var(--accent); color: var(--accent); }
+.offbtn[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.dots { display: flex; gap: 4px; }
+.tdot {
+  width: 13px; height: 13px; border-radius: 4px; padding: 0; cursor: pointer;
+  border: 1px solid rgba(127,127,127,.4);
+}
+.tdot:hover { transform: scale(1.15); }
+
+.tradeoff { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 1.5rem 0 0; font-size: var(--step-0); }
+.tradeoff dt {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--g-muted); padding-top: 0.2em;
+}
+.tradeoff dd { margin: 0; color: var(--g-dim); }
+.tradeoff .win { color: var(--g-ink); }
+.tradeoff .flag { color: var(--g-accent); }
+
+/* ============================================================
+   THEME TOKENS — the real seven, page-side derivations included
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] {
+  --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64;
+  --sep:#3a3a35; --accent:#d97757; --accent-dark:#b06848; --on-accent:#1a0d07;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(20,20,19,.4);
+  --shadow-bar: 0 4px 16px rgba(20,20,19,.6);
+  --page:#1e1e1c; --page-ink:#c8c5bc; --page-rule:#2e2e2a;
+}
+[data-ccp-theme="terracotta-light"] {
+  --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780;
+  --sep:#ddd9cf; --accent:#c2603f; --accent-dark:#9c4a2e; --on-accent:#fff8f4;
+  --shadow-card: 0 8px 24px -10px rgba(60,45,35,.28), 0 1px 3px rgba(60,45,35,.14);
+  --shadow-bar: 0 4px 14px rgba(60,45,35,.18);
+  --page:#ffffff; --page-ink:#3a3a35; --page-rule:#eae7de;
+}
+[data-ccp-theme="dracula"] {
+  --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4;
+  --sep:#44475a; --accent:#bd93f9; --accent-dark:#9a6ee0; --on-accent:#1a1626;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,30,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,30,.65);
+  --page:#21222c; --page-ink:#cfd0e0; --page-rule:#343746;
+}
+[data-ccp-theme="monokai"] {
+  --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e;
+  --sep:#3e3d32; --accent:#f92672; --accent-dark:#cc1f5d; --on-accent:#2a0512;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,15,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,15,.65);
+  --page:#1e1f1a; --page-ink:#d9d8cd; --page-rule:#32332b;
+}
+[data-ccp-theme="nord"] {
+  --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1;
+  --sep:#3b4252; --accent:#88c0d0; --accent-dark:#5e81ac; --on-accent:#16202b;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.5), 0 2px 6px rgba(20,25,35,.4);
+  --shadow-bar: 0 4px 16px rgba(20,25,35,.6);
+  --page:#272c36; --page-ink:#d8dee9; --page-rule:#343b48;
+}
+[data-ccp-theme="solarized-dark"] {
+  --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75;
+  --sep:#073642; --accent:#cb4b16; --accent-dark:#a53c11; --on-accent:#1a0700;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,20,25,.45);
+  --shadow-bar: 0 4px 16px rgba(0,20,25,.65);
+  --page:#01212b; --page-ink:#93a1a1; --page-rule:#062b35;
+}
+[data-ccp-theme="tokyo-night"] {
+  --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89;
+  --sep:#292e42; --accent:#bb9af7; --accent-dark:#9a78d8; --on-accent:#16111f;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(15,15,25,.45);
+  --shadow-bar: 0 4px 16px rgba(15,15,25,.65);
+  --page:#16161e; --page-ink:#a9b1d6; --page-rule:#232430;
+}
+
+/* ============================================================
+   THE VIGNETTE — a fake page with a real element being edited.
+   The card's border, radius, fill and shadow are written inline
+   by paint(), exactly the way Edit Mode writes them. Those four
+   properties are the whole point: every prototype has to leave
+   them legible.
+   ============================================================ */
+.vp {
+  position: relative; min-height: 430px; padding: 22px 24px;
+  font-family: var(--sans); overflow: hidden;
+}
+/* the page sits above the lift layer, so 12's caster is genuinely behind the
+   element rather than merely transparent where it overlaps */
+.page { position: relative; z-index: 2; transition: transform 0.28s cubic-bezier(.4,0,.2,1); }
+.vp[data-off="1"] .page { transform: translate(-232px, -138px); }
+
+.vp h3 { font: 600 15px/1.3 var(--sans); color: var(--page-ink); margin: 0 0 4px; }
+.pg-sub { font: 11px/1.5 var(--sans); color: color-mix(in srgb, var(--page-ink) 65%, transparent); margin: 0 0 18px; }
+.cards { display: flex; gap: 18px; align-items: flex-start; }
+.skill-card {
+  display: flex; flex-direction: column; position: relative;
+  font-family: var(--sans); width: 250px;
+  /* border / radius / fill / shadow / padding all arrive inline from paint() */
+}
+.sc-name { font-weight: 600; font-size: 14px; }
+.sc-desc { font-size: 12px; opacity: 0.72; line-height: 1.5; }
+.sc-row { display: flex; align-items: center; gap: 6px; margin-top: 2px; }
+.sc-btn {
+  font-size: 11px; font-weight: 600; letter-spacing: 0.03em;
+  padding: 4px 10px; border-radius: 6px;
+  background: rgb(from var(--accent) r g b / 0.14); color: var(--accent);
+}
+.sc-meta { font: 10px var(--mono); color: #8B887E; margin-left: auto; }
+.skill-card.ghost {
+  background: #fbfaf7; color: #1f1e1b;
+  border: 2px solid #c9c3b4; border-radius: 14px;
+  padding: 16px; gap: 8px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.10);
+}
+.pg-note { font: 11px/1.6 var(--sans); color: color-mix(in srgb, var(--page-ink) 50%, transparent); margin: 20px 0 0; max-width: 40ch; }
+
+/* ============================================================
+   PANEL FURNITURE — one mock edit panel, shared by all twelve.
+   Only the association visual differs between prototypes.
+   ============================================================ */
+.ep {
+  position: absolute; z-index: 20; width: 216px;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--sep); border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  font-family: var(--mono); font-size: 10px;
+  user-select: none;
+}
+.ep-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 9px; border-bottom: 1px solid var(--sep);
+  cursor: grab; touch-action: none; position: relative;
+}
+.ep-head:active { cursor: grabbing; }
+.ep-back {
+  font: 600 12px/1 var(--mono); width: 18px; height: 18px; flex: none;
+  display: grid; place-items: center; padding: 0;
+  background: transparent; border: 1px solid var(--sep); border-radius: 5px;
+  color: var(--dim); cursor: pointer;
+}
+.ep-id { font: 500 10px var(--mono); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-id b { color: var(--accent); font-weight: 500; }
+.ep-body { padding: 9px 11px 11px; }
+.g-leg {
+  font: 500 8.5px var(--mono); letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 6px;
+}
+.g-sec + .g-sec { margin-top: 10px; padding-top: 9px; border-top: 1px solid var(--sep); }
+
+.fld {
+  display: flex; align-items: center; gap: 6px; padding: 2.5px 4px;
+  margin: 0 -4px; border-radius: 5px;
+}
+.fld.hot { background: rgb(from var(--accent) r g b / 0.10); }
+.f-lab { font: 10px var(--mono); color: var(--muted); flex: 1; min-width: 0; }
+.val {
+  display: inline-flex; align-items: baseline; gap: 2px; flex: none;
+  font: 500 10px var(--mono); font-variant-numeric: tabular-nums;
+  color: var(--text); background: color-mix(in srgb, var(--surface) 60%, var(--sep));
+  border: 1px solid var(--sep); border-radius: 5px; padding: 2.5px 6px;
+  cursor: ew-resize; min-width: 46px; justify-content: center;
+  touch-action: none;
+}
+.val:hover, .val:focus-visible { border-color: var(--accent); outline: none; }
+.val i { font-style: normal; color: var(--faint); font-size: 8.5px; }
+.sw {
+  width: 46px; height: 17px; flex: none; padding: 0; cursor: pointer;
+  border: 1px solid var(--sep); border-radius: 5px;
+}
+.sw:hover { border-color: var(--accent); }
+
+/* ============================================================
+   ASSOCIATION LAYERS — every prototype draws into these two.
+   .as-svg for strokes, .as-dom for boxes and chips. Both sit
+   above the page and below the panel, and neither takes hits.
+   ============================================================ */
+.as-svg, .as-dom {
+  position: absolute; inset: 0; z-index: 10;
+  pointer-events: none; overflow: visible;
+}
+.as-svg { width: 100%; height: 100%; }
+.as-lift { z-index: 1; }
+
+/* the shared stroke vocabulary */
+.as-line {
+  fill: none; stroke: var(--accent);
+  stroke-width: 1; stroke-linecap: round; stroke-linejoin: round;
+  opacity: 0.5;
+  transition: stroke-width 0.15s cubic-bezier(.4,0,.2,1), opacity 0.15s cubic-bezier(.4,0,.2,1);
+}
+.loud .as-line { stroke-width: 2; opacity: 1; }
+.as-dash { stroke-dasharray: 4 4; }
+.as-fill { fill: var(--accent); stroke: none; opacity: 0.55; transition: opacity 0.15s, r 0.15s; }
+.loud .as-fill { opacity: 1; }
+
+/* 03 · caption tag */
+.as-cap {
+  position: absolute; white-space: nowrap;
+  font: 500 9px var(--mono); letter-spacing: 0.04em;
+  padding: 2px 6px; border-radius: 5px;
+  background: var(--surface); color: var(--accent);
+  border: 1px solid rgb(from var(--accent) r g b / 0.5);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+.loud .as-cap { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(from var(--accent) r g b / 0.18); }
+
+/* 06/07 · brackets and ticks share one bar primitive */
+.as-bar {
+  position: absolute; background: var(--accent); opacity: 0.55; border-radius: 1px;
+  transition: opacity 0.15s cubic-bezier(.4,0,.2,1), width 0.15s, height 0.15s, top 0.15s, left 0.15s;
+}
+.loud .as-bar { opacity: 1; }
+
+/* 08 · the control: a ring in the exterior gap, constant radius, breathing */
+.as-ring {
+  position: absolute; border: 1.5px solid var(--accent);
+  opacity: 0.5; border-radius: 4px;
+  animation: as-breathe 2.6s cubic-bezier(.4,0,.2,1) infinite;
+  transition: opacity 0.15s;
+}
+.loud .as-ring { opacity: 1; }
+@keyframes as-breathe {
+  0%, 100% { transform: scale(1);     }
+  50%      { transform: scale(1.018); }
+}
+
+/* 09 · gutter rails */
+.as-rail {
+  position: absolute; background: var(--accent); opacity: 0.45; border-radius: 2px;
+  transition: opacity 0.15s, top 0.15s, left 0.15s, width 0.15s, height 0.15s;
+}
+.loud .as-rail { opacity: 1; }
+.as-gutter { position: absolute; background: rgb(from var(--accent) r g b / 0.07); }
+
+/* 10 · the shared identity tag */
+.as-tag, .ep-tag {
+  display: inline-flex; align-items: center; gap: 3px;
+  font: 600 8.5px var(--mono); letter-spacing: 0.06em;
+  padding: 2px 5px; border-radius: 4px;
+  background: var(--accent); color: var(--on-accent);
+  transition: box-shadow 0.15s cubic-bezier(.4,0,.2,1);
+}
+.as-tag { position: absolute; white-space: nowrap; }
+.loud .as-tag, .loud .ep-tag { box-shadow: 0 0 0 3px rgb(from var(--accent) r g b / 0.3); }
+
+/* 11 · live mirror in the panel head */
+.ep-mirror {
+  width: 54px; height: 38px; flex: none; overflow: hidden;
+  border: 1px solid var(--sep); border-radius: 5px;
+  background: var(--page); position: relative;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.loud .ep-mirror { border-color: var(--accent); box-shadow: 0 0 0 3px rgb(from var(--accent) r g b / 0.22); }
+.ep-mirror > * { position: absolute; top: 0; left: 0; transform-origin: top left; }
+
+/* 12 · lift — a shadow caster sitting behind the element */
+.as-caster {
+  position: absolute;
+  box-shadow: 0 6px 18px -4px rgb(from var(--accent) r g b / 0.5),
+              0 2px 6px rgb(from var(--accent) r g b / 0.32);
+  transition: box-shadow 0.18s cubic-bezier(.4,0,.2,1);
+}
+.loud .as-caster {
+  box-shadow: 0 14px 34px -6px rgb(from var(--accent) r g b / 0.7),
+              0 4px 10px rgb(from var(--accent) r g b / 0.45);
+}
+
+/* 05 · the traveling pulse */
+.as-pulse { fill: var(--accent); stroke: none; }
+.as-ripple {
+  fill: none; stroke: var(--accent); stroke-width: 1.5;
+}
+
+/* ------------------------------------------------------------
+   REDUCED MOTION
+   Every self-animating node above, listed the way content.css
+   lists them. Note the house rule: where the animation *is* the
+   information (05's pulse, 08's breath), the still state keeps
+   the information and only loses the movement — it is never
+   zeroed away.
+   ------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  .as-ring { animation: none; opacity: 0.8; }
+  .as-line, .as-fill, .as-bar, .as-rail, .as-cap, .as-tag,
+  .ep-tag, .ep-mirror, .as-caster, .page { transition: none; }
+  /* 05 keeps a permanent chord instead of a traveling dot — see fireProto5() */
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <p class="topbar-title">Edit-mode association · 12</p>
+    <nav class="jump">
+      <a href="#p1">1</a><a href="#p2">2</a><a href="#p3">3</a><a href="#p4">4</a>
+      <a href="#p5">5</a><a href="#p6">6</a><a href="#p7">7</a><a href="#p8">8</a>
+      <a href="#p9">9</a><a href="#p10">10</a><a href="#p11">11</a><a href="#p12">12</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="masthead">
+    <p class="eyebrow">Claude Code Probe · prototypes</p>
+    <h1>Twelve ways to say "this panel edits that element"</h1>
+    <p class="lede">The selection box is a ring drawn 2px outside the element. In Edit
+      Mode that ring sits on top of the exact pixels being tuned — <b>border width,
+      border colour, corner radius, shadow</b>. You cannot judge a 2px stroke through
+      an accent stroke. Every prototype below answers "which element" while leaving the
+      element's <b>border, corners and interior completely untouched</b>.</p>
+    <div class="howto">
+      <p><strong>Scrub the values.</strong> Drag any number chip sideways. Stroke, radius
+        and shadow all really apply — watch whether the association gets in the way.</p>
+      <p><strong>Quiet, then loud.</strong> Every one has a resting state and an amplified
+        one. It amplifies on row hover, during a scrub, and for a beat after a value lands.</p>
+      <p><strong>Drag the panel.</strong> Its header is a handle. The association has to
+        survive the panel being anywhere.</p>
+      <p><strong>Press "off-screen".</strong> Pushes the element toward the corner and out.
+        The twelve answer this differently on purpose — that is part of the comparison.</p>
+    </div>
+  </div>
+
+  <p class="family">Family · <span>spanning the gap</span> — a physical link between the two</p>
+
+  <!-- ============ 01 ============ -->
+  <section class="proto" id="p1">
+    <div class="proto-head">
+      <span class="proto-num">01</span>
+      <h2>Wire</h2>
+      <p class="thesis">One hairline curve from the panel to a dot resting in the gap
+        outside the element. The canonical answer, and the one everybody pictures when
+        they hear "connect them" — a physical line you can trace with a finger.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="1"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Unambiguous at any distance and in any direction. The terminal dot lands in dead space, so a 1px border and a 20px radius both stay perfectly readable underneath.</dd>
+      <dt>Costs</dt><dd>A curve crossing the page cuts through whatever content lies between, and on a busy page it reads as one more thing drawn on top. Needs a live rect: editing padding or width moves the anchor.</dd>
+      <dt>Off-screen</dt><dd>Clamps to the viewport edge and terminates in an arrowhead — the link never breaks, it just points.</dd>
+      <dt>Costs to build</dt><dd class="flag">Needs a refresh hook from the edit-apply path — there is no <code>ResizeObserver</code> in the codebase.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section class="proto" id="p2">
+    <div class="proto-head">
+      <span class="proto-num">02</span>
+      <h2>Elbow tether</h2>
+      <p class="thesis">The same link, routed orthogonally instead of curved. This is the
+        vocabulary the product already speaks — <code>computeRedline()</code> is an
+        axis-relation solver and the dashed guide is already a rendered primitive. Reads
+        as a spec drawing rather than a UI flourish.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord" data-proto="2"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Continuous with Redline mode, so the tool gains no new visual language. Axis-aligned segments hide inside a page's own grid far better than a diagonal curve.</dd>
+      <dt>Costs</dt><dd>Two long runs cover more ground than one short curve, and the elbow can land on content in a way a bezier arcs over.</dd>
+      <dt>Off-screen</dt><dd>Hides outright. The elbow's whole legibility is knowing where both ends are.</dd>
+      <dt>Reuses</dt><dd><code>computeRedline()</code> at content.js:1128, <code>.ccp-redline-guide-h/v</code> at content.css:137.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section class="proto" id="p3">
+    <div class="proto-head">
+      <span class="proto-num">03</span>
+      <h2>Leader and caption</h2>
+      <p class="thesis">The line stops short. It terminates at a small tag floating in
+        nearby whitespace carrying the element's identity — an architectural callout.
+        Nothing at all approaches the perimeter, and the association carries a name
+        rather than just a direction.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light" data-proto="3"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only spanning approach that also answers "which element <em>is</em> it" — <code>div.skill-card</code> is right there. Keeps a wide berth from the box.</dd>
+      <dt>Costs</dt><dd>Needs whitespace to put the caption in, and dense pages have none; the caption then either overlaps content or drifts far enough to be ambiguous.</dd>
+      <dt>Off-screen</dt><dd>The caption pins itself to the viewport edge and the leader drops — identity survives, geometry doesn't.</dd>
+      <dt>Note</dt><dd>Recovers the information the hushed <code>#ccp-label</code> stops showing in edit mode.</dd>
+    </dl>
+  </section>
+
+  <p class="family">Family · <span>pointing without spanning</span> — direction, no line across the page</p>
+
+  <!-- ============ 04 ============ -->
+  <section class="proto" id="p4">
+    <div class="proto-head">
+      <span class="proto-num">04</span>
+      <h2>Gnomon</h2>
+      <p class="thesis">A tapered wedge on the panel's own border, aimed at the element
+        and re-aiming as either moves. Nothing crosses the gap; the panel simply looks
+        at what it owns. Zero pixels are drawn anywhere near the element.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night" data-proto="4"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The lowest-footprint approach that still has a direction. The page is never drawn on — not near the element, not between them. Immune to every rect problem, since it only needs a bearing.</dd>
+      <dt>Costs</dt><dd>A bearing is not an address. With two similar cards along the same ray it genuinely cannot disambiguate, and the user has to follow the aim by eye.</dd>
+      <dt>Off-screen</dt><dd>Keeps aiming — it is a compass, so leaving the viewport costs it nothing.</dd>
+      <dt>Scales to</dt><dd>Any distance. Degrades only with candidate density along the ray.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section class="proto" id="p5">
+    <div class="proto-head">
+      <span class="proto-num">05</span>
+      <h2>Traveling pulse</h2>
+      <p class="thesis">Nothing persistent whatsoever. On each value change a single dot
+        runs from the panel to the element and dissolves into a ripple. The association
+        is carried entirely by motion over time — the resting state is literally empty
+        page.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="monokai" data-proto="5"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The purest possible obedience to the constraint: at rest there is nothing on screen to obstruct anything. Ties the signal to consequence — you see the link exactly when you change something.</dd>
+      <dt>Costs</dt><dd>Glance away mid-session and there is no standing answer to "which one". Fails the user's own "quiet always" half outright, which is precisely why it's worth seeing.</dd>
+      <dt>Off-screen</dt><dd>No pulse fires — there is nowhere to send it.</dd>
+      <dt>Reduced motion</dt><dd class="flag">Falls back to a briefly-held chord between the two, not a removed animation — motion goes, information stays.</dd>
+    </dl>
+  </section>
+
+  <p class="family">Family · <span>marking the exterior</span> — near the element, never on it</p>
+
+  <!-- ============ 06 ============ -->
+  <section class="proto" id="p6">
+    <div class="proto-head">
+      <span class="proto-num">06</span>
+      <h2>Corner brackets</h2>
+      <p class="thesis">Four L-shaped crop marks sitting outside the corners at a fixed
+        offset, deliberately square — they do <em>not</em> follow <code>border-radius</code>.
+        That refusal is the entire design: a mark that never traces the corner can never
+        be confused with it.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="6"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Reads instantly as "this box" while touching none of it, and the square corners stay visually independent of the radius you're scrubbing — you can watch 0→24px with the marks completely still.</dd>
+      <dt>Costs</dt><dd>Four objects instead of one, and on a small element the brackets crowd until they nearly close into the ring we're trying to get away from.</dd>
+      <dt>Off-screen</dt><dd>Surviving corners stay; the clipped ones simply leave. Two brackets still bound the element usefully.</dd>
+      <dt>Costs to build</dt><dd class="flag">Live-rect dependent — needs the edit-apply refresh hook.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section class="proto" id="p7">
+    <div class="proto-head">
+      <span class="proto-num">07</span>
+      <h2>Edge ticks</h2>
+      <p class="thesis">Lighter than brackets: one short mark at the midpoint of each
+        edge, floating in the exterior gap. Four points imply the box without describing
+        it, and midpoints stay maximally far from the corners — the most delicate part
+        of what's being edited.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula" data-proto="7"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The quietest of the exterior family. Deliberately puts its marks at the point on each edge furthest from any corner, so radius work is never visually crowded.</dd>
+      <dt>Costs</dt><dd>Weakest bounding read of the three exterior options — four ticks describe a cross, and the eye has to infer the rectangle.</dd>
+      <dt>Off-screen</dt><dd>Surviving ticks stay put; losing two of four degrades it badly.</dd>
+      <dt>Scales to</dt><dd>Large elements well, small ones poorly — the ticks converge.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section class="proto" id="p8">
+    <div class="proto-head">
+      <span class="proto-num">08</span>
+      <h2>Breathing offset ring · <em>the control</em></h2>
+      <p class="thesis">A ring 8px out with a <em>constant</em> corner radius of its own,
+        breathing slowly. This is today's box moved just far enough out to be legal —
+        included on purpose as the baseline the other eleven have to beat.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="solarized-dark" data-proto="8"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Strongest possible bounding read, and no learning curve — it is the vocabulary users already have. The breath replaces the sweep as the "alive" signal at a fraction of the visual cost.</dd>
+      <dt>Costs</dt><dd class="flag">Its constant radius visibly disagrees with the element's own once you scrub radius past ~12px, which is either honest separation or an irritating mismatch. It also still fully encircles, so it competes with shadow work all round the box.</dd>
+      <dt>Off-screen</dt><dd>Clips. Half a ring is still a ring.</dd>
+      <dt>Reduced motion</dt><dd>Holds at higher opacity rather than losing the ring.</dd>
+    </dl>
+  </section>
+
+  <p class="family">Family · <span>remote</span> — no proximity to the element at all</p>
+
+  <!-- ============ 09 ============ -->
+  <section class="proto" id="p9">
+    <div class="proto-head">
+      <span class="proto-num">09</span>
+      <h2>Gutter rails</h2>
+      <p class="thesis">Two bars pinned in the viewport's margins, spanning exactly the
+        element's vertical and horizontal extent — a spreadsheet highlighting the row and
+        column of the active cell. Association by projection, from as far away as it is
+        possible to get.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light" data-proto="9"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Nothing is drawn within a hundred pixels of the element, and it still communicates position <em>and</em> size on both axes. Borrows a read every spreadsheet user already owns.</dd>
+      <dt>Costs</dt><dd>Indirect — you read two projections and intersect them mentally. Vertically stacked elements of equal width project identically.</dd>
+      <dt>Costs</dt><dd class="flag">The gutter is a strip we reserve but do not own. An element flush to the viewport edge slides under its own rail — the only approach here that can violate the constraint unaided. Each band has to relocate to the opposite margin to stay clear; press "off-screen" to watch both rails jump.</dd>
+      <dt>Off-screen</dt><dd class="win">Degrades into a direction indicator for free: the rails compress toward the edge the element left through. The only approach that gets this without special-casing.</dd>
+      <dt>Scales to</dt><dd>Any element size. Struggles when the element spans nearly the full viewport.</dd>
+    </dl>
+  </section>
+
+  <p class="family">Family · <span>identity</span> — matched objects instead of geometry</p>
+
+  <!-- ============ 10 ============ -->
+  <section class="proto" id="p10">
+    <div class="proto-head">
+      <span class="proto-num">10</span>
+      <h2>Shared tag</h2>
+      <p class="thesis">No connecting geometry at all. The panel header wears a small
+        marked chip, and an identical chip floats just outside the element's top-left
+        corner. Two matching objects; the eye pairs them the way it pairs a footnote with
+        its marker.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night" data-proto="10"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Cheapest thing on the page — one chip in dead space above the corner. No path to route, no rect to trace, nothing that can collide with content between the two.</dd>
+      <dt>Costs</dt><dd>Requires a deliberate scan to find the matching chip; it never grabs you. And it marks one corner only, so it says "here" without saying "this big".</dd>
+      <dt>Off-screen</dt><dd>The panel chip is left alone with nothing to match — the weakest failure of the twelve.</dd>
+      <dt>Scales to</dt><dd class="win">Multiple elements trivially, if that ever comes back — distinct glyphs, one chip each. (Explicitly not a requirement today.)</dd>
+    </dl>
+  </section>
+
+  <p class="family">Family · <span>panel-side only</span> — nothing whatsoever drawn on the page</p>
+
+  <!-- ============ 11 ============ -->
+  <section class="proto" id="p11">
+    <div class="proto-head">
+      <span class="proto-num">11</span>
+      <h2>Live mirror</h2>
+      <p class="thesis">A live thumbnail of the element in the panel header, re-rendered
+        on every change. The association isn't spatial at all — it's "what you see in the
+        panel is what you're editing". The page is never touched by a single pixel.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="monokai" data-proto="11"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only approach that draws <em>nothing</em> on the page — perfect compliance with the constraint by construction, and the only one that still works with the element scrolled entirely out of view. Doubles as a before/after read at a glance.</dd>
+      <dt>Costs</dt><dd class="flag">Confirms identity but not <em>location</em> — with two similar cards it tells you what you're editing without telling you where. At thumbnail scale a 1px border change is nearly invisible, which is exactly the edit it most needs to show.</dd>
+      <dt>Off-screen</dt><dd class="win">Entirely unaffected. This is its superpower.</dd>
+      <dt>Reuses</dt><dd><code>lib/html2canvas.min.js</code> is already vendored for the screenshot action; the mock here clones and scales instead.</dd>
+    </dl>
+  </section>
+
+  <p class="family">Family · <span>depth</span> — implied by elevation rather than marked</p>
+
+  <!-- ============ 12 ============ -->
+  <section class="proto" id="p12">
+    <div class="proto-head">
+      <span class="proto-num">12</span>
+      <h2>Lift</h2>
+      <p class="thesis">The element reads as raised off the page — an accent-tinted
+        shadow cast into the gap around it by a caster sitting behind. Nothing traces
+        it, nothing points at it; it is simply the only thing in the room that is off
+        the ground.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord" data-proto="12"></div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Feels physical rather than annotated — the least "tool chrome" of the twelve. The glow occupies the gap outside the border without any hard edge for the eye to mistake for a stroke.</dd>
+      <dt>Costs</dt><dd class="flag">Collides head-on with the Shadow group, one of the six editable inventories. Tuning <code>shadow-blur</code> against a tinted glow of our own is genuinely confusing — the strongest single objection to any approach here.</dd>
+      <dt>Off-screen</dt><dd>Clips with the element.</dd>
+      <dt>Costs to build</dt><dd class="flag">Live-rect dependent, and needs a caster node behind the element in a page whose stacking contexts we don't control.</dd>
+    </dl>
+  </section>
+
+</main>
+
+<script>
+/* ============================================================
+   ONE ENGINE, TWELVE RENDERERS
+
+   Every viewport is the same vignette: a real card with a real
+   border, radius, fill and shadow, and a real (mock) edit panel
+   whose controls write those properties inline — the way Edit
+   Mode does. The ONLY thing that differs between prototypes is
+   the draw() that runs in the association layer.
+
+   Association geometry is kept pure — draw functions take rects
+   and return nothing but DOM writes — mirroring the contract
+   computeChromeLayout() and computeRedline() hold in content.js.
+   ============================================================ */
+
+const THEMES = [
+  ["terracotta-dark",  "#141413", "#d97757"],
+  ["terracotta-light", "#faf9f5", "#c2603f"],
+  ["dracula",          "#282a36", "#bd93f9"],
+  ["monokai",          "#272822", "#f92672"],
+  ["nord",             "#2e3440", "#88c0d0"],
+  ["solarized-dark",   "#002b36", "#cb4b16"],
+  ["tokyo-night",      "#1a1b26", "#bb9af7"],
+];
+
+const SVGNS = "http://www.w3.org/2000/svg";
+
+/* The gap the association is allowed to work in. Nothing may be
+   drawn closer to the element than this — it is the constraint,
+   expressed as a number. */
+const GAP = 8;
+
+const LINES = [
+  { key: "borderW", g: "line",   lab: "stroke", unit: "px", min: 0, max: 8,  step: 1 },
+  { key: "radius",  g: "line",   lab: "radius", unit: "px", min: 0, max: 28, step: 1 },
+  { key: "borderC", g: "line",   lab: "tint",   type: "color", pal: ["#c9c3b4", "#b8542f", "#1f1e1b", "#7d9095", "#e5e0d4"] },
+  { key: "pad",     g: "space",  lab: "padding", unit: "px", min: 6, max: 34, step: 1 },
+  { key: "bg",      g: "fill",   lab: "fill",   type: "color", pal: ["#fbfaf7", "#f4efe6", "#e9eef4", "#e7ebdd", "#2b2e33"] },
+  { key: "shadowB", g: "shadow", lab: "blur",   unit: "px", min: 0, max: 40, step: 1 },
+  { key: "shadowA", g: "shadow", lab: "alpha",  unit: "%",  min: 0, max: 45, step: 1 },
+];
+const GLABEL = { line: "border", space: "spacing", fill: "surface", shadow: "shadow" };
+
+const DEFAULTS = {
+  borderW: 2, radius: 14, borderC: "#c9c3b4",
+  pad: 16, bg: "#fbfaf7",
+  shadowB: 14, shadowA: 10,
+};
+
+/* ---------- geometry helpers (pure) ---------- */
+
+/* rect of `el` in `host`'s coordinate space */
+function rectIn(el, host) {
+  const a = el.getBoundingClientRect(), b = host.getBoundingClientRect();
+  return { x: a.left - b.left, y: a.top - b.top, w: a.width, h: a.height,
+           cx: a.left - b.left + a.width / 2, cy: a.top - b.top + a.height / 2 };
+}
+const inflate = (r, n) => ({
+  x: r.x - n, y: r.y - n, w: r.w + n * 2, h: r.h + n * 2, cx: r.cx, cy: r.cy,
+});
+
+/* The point on `r`'s perimeter facing (tx,ty), plus that side's outward
+   normal. Picks the side by comparing the direction's slope against the
+   rect's own aspect, so a wide rect prefers its long edges — then slides the
+   anchor ALONG that edge toward the target. Pinning every anchor to the edge
+   midpoint is what makes a tall panel reach out from far below a short
+   element; sliding keeps the link short and roughly perpendicular. */
+const ANCHOR_INSET = 12;
+function sideAnchor(r, tx, ty) {
+  const dx = tx - r.cx, dy = ty - r.cy;
+  const slide = (lo, hi, v) => {
+    const i = Math.min(ANCHOR_INSET, Math.max(0, (hi - lo) / 2 - 1));
+    return Math.max(lo + i, Math.min(hi - i, v));
+  };
+  if (Math.abs(dx) * r.h >= Math.abs(dy) * r.w) {
+    const y = slide(r.y, r.y + r.h, ty);
+    return dx >= 0
+      ? { x: r.x + r.w, y, nx: 1,  ny: 0 }
+      : { x: r.x,       y, nx: -1, ny: 0 };
+  }
+  const x = slide(r.x, r.x + r.w, tx);
+  return dy >= 0
+    ? { x, y: r.y + r.h, nx: 0, ny: 1 }
+    : { x, y: r.y,       nx: 0, ny: -1 };
+}
+
+/* Anchors for a link between two rects. Seeded from the centres, then
+   refined once against each other — a sliding anchor needs to know where the
+   far end actually landed, not just where its rect sits. */
+function linkAnchors(from, to) {
+  let a = sideAnchor(from, to.cx, to.cy);
+  const b = sideAnchor(to, a.x, a.y);
+  a = sideAnchor(from, b.x, b.y);
+  return { a, b };
+}
+
+/* How far a bezier handle should reach out of `a` on its way to `b`.
+   Measured along a's own normal, never as raw distance — using the total
+   distance makes the curve loop back on itself whenever the two rects are
+   far apart on the axis the anchor does NOT face. */
+function handle(a, b) {
+  const along = Math.abs((b.x - a.x) * a.nx + (b.y - a.y) * a.ny);
+  return Math.max(16, Math.min(90, along * 0.55));
+}
+
+/* Where a segment from `from` toward `to` leaves the viewport box, so an
+   off-screen link can still terminate somewhere honest. */
+function clampToBox(from, to, w, h, pad) {
+  const inside = to.x >= pad && to.x <= w - pad && to.y >= pad && to.y <= h - pad;
+  if (inside) return { x: to.x, y: to.y, clamped: false };
+  const dx = to.x - from.x, dy = to.y - from.y;
+  let t = 1;
+  if (dx > 0) t = Math.min(t, (w - pad - from.x) / dx);
+  if (dx < 0) t = Math.min(t, (pad - from.x) / dx);
+  if (dy > 0) t = Math.min(t, (h - pad - from.y) / dy);
+  if (dy < 0) t = Math.min(t, (pad - from.y) / dy);
+  t = Math.max(0, Math.min(1, t));
+  return { x: from.x + dx * t, y: from.y + dy * t, clamped: true };
+}
+
+/* fully outside the viewport? */
+const isGone = (r, w, h) => r.x + r.w < 4 || r.y + r.h < 4 || r.x > w - 4 || r.y > h - 4;
+
+const overlaps = (a, b) =>
+  a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+/* Does the segment p→q cut through `r`? Liang–Barsky, which is the compact
+   way to ask; used to keep a leader line off the element it describes. */
+function segHitsRect(p, q, r) {
+  const dx = q.x - p.x, dy = q.y - p.y;
+  let t0 = 0, t1 = 1;
+  const edges = [[-dx, p.x - r.x], [dx, r.x + r.w - p.x],
+                 [-dy, p.y - r.y], [dy, r.y + r.h - p.y]];
+  for (const [pp, qq] of edges) {
+    if (pp === 0) { if (qq < 0) return false; continue; }
+    const t = qq / pp;
+    if (pp < 0) { if (t > t1) return false; if (t > t0) t0 = t; }
+    else        { if (t < t0) return false; if (t < t1) t1 = t; }
+  }
+  return t0 <= t1;
+}
+
+/* sideAnchor weights by aspect, which is right for big rects and wrong for a
+   thin label: a 92×16 tag would offer its long bottom edge to a panel sitting
+   off to the right. For those, prefer the vertical edges whenever the target
+   is horizontally clear of the rect. */
+function edgeAnchor(r, tx, ty) {
+  if (tx > r.x + r.w) return { x: r.x + r.w, y: r.cy, nx: 1,  ny: 0 };
+  if (tx < r.x)       return { x: r.x,       y: r.cy, nx: -1, ny: 0 };
+  return ty >= r.cy
+    ? { x: r.cx, y: r.y + r.h, nx: 0, ny: 1 }
+    : { x: r.cx, y: r.y,       nx: 0, ny: -1 };
+}
+
+/* The four side anchors of a rect, in order. */
+const allSides = (r) => [
+  { x: r.x + r.w, y: r.cy, nx: 1,  ny: 0  },
+  { x: r.x,       y: r.cy, nx: -1, ny: 0  },
+  { x: r.cx, y: r.y + r.h, nx: 0,  ny: 1  },
+  { x: r.cx, y: r.y,       nx: 0,  ny: -1 },
+];
+
+/* ---------- tiny DOM helpers ---------- */
+function svg(tag, attrs) {
+  const n = document.createElementNS(SVGNS, tag);
+  for (const k in attrs) n.setAttribute(k, attrs[k]);
+  return n;
+}
+function div(cls, style) {
+  const n = document.createElement("div");
+  n.className = cls;
+  if (style) Object.assign(n.style, style);
+  return n;
+}
+const px = (v) => Math.round(v) + "px";
+
+/* ============================================================
+   THE VIGNETTE
+   ============================================================ */
+function buildViewport(vpEl, proto) {
+  const state = {
+    proto,
+    vals: { ...DEFAULTS },
+    loud: false,
+    loudTimer: 0,
+    off: false,
+    panel: { top: 0, left: 0, placed: false },
+  };
+
+  vpEl.innerHTML = `
+    <div class="viewport-bar">
+      <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+      <span class="viewport-url">https://skills.example.dev/catalog</span>
+      <span class="bar-sp"></span>
+      <button class="offbtn" data-off-btn aria-pressed="false">off-screen</button>
+      <span class="dots" data-slot="dots"></span>
+    </div>
+    <div class="vp" data-off="0">
+      <div class="as-dom as-lift" data-lift></div>
+      <div class="page">
+        <h3>Skill catalog</h3>
+        <p class="pg-sub">Twelve installed · 3 updated this week</p>
+        <div class="cards">
+          <div class="skill-card ghost" data-card>
+            <span class="sc-name">Redline</span>
+            <span class="sc-desc">Measure the distance between any two elements, in px or rem.</span>
+            <span class="sc-row"><span class="sc-btn">Installed</span><span class="sc-meta">v2.1</span></span>
+          </div>
+        </div>
+        <p class="pg-note">The card above is the selected element. Its border, corners,
+          fill and shadow are all under edit — nothing may cover them.</p>
+      </div>
+      <svg class="as-svg" data-svg></svg>
+      <div class="as-dom" data-dom></div>
+      <div class="ep" data-ep>
+        <div class="ep-head" data-head></div>
+        <div class="ep-body" data-body></div>
+      </div>
+    </div>`;
+
+  const vp    = vpEl.querySelector(".vp");
+  const card  = vpEl.querySelector("[data-card]");
+  const ep    = vpEl.querySelector("[data-ep]");
+  const head  = vpEl.querySelector("[data-head]");
+  const body  = vpEl.querySelector("[data-body]");
+  const layer = vpEl.querySelector("[data-svg]");
+  const dom   = vpEl.querySelector("[data-dom]");
+  const lift  = vpEl.querySelector("[data-lift]");
+
+  Object.assign(state, { vpEl, vp, card, ep, head, body, layer, dom, lift });
+
+  buildHead(state);
+  buildBody(state);
+  buildThemeDots(vpEl);
+
+  /* ---- off-screen toggle ---- */
+  const offBtn = vpEl.querySelector("[data-off-btn]");
+  offBtn.addEventListener("click", () => {
+    state.off = !state.off;
+    vp.dataset.off = state.off ? "1" : "0";
+    offBtn.setAttribute("aria-pressed", String(state.off));
+    /* the page glides, so keep redrawing until it settles */
+    const until = performance.now() + 340;
+    (function chase(t) {
+      draw(state);
+      if (t < until) requestAnimationFrame(chase);
+    })(performance.now());
+  });
+
+  /* ---- panel drag ---- */
+  head.addEventListener("pointerdown", (e) => {
+    if (e.target.closest("button")) return;
+    head.setPointerCapture(e.pointerId);
+    const start = { x: e.clientX, y: e.clientY, t: state.panel.top, l: state.panel.left };
+    const move = (ev) => {
+      const w = vp.clientWidth, h = vp.clientHeight;
+      state.panel.left = Math.max(4, Math.min(w - ep.offsetWidth - 4,  start.l + ev.clientX - start.x));
+      state.panel.top  = Math.max(4, Math.min(h - ep.offsetHeight - 4, start.t + ev.clientY - start.y));
+      placePanel(state);
+      draw(state);
+    };
+    const up = () => {
+      head.removeEventListener("pointermove", move);
+      head.removeEventListener("pointerup", up);
+    };
+    head.addEventListener("pointermove", move);
+    head.addEventListener("pointerup", up);
+  });
+
+  paint(state);
+  /* first layout pass needs the panel measured, so place after paint */
+  requestAnimationFrame(() => { placePanel(state); draw(state); });
+
+  return state;
+}
+
+/* The panel opens where the toolbar would have been — anchored below the
+   element, clamped into the viewport. That mirrors placeEditPanel()'s use of
+   computeChromeLayout(); after a drag the position is user-owned. */
+function placePanel(state) {
+  const { vp, card, ep, panel } = state;
+  const w = vp.clientWidth, h = vp.clientHeight;
+  if (!panel.placed) {
+    const r = rectIn(card, vp);
+    panel.left = Math.max(4, Math.min(w - ep.offsetWidth - 4, r.x + r.w + 28));
+    panel.top  = Math.max(4, Math.min(h - ep.offsetHeight - 4, r.y - 4));
+    panel.placed = true;
+  }
+  ep.style.left = px(panel.left);
+  ep.style.top  = px(panel.top);
+}
+
+/* ---------- panel header ---------- */
+function buildHead(state) {
+  const { head, proto } = state;
+  head.innerHTML = "";
+  head.appendChild(Object.assign(document.createElement("button"),
+    { className: "ep-back", textContent: "‹", type: "button" }));
+
+  if (proto === 11) {
+    const m = div("ep-mirror");
+    m.dataset.mirror = "1";
+    head.appendChild(m);
+  }
+  if (proto === 10) {
+    const t = div("ep-tag");
+    t.textContent = "◆ A";
+    head.appendChild(t);
+  }
+
+  const id = div("ep-id");
+  id.innerHTML = 'div<b>.skill-card</b>';
+  head.appendChild(id);
+}
+
+/* ---------- panel controls ---------- */
+function buildBody(state) {
+  const { body } = state;
+  body.innerHTML = "";
+  let lastGroup = null, sec = null;
+
+  for (const c of LINES) {
+    if (c.g !== lastGroup) {
+      sec = div("g-sec");
+      const leg = div("g-leg");
+      leg.textContent = GLABEL[c.g];
+      sec.appendChild(leg);
+      body.appendChild(sec);
+      lastGroup = c.g;
+    }
+    sec.appendChild(buildField(state, c));
+  }
+}
+
+function buildField(state, c) {
+  const row = div("fld");
+  const lab = div("f-lab");
+  lab.textContent = c.lab;
+  row.appendChild(lab);
+
+  /* LOUD TRIGGER 1 — pointer enters a control row */
+  row.addEventListener("pointerenter", () => setLoud(state, true));
+  row.addEventListener("pointerleave", () => { if (!state.scrubbing) setLoud(state, false); });
+
+  if (c.type === "color") {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "sw";
+    b.style.background = state.vals[c.key];
+    b.dataset.swatch = c.key;
+    b.addEventListener("click", () => {
+      const i = c.pal.indexOf(state.vals[c.key]);
+      state.vals[c.key] = c.pal[(i + 1) % c.pal.length];
+      b.style.background = state.vals[c.key];
+      paint(state);
+      bump(state);              /* LOUD TRIGGER 3 — a value landed */
+    });
+    row.appendChild(b);
+    return row;
+  }
+
+  const chip = document.createElement("span");
+  chip.className = "val";
+  chip.tabIndex = 0;
+  chip.dataset.val = c.key;
+  chip.innerHTML = `<b>${state.vals[c.key]}</b><i>${c.unit}</i>`;
+
+  /* LOUD TRIGGER 2 — the control is being scrubbed (or focused) */
+  chip.addEventListener("focus", () => setLoud(state, true));
+  chip.addEventListener("blur",  () => setLoud(state, false));
+
+  chip.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    chip.setPointerCapture(e.pointerId);
+    state.scrubbing = true;
+    setLoud(state, true);
+    const startX = e.clientX, startV = state.vals[c.key];
+    let moved = false;
+    const move = (ev) => {
+      moved = true;
+      const raw = startV + Math.round((ev.clientX - startX) / 3) * c.step;
+      const v = Math.max(c.min, Math.min(c.max, raw));
+      if (v === state.vals[c.key]) return;
+      state.vals[c.key] = v;
+      chip.querySelector("b").textContent = v;
+      paint(state);
+      draw(state);
+    };
+    const up = () => {
+      chip.removeEventListener("pointermove", move);
+      chip.removeEventListener("pointerup", up);
+      state.scrubbing = false;
+      if (moved) bump(state);   /* the gesture commits — one bump, not one per frame */
+      else setLoud(state, false);
+    };
+    chip.addEventListener("pointermove", move);
+    chip.addEventListener("pointerup", up);
+  });
+
+  row.appendChild(chip);
+  return row;
+}
+
+/* ---------- the quiet ⇄ loud state ---------- */
+function setLoud(state, on) {
+  if (state.loud === on) return;
+  state.loud = on;
+  state.vp.classList.toggle("loud", on);
+  draw(state);
+}
+
+/* A value landed: go loud for a beat, then settle back. Proto 05 has no
+   resting state at all, so this is also what fires its pulse. */
+function bump(state) {
+  clearTimeout(state.loudTimer);
+  setLoud(state, true);
+  if (state.proto === 5) firePulse(state);
+  state.loudTimer = setTimeout(() => {
+    if (!state.scrubbing && !state.vp.querySelector(".fld:hover")) setLoud(state, false);
+  }, 900);
+}
+
+/* ---------- write the element's real styles ---------- */
+function paint(state) {
+  const v = state.vals, c = state.card;
+  c.style.borderWidth  = v.borderW + "px";
+  c.style.borderStyle  = "solid";
+  c.style.borderColor  = v.borderC;
+  c.style.borderRadius = v.radius + "px";
+  c.style.padding      = v.pad + "px";
+  c.style.background   = v.bg;
+  c.style.color        = v.bg === "#2b2e33" ? "#f4efe6" : "#1f1e1b";
+  c.style.boxShadow    = `0 4px ${v.shadowB}px rgba(0,0,0,${(v.shadowA / 100).toFixed(3)})`;
+  draw(state);
+}
+
+/* ============================================================
+   THE TWELVE RENDERERS
+   Each gets the same context and owns the association layers.
+   ============================================================ */
+function draw(state) {
+  const { vp, card, ep, layer, dom, lift } = state;
+  const w = vp.clientWidth, h = vp.clientHeight;
+  if (!w || !h) return;
+
+  layer.setAttribute("viewBox", `0 0 ${w} ${h}`);
+  layer.innerHTML = "";
+  dom.innerHTML = "";
+  lift.innerHTML = "";
+
+  const r = rectIn(card, vp);      /* the element, exactly */
+  const g = inflate(r, GAP);       /* the working boundary — nothing inside this */
+  const p = rectIn(ep, vp);
+  const gone = isGone(r, w, h);
+
+  const ctx = { state, vp, card, ep, layer, dom, lift, w, h, r, g, p, gone,
+                loud: state.loud, vals: state.vals };
+
+  (RENDER[state.proto] || (() => {}))(ctx);
+}
+
+const RENDER = {};
+
+/* 01 · Wire — one bezier, terminal dot in the gap, arrow when clamped */
+RENDER[1] = (c) => {
+  const { a, b } = linkAnchors(c.p, c.g);
+  const end = clampToBox(a, b, c.w, c.h, 12);
+  const ka = handle(a, end);
+  const kb = handle(b, a);
+
+  /* once clamped there is no far anchor to leave along, so the second handle
+     collapses onto the endpoint and the curve straightens into the exit */
+  const d = `M ${a.x} ${a.y} C ${a.x + a.nx * ka} ${a.y + a.ny * ka}, ` +
+            (end.clamped ? `${end.x} ${end.y}, ` : `${b.x + b.nx * kb} ${b.y + b.ny * kb}, `) +
+            `${end.x} ${end.y}`;
+  c.layer.appendChild(svg("path", { class: "as-line", d }));
+
+  if (end.clamped) {
+    /* an arrowhead aimed the way the element went */
+    const ang = Math.atan2(end.y - a.y, end.x - a.x) + Math.PI;
+    const s = c.loud ? 10 : 8, spread = 0.42;
+    const p1 = { x: end.x + Math.cos(ang + spread) * s, y: end.y + Math.sin(ang + spread) * s };
+    const p2 = { x: end.x + Math.cos(ang - spread) * s, y: end.y + Math.sin(ang - spread) * s };
+    c.layer.appendChild(svg("polygon", {
+      class: "as-fill", points: `${end.x},${end.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`,
+    }));
+  } else {
+    c.layer.appendChild(svg("circle", { class: "as-fill", cx: end.x, cy: end.y, r: c.loud ? 4.5 : 3 }));
+  }
+};
+
+/* 02 · Elbow tether — Manhattan routing, redline's dashed vocabulary */
+RENDER[2] = (c) => {
+  if (c.gone) return;                       /* this one hides rather than guesses */
+  const { a, b } = linkAnchors(c.p, c.g);
+
+  /* leave each end along its own normal, then turn once */
+  const mid = a.nx !== 0 ? { x: b.x, y: a.y } : { x: a.x, y: b.y };
+  const d = `M ${a.x} ${a.y} L ${mid.x} ${mid.y} L ${b.x} ${b.y}`;
+  c.layer.appendChild(svg("path", { class: "as-line as-dash", d }));
+
+  /* a small square terminal, sitting in the gap */
+  const s = c.loud ? 5 : 3.5;
+  c.layer.appendChild(svg("rect", {
+    class: "as-fill", x: b.x - s / 2, y: b.y - s / 2, width: s, height: s,
+  }));
+};
+
+/* 03 · Leader and caption — the line stops at a name, not at the element */
+RENDER[3] = (c) => {
+  const cap = div("as-cap");
+  cap.textContent = "div.skill-card";
+  c.dom.appendChild(cap);
+
+  /* Park the caption on the side of the element that FACES the panel. Putting
+     it anywhere else means the leader has to cross the element to reach it —
+     which is the one thing this whole family exists to avoid. */
+  const cw = 92, ch = 16;
+  let cx, cy, pinned = false;
+  if (c.gone) {
+    pinned = true;
+    cx = Math.max(6, Math.min(c.w - cw - 6, c.r.cx));
+    cy = Math.max(6, Math.min(c.h - ch - 6, c.r.cy));
+  } else {
+    /* Candidate berths in the gap, best first: beside the element on the side
+       facing the panel, then above, then below. The first that clears both the
+       element and the panel wins. */
+    const s = sideAnchor(c.g, c.p.cx, c.p.cy);
+    const beside = {
+      x: s.nx !== 0 ? (s.nx > 0 ? s.x + 6 : s.x - cw - 6) : c.g.cx - cw / 2,
+      y: s.ny !== 0 ? (s.ny > 0 ? s.y + 6 : s.y - ch - 6) : s.y - ch / 2,
+    };
+    const berths = [
+      beside,
+      { x: c.g.x, y: c.g.y - ch - 6 },
+      { x: c.g.x, y: c.g.y + c.g.h + 6 },
+    ];
+    let best = null;
+    for (const t of berths) {
+      const b = { x: Math.max(6, Math.min(c.w - cw - 6, t.x)),
+                  y: Math.max(6, Math.min(c.h - ch - 6, t.y)), w: cw, h: ch };
+      if (overlaps(b, c.g) || overlaps(b, c.p)) continue;
+      best = b; break;
+    }
+    if (!best) best = { x: Math.max(6, c.g.x), y: Math.max(6, c.g.y - ch - 6), w: cw, h: ch };
+    cx = best.x; cy = best.y;
+  }
+  cap.style.left = px(cx);
+  cap.style.top  = px(cy);
+
+  if (pinned) return;                        /* identity survives, geometry doesn't */
+
+  const capRect = { x: cx, y: cy, w: cw, h: ch, cx: cx + cw / 2, cy: cy + ch / 2 };
+  const b = edgeAnchor(capRect, c.p.cx, c.p.cy);
+
+  /* Leave the panel by whichever side gets to the caption without cutting
+     across the element. Shortest clean route wins; if every side crosses,
+     the leader is dropped and the caption stands alone — better no line than
+     a line through the thing it is describing. */
+  let a = null, bestLen = Infinity;
+  for (const cand of allSides(c.p)) {
+    if (segHitsRect(cand, b, c.g)) continue;
+    const len = Math.hypot(b.x - cand.x, b.y - cand.y);
+    if (len < bestLen) { bestLen = len; a = cand; }
+  }
+  if (!a) return;
+
+  const ka = handle(a, b), kb = handle(b, a);
+  c.layer.appendChild(svg("path", {
+    class: "as-line",
+    d: `M ${a.x} ${a.y} C ${a.x + a.nx * ka} ${a.y + a.ny * ka}, ${b.x + b.nx * kb} ${b.y + b.ny * kb}, ${b.x} ${b.y}`,
+  }));
+};
+
+/* 04 · Gnomon — a wedge on the panel's border, aimed at the element */
+RENDER[4] = (c) => {
+  const a = sideAnchor(c.p, c.r.cx, c.r.cy);
+  const ang = Math.atan2(c.r.cy - a.y, c.r.cx - a.x);
+  const len  = c.loud ? 22 : 13;
+  const half = c.loud ? 4.5 : 5.5;          /* louder is longer AND sharper */
+
+  const tip  = { x: a.x + Math.cos(ang) * len, y: a.y + Math.sin(ang) * len };
+  const perp = ang + Math.PI / 2;
+  const p1 = { x: a.x + Math.cos(perp) * half, y: a.y + Math.sin(perp) * half };
+  const p2 = { x: a.x - Math.cos(perp) * half, y: a.y - Math.sin(perp) * half };
+
+  c.layer.appendChild(svg("polygon", {
+    class: "as-fill",
+    points: `${tip.x},${tip.y} ${p1.x},${p1.y} ${p2.x},${p2.y}`,
+  }));
+};
+
+/* 05 · Traveling pulse — nothing at rest; motion only, on commit */
+RENDER[5] = () => { /* deliberately empty: the resting state is empty page */ };
+
+function firePulse(state) {
+  const { vp, card, ep, layer } = state;
+  const w = vp.clientWidth, h = vp.clientHeight;
+  const r = rectIn(card, vp), g = inflate(r, GAP), p = rectIn(ep, vp);
+  if (isGone(r, w, h)) return;               /* nowhere to send it */
+
+  const { a, b } = linkAnchors(p, g);
+  const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (still) {
+    /* Motion goes, information stays: hold the chord and both ends briefly,
+       the way #ccp-edit-flash keeps opacity 1 instead of vanishing. */
+    const chord = svg("path", { class: "as-line", d: `M ${a.x} ${a.y} L ${b.x} ${b.y}`, opacity: 1 });
+    const dot = svg("circle", { class: "as-fill", cx: b.x, cy: b.y, r: 4, opacity: 1 });
+    layer.append(chord, dot);
+    setTimeout(() => { chord.remove(); dot.remove(); }, 900);
+    return;
+  }
+
+  const ka = handle(a, b), kb = handle(b, a);
+  const P0 = a, P3 = b;
+  const P1 = { x: a.x + a.nx * ka, y: a.y + a.ny * ka };
+  const P2 = { x: b.x + b.nx * kb, y: b.y + b.ny * kb };
+  const at = (t) => {
+    const u = 1 - t;
+    return {
+      x: u*u*u*P0.x + 3*u*u*t*P1.x + 3*u*t*t*P2.x + t*t*t*P3.x,
+      y: u*u*u*P0.y + 3*u*u*t*P1.y + 3*u*t*t*P2.y + t*t*t*P3.y,
+    };
+  };
+
+  const dot = svg("circle", { class: "as-pulse", r: 3.5, cx: P0.x, cy: P0.y });
+  layer.appendChild(dot);
+
+  const DUR = 420, t0 = performance.now();
+  (function step(now) {
+    const t = Math.min(1, (now - t0) / DUR);
+    const e = 1 - Math.pow(1 - t, 3);        /* ease-out: arrives decisively */
+    const pt = at(e);
+    dot.setAttribute("cx", pt.x);
+    dot.setAttribute("cy", pt.y);
+    dot.setAttribute("opacity", String(0.35 + e * 0.65));
+    if (t < 1) return requestAnimationFrame(step);
+    dot.remove();
+
+    /* land: one ripple in the gap, never touching the element */
+    const rip = svg("circle", { class: "as-ripple", cx: P3.x, cy: P3.y, r: 3 });
+    layer.appendChild(rip);
+    const t1 = performance.now();
+    (function grow(n) {
+      const u = Math.min(1, (n - t1) / 380);
+      rip.setAttribute("r", String(3 + u * 13));
+      rip.setAttribute("opacity", String(1 - u));
+      if (u < 1) requestAnimationFrame(grow); else rip.remove();
+    })(t1);
+  })(t0);
+}
+
+/* 06 · Corner brackets — square on purpose, so they never echo the radius */
+RENDER[6] = (c) => {
+  const arm = c.loud ? 18 : 12;
+  const t = 2;
+  const corners = [
+    [c.g.x,            c.g.y,            1,  1],
+    [c.g.x + c.g.w,    c.g.y,           -1,  1],
+    [c.g.x,            c.g.y + c.g.h,    1, -1],
+    [c.g.x + c.g.w,    c.g.y + c.g.h,   -1, -1],
+  ];
+  for (const [x, y, sx, sy] of corners) {
+    const hb = div("as-bar", {
+      left: px(sx > 0 ? x : x - arm), top: px(sy > 0 ? y : y - t),
+      width: px(arm), height: px(t),
+    });
+    const vb = div("as-bar", {
+      left: px(sx > 0 ? x : x - t), top: px(sy > 0 ? y : y - arm),
+      width: px(t), height: px(arm),
+    });
+    c.dom.append(hb, vb);
+  }
+};
+
+/* 07 · Edge ticks — midpoints only, as far from the corners as possible */
+RENDER[7] = (c) => {
+  const len = c.loud ? 26 : 16, t = 2;
+  const marks = [
+    { left: c.g.cx - len / 2, top: c.g.y - t / 2,           w: len, h: t },
+    { left: c.g.cx - len / 2, top: c.g.y + c.g.h - t / 2,   w: len, h: t },
+    { left: c.g.x - t / 2,    top: c.g.cy - len / 2,        w: t,   h: len },
+    { left: c.g.x + c.g.w - t / 2, top: c.g.cy - len / 2,   w: t,   h: len },
+  ];
+  for (const m of marks) {
+    c.dom.appendChild(div("as-bar", {
+      left: px(m.left), top: px(m.top), width: px(m.w), height: px(m.h),
+    }));
+  }
+};
+
+/* 08 · Breathing offset ring — the control. Constant radius, never the
+   element's, so the two can never be confused for one another. */
+RENDER[8] = (c) => {
+  c.dom.appendChild(div("as-ring", {
+    left: px(c.g.x), top: px(c.g.y),
+    width: px(c.g.w), height: px(c.g.h),
+  }));
+};
+
+/* 09 · Gutter rails — projection onto the viewport margins.
+
+   The gutter is a strip we reserve but do not own: an element flush to the
+   viewport edge slides straight under it. Rather than surrender the rail, each
+   band moves to the opposite margin — the projection is just as readable from
+   the right as from the left, and relocating keeps the information that
+   yielding would have thrown away. (Yielding is the house move when there is
+   nowhere else to go — see updateSettingsButtonVisibility, content.js:449.) */
+RENDER[9] = (c) => {
+  const GUT = 5, THICK = 3, BAND = GUT * 2 + THICK;
+  const onScreenV = c.r.y + c.r.h > 0 && c.r.y < c.h;
+  const onScreenH = c.r.x + c.r.w > 0 && c.r.x < c.w;
+
+  const y0 = Math.max(0, Math.min(c.h, c.r.y)), y1 = Math.max(0, Math.min(c.h, c.r.y + c.r.h));
+  const x0 = Math.max(0, Math.min(c.w, c.r.x)), x1 = Math.max(0, Math.min(c.w, c.r.x + c.r.w));
+
+  /* vertical rail: left margin unless the element is sitting in it */
+  if (onScreenV) {
+    const right = c.r.x < BAND;
+    c.dom.appendChild(div("as-gutter", {
+      left: right ? px(c.w - BAND) : 0, top: 0, width: px(BAND), height: "100%",
+    }));
+    c.dom.appendChild(div("as-rail", {
+      left: px(right ? c.w - GUT - THICK : GUT), top: px(y0),
+      width: px(THICK), height: px(Math.max(2, y1 - y0)),
+    }));
+  }
+  /* horizontal rail: top margin unless the element is sitting in it */
+  if (onScreenH) {
+    const bottom = c.r.y < BAND;
+    c.dom.appendChild(div("as-gutter", {
+      left: 0, top: bottom ? px(c.h - BAND) : 0, width: "100%", height: px(BAND),
+    }));
+    c.dom.appendChild(div("as-rail", {
+      left: px(x0), top: px(bottom ? c.h - GUT - THICK : GUT),
+      width: px(Math.max(2, x1 - x0)), height: px(THICK),
+    }));
+  }
+};
+
+/* 10 · Shared tag — one chip in the gap above the corner, matching the panel's */
+RENDER[10] = (c) => {
+  if (c.gone) return;                        /* the panel chip is left alone */
+  const tag = div("as-tag");
+  tag.textContent = "◆ A";
+  c.dom.appendChild(tag);
+  /* above the top-left corner, flipping under when there is no room */
+  const above = c.g.y - 18;
+  tag.style.left = px(Math.max(4, c.g.x));
+  tag.style.top  = px(above >= 4 ? above : c.g.y + c.g.h + 4);
+};
+
+/* 11 · Live mirror — the page is never touched; the panel shows the element */
+RENDER[11] = (c) => {
+  const frame = c.ep.querySelector("[data-mirror]");
+  if (!frame) return;
+  frame.innerHTML = "";
+  const clone = c.card.cloneNode(true);
+  const k = Math.min((frame.clientWidth - 4) / Math.max(1, c.r.w),
+                     (frame.clientHeight - 4) / Math.max(1, c.r.h));
+  Object.assign(clone.style, {
+    transform: `scale(${k})`, margin: "0", left: "2px", top: "2px",
+    width: c.r.w + "px", height: c.r.h + "px",
+  });
+  frame.appendChild(clone);
+};
+
+/* 12 · Lift — a caster behind the element throws an accent glow into the gap */
+RENDER[12] = (c) => {
+  c.lift.appendChild(div("as-caster", {
+    left: px(c.r.x), top: px(c.r.y), width: px(c.r.w), height: px(c.r.h),
+    borderRadius: c.vals.radius + "px",
+  }));
+};
+
+/* ============================================================
+   THEME SWITCHER — every viewport carries its own
+   ============================================================ */
+function buildThemeDots(vpEl) {
+  const slot = vpEl.querySelector('[data-slot="dots"]');
+  for (const [name, bg, accent] of THEMES) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "tdot";
+    b.title = name;
+    b.style.background = `linear-gradient(135deg, ${bg} 50%, ${accent} 50%)`;
+    b.addEventListener("click", () => {
+      vpEl.dataset.ccpTheme = name;
+      const st = STATES.get(vpEl);
+      if (st) draw(st);
+    });
+    slot.appendChild(b);
+  }
+}
+
+/* ============================================================
+   BOOT
+   ============================================================ */
+const STATES = new Map();
+
+for (const vpEl of document.querySelectorAll(".viewport[data-proto]")) {
+  STATES.set(vpEl, buildViewport(vpEl, Number(vpEl.dataset.proto)));
+}
+
+/* The extension has no ResizeObserver — position tracking there is scroll +
+   resize + rAF-throttled mousemove only. The gallery mirrors that honestly:
+   it redraws on resize and on every value commit, never on a silent reflow. */
+addEventListener("resize", () => {
+  for (const st of STATES.values()) { placePanel(st); draw(st); }
+});
+
+/* Fonts landing can change the card's height after first paint. */
+if (document.fonts && document.fonts.ready) {
+  document.fonts.ready.then(() => {
+    for (const st of STATES.values()) { placePanel(st); draw(st); }
+  });
+}
+</script>

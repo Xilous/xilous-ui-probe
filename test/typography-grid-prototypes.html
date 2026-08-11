@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Probe — Typography grid, round two</title>
+<!--
+  Round two. Option 07 from typography-prototypes.html won: the 3×2 mini-grid,
+  labels above cells, three normal rows for the whole group. Two questions
+  survived it:
+
+  1. The text field truncates — where does a long text get edited? Every
+     variation here carries the truncated field plus a ⤢ that opens an editor
+     beside the panel (the colour picker's own move). V3 and V8 show it open.
+
+  2. 74px cells leave no room for the token steppers. When the size sits on
+     text-lg and the leading on leading-6 — which is most real pages — where
+     do the scales live? Eight answers below, from quietest to most committed.
+
+  The mock state everywhere: an <h2> whose words are "Craft, taste, and the
+  long way around" (truncated in the field), 18px Inter 600 with 24px leading —
+  size on text-lg, leading on leading-6, weight and tracking off any scale —
+  left-aligned, accent-coloured, colour edited (dirty). Click what looks
+  clickable: V3/V8's ⤢, V5's cells, V6's px⇄tok, V7's underlined cells.
+-->
+<style>
+/* ============================================================
+   GALLERY SHELL — same quiet frame as round one.
+   ============================================================ */
+:root {
+  --g-ground:  #f7f6f2;
+  --g-raised:  #ffffff;
+  --g-ink:     #17160f;
+  --g-dim:     #56534a;
+  --g-muted:   #8d8a80;
+  --g-rule:    #e0ddd3;
+  --g-rule-hi: #cbc7ba;
+  --g-accent:  #b8542f;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --step-0: 0.8125rem; --step-1: 0.9375rem; --step-2: 1.25rem; --step-3: 1.75rem; --step-4: 2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-ground:#131210; --g-raised:#1b1a17; --g-ink:#ece9e1; --g-dim:#a5a196;
+    --g-muted:#7d7a71; --g-rule:#2a2824; --g-rule-hi:#3d3a34; --g-accent:#e08b68;
+  }
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin:0; background:var(--g-ground); color:var(--g-ink); font-family:var(--sans); font-size:var(--step-1); line-height:1.6; -webkit-font-smoothing:antialiased; }
+.wrap { max-width:1180px; margin:0 auto; padding:0 clamp(1rem,4vw,3rem); }
+.topbar { position:sticky; top:0; z-index:50; background:color-mix(in srgb, var(--g-ground) 88%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--g-rule); }
+.topbar-in { display:flex; align-items:center; gap:1.5rem; padding:0.75rem 0; flex-wrap:wrap; }
+.topbar-title { font-family:var(--mono); font-size:var(--step-0); text-transform:uppercase; letter-spacing:0.1em; color:var(--g-dim); margin:0; white-space:nowrap; }
+.jump { display:flex; gap:0.25rem; margin-left:auto; flex-wrap:wrap; }
+.jump a { font-family:var(--mono); font-size:0.75rem; text-decoration:none; color:var(--g-dim); border:1px solid var(--g-rule); border-radius:6px; width:2rem; height:2rem; display:grid; place-items:center; transition:background .15s,color .15s,border-color .15s; }
+.jump a:hover, .jump a:focus-visible { background:var(--g-accent); border-color:var(--g-accent); color:var(--g-ground); outline:none; }
+.masthead { padding:clamp(2.5rem,7vw,5rem) 0 2rem; border-bottom:1px solid var(--g-rule); }
+.eyebrow { font-family:var(--mono); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.14em; color:var(--g-accent); margin:0 0 1rem; }
+h1 { font-family:var(--mono); font-weight:500; font-size:clamp(1.75rem,4.5vw,var(--step-4)); line-height:1.1; letter-spacing:-0.02em; margin:0 0 1.25rem; text-wrap:balance; }
+.lede { font-size:var(--step-2); line-height:1.5; color:var(--g-dim); max-width:62ch; margin:0; }
+.proto { padding:clamp(2.5rem,6vw,4.5rem) 0; border-bottom:1px solid var(--g-rule); scroll-margin-top:4.5rem; }
+.proto-head { display:grid; grid-template-columns:auto 1fr; gap:0 1.25rem; align-items:baseline; margin-bottom:1.75rem; }
+.proto-num { font-family:var(--mono); font-size:var(--step-3); font-weight:500; color:var(--g-rule-hi); line-height:1; font-variant-numeric:tabular-nums; }
+.proto-head h2 { font-family:var(--mono); font-weight:500; font-size:var(--step-2); margin:0; letter-spacing:-0.01em; line-height:1.25; }
+.thesis { grid-column:2; margin:0.5rem 0 0; color:var(--g-dim); max-width:68ch; }
+.viewport { position:relative; background:var(--page); border:1px solid var(--g-rule-hi); border-radius:10px; overflow:hidden; }
+.viewport-bar { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.75rem; background:color-mix(in srgb, var(--surface) 55%, var(--page)); border-bottom:1px solid var(--sep); }
+.dot { width:9px; height:9px; border-radius:50%; background:var(--faint); opacity:0.6; }
+.viewport-url { font-family:var(--mono); font-size:10px; color:var(--muted); margin-left:0.5rem; letter-spacing:0.02em; }
+.dots { display:flex; gap:4px; margin-left:auto; }
+.tdot { width:13px; height:13px; border-radius:4px; padding:0; cursor:pointer; border:1px solid rgba(127,127,127,.4); }
+.tdot:hover { transform:scale(1.15); }
+.stage { display:flex; gap:40px; align-items:flex-start; padding:26px 28px 30px; }
+.stage-note { font:11px/1.6 var(--mono); color:var(--muted); max-width:30ch; padding-top:8px; }
+.stage-note b { color:var(--page-ink); font-weight:600; }
+.stage-note .h { color:var(--accent); }
+.tradeoff { display:grid; grid-template-columns:max-content 1fr; gap:0.35rem 1rem; margin:1.5rem 0 0; font-size:var(--step-0); }
+.tradeoff dt { font-family:var(--mono); font-size:0.6875rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--g-muted); padding-top:0.2em; }
+.tradeoff dd { margin:0; color:var(--g-dim); }
+.tradeoff .win { color:var(--g-ink); }
+
+/* ============================================================
+   THEME TOKENS — the real seven.
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] { --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64; --sep:#3a3a35; --accent:#d97757; --on-accent:#1a0d07; --shadow-card:0 8px 24px -8px rgba(0,0,0,.55),0 2px 6px rgba(20,20,19,.4); --page:#1e1e1c; --page-ink:#c8c5bc; }
+[data-ccp-theme="terracotta-light"] { --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780; --sep:#ddd9cf; --accent:#c2603f; --on-accent:#fff8f4; --shadow-card:0 8px 24px -10px rgba(60,45,35,.28),0 1px 3px rgba(60,45,35,.14); --page:#ffffff; --page-ink:#3a3a35; }
+[data-ccp-theme="dracula"] { --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4; --sep:#44475a; --accent:#bd93f9; --on-accent:#1a1626; --shadow-card:0 8px 24px -8px rgba(0,0,0,.6),0 2px 6px rgba(20,20,30,.45); --page:#21222c; --page-ink:#cfd0e0; }
+[data-ccp-theme="monokai"] { --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e; --sep:#3e3d32; --accent:#f92672; --on-accent:#2a0512; --shadow-card:0 8px 24px -8px rgba(0,0,0,.6),0 2px 6px rgba(20,20,15,.45); --page:#1e1f1a; --page-ink:#d9d8cd; }
+[data-ccp-theme="nord"] { --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1; --sep:#3b4252; --accent:#88c0d0; --on-accent:#16202b; --shadow-card:0 8px 24px -8px rgba(0,0,0,.5),0 2px 6px rgba(20,25,35,.4); --page:#272c36; --page-ink:#d8dee9; }
+[data-ccp-theme="solarized-dark"] { --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75; --sep:#073642; --accent:#cb4b16; --on-accent:#1a0700; --shadow-card:0 8px 24px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,20,25,.45); --page:#01212b; --page-ink:#93a1a1; }
+[data-ccp-theme="tokyo-night"] { --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89; --sep:#292e42; --accent:#bb9af7; --on-accent:#16111f; --shadow-card:0 8px 24px -8px rgba(0,0,0,.6),0 2px 6px rgba(15,15,25,.45); --page:#16161e; --page-ink:#a9b1d6; }
+
+/* ============================================================
+   PANEL FRAGMENT + THE WINNING GRID, shared by all eight.
+   ============================================================ */
+.ep { width:248px; flex:none; background:var(--surface); color:var(--text); border:1px solid rgb(from var(--accent) r g b / 0.5); border-radius:12px; box-shadow:var(--shadow-card); font-family:var(--mono); font-size:10px; overflow:hidden; user-select:none; }
+.ep-head { display:flex; align-items:center; gap:6px; padding:6px 8px; border-bottom:1px solid var(--sep); cursor:grab; }
+.ep-back { width:20px; height:20px; flex:none; display:grid; place-items:center; border:1px solid var(--sep); border-radius:4px; color:var(--dim); font-size:11px; }
+.ep-id { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; font-size:10px; color:var(--dim); }
+.ep-id b { color:var(--accent); font-weight:700; }
+.ep-id i { color:#8bd0bd; font-style:normal; }
+.ep-act { width:20px; height:20px; flex:none; display:grid; place-items:center; border:1px solid var(--sep); border-radius:4px; color:var(--dim); font-size:10px; }
+.ep-body { padding:8px 12px 10px; }
+.legend { font-weight:500; font-size:9px; letter-spacing:0.13em; text-transform:uppercase; color:var(--muted); margin:0 0 6px; }
+.legendline { display:flex; align-items:center; justify-content:space-between; margin:0 0 6px; }
+.legendline .legend { margin:0; }
+.row { display:flex; align-items:center; gap:6px; padding:2px 0; }
+.rdot { width:9px; height:9px; flex:none; border-radius:50%; border:1px solid var(--sep); }
+.rdot.on { background:var(--accent); border-color:var(--accent); }
+.rlabel { flex:1; min-width:0; font-size:10px; color:var(--muted); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.chip { display:inline-flex; align-items:baseline; justify-content:center; gap:1px; flex:none; width:58px; padding:2px 4px; border:1px solid var(--sep); border-radius:4px; background:rgb(from var(--text) r g b / 0.06); font-weight:500; font-size:10px; color:var(--text); font-variant-numeric:tabular-nums; cursor:ew-resize; }
+.chip .u { font-size:8px; color:var(--faint); }
+.chip.wide { flex:1; min-width:0; width:auto; cursor:text; justify-content:flex-start; }
+.chip.wide span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.seg { display:inline-flex; flex:none; border:1px solid var(--sep); border-radius:4px; overflow:hidden; }
+.seg b { width:19px; height:16px; display:grid; place-items:center; font-weight:400; color:var(--muted); font-size:9px; }
+.seg b.on { background:rgb(from var(--accent) r g b / 0.2); color:var(--accent); }
+.swatch { width:14px; height:14px; flex:none; border-radius:4px; border:1px solid var(--sep); background:var(--accent); cursor:pointer; }
+.hex { font-size:10px; color:var(--text); font-variant-numeric:tabular-nums; }
+.stub { margin-top:8px; padding-top:6px; border-top:1px solid var(--sep); opacity:0.38; }
+.stub .row { padding:1px 0; }
+
+/* the ⤢ that opens the long-text editor */
+.expand { width:18px; height:18px; flex:none; display:grid; place-items:center; border:1px solid var(--sep); border-radius:4px; color:var(--dim); font-size:9px; cursor:pointer; background:transparent; padding:0; font-family:inherit; }
+.expand:hover { border-color:var(--accent); color:var(--accent); }
+
+/* the long-text editor popover — the colour picker's move, for words */
+.txped { position:absolute; left:292px; width:200px; background:var(--surface); border:1px solid rgb(from var(--accent) r g b / 0.5); border-radius:10px; box-shadow:var(--shadow-card); padding:8px 10px 10px; font-family:var(--mono); color:var(--text); display:none; }
+.txped.open { display:block; }
+.txped .legend { display:flex; justify-content:space-between; }
+.txped .legend button { all:unset; cursor:pointer; color:var(--dim); font-size:10px; }
+.txped textarea { width:100%; height:64px; resize:none; border:1px solid var(--sep); border-radius:4px; background:rgb(from var(--text) r g b / 0.06); color:var(--text); font:10px/1.5 var(--mono); padding:4px 5px; outline:none; }
+.txped textarea:focus { border-color:var(--accent); }
+.txped .cnt { font-size:8px; color:var(--faint); text-align:right; margin-top:3px; }
+
+/* the grid itself — 07 as it won */
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:5px 6px; margin-top:2px; }
+.cell { position:relative; }
+.cell k { display:block; font-size:7.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--faint); margin-bottom:2px; }
+.cell .chip { width:100%; }
+.cell .seg { width:100%; }
+.cell .seg b { flex:1; }
+.cwrap { display:flex; align-items:center; gap:4px; border:1px solid var(--sep); border-radius:4px; padding:2px 4px; background:rgb(from var(--text) r g b / 0.06); }
+.cwrap .swatch { width:11px; height:11px; }
+.cwrap .hex { font-size:9px; }
+.caption { font-size:8px; color:var(--faint); padding:3px 0 0 1px; min-height:13px; }
+.caption b { color:var(--accent); font-weight:500; }
+.caption s { color:var(--dim); text-decoration:none; }
+
+/* ===== V1 · corner tick, hover reveal ===== */
+.V1 .cell.tok .chip::after { content:""; position:absolute; top:-1px; right:-1px; width:5px; height:5px; border-radius:0 3px 0 3px; background:var(--accent); opacity:0.85; }
+.V1 .cell.tok:hover .chip { border-color:var(--accent); }
+
+/* ===== V2 · token-first cells ===== */
+.V2 .cell.tok .chip { gap:3px; cursor:pointer; }
+.V2 .cell.tok .chip b { font-weight:500; color:var(--accent); }
+.V2 .cell.tok .chip .st { font-size:8px; color:var(--faint); cursor:pointer; }
+.V2 .cell.tok .chip .st:hover { color:var(--accent); }
+
+/* ===== V3 · two-deck cells ===== */
+.V3 .deck { border:1px solid var(--sep); border-radius:4px; background:rgb(from var(--text) r g b / 0.06); padding:2px 4px 3px; cursor:ew-resize; }
+.V3 .deck .v { font-weight:500; font-size:10px; text-align:center; font-variant-numeric:tabular-nums; }
+.V3 .deck .v .u { font-size:8px; color:var(--faint); }
+.V3 .deck .t { display:flex; align-items:center; justify-content:center; gap:3px; font-size:7.5px; color:var(--accent); margin-top:1px; }
+.V3 .deck .t.off { color:var(--faint); }
+.V3 .deck .t .st { cursor:pointer; }
+.V3 .deck .t .st:hover { color:var(--text); }
+
+/* ===== V4 · shared scale row ===== */
+.V4 .scales { display:flex; align-items:center; gap:8px; margin-top:5px; padding:3px 5px; border:1px dashed rgb(from var(--accent) r g b / 0.45); border-radius:4px; }
+.V4 .scales .sc { display:flex; align-items:center; gap:3px; font-size:8.5px; }
+.V4 .scales .sc k2 { color:var(--faint); font-size:7.5px; text-transform:uppercase; letter-spacing:0.08em; }
+.V4 .scales .sc b { color:var(--accent); font-weight:500; }
+.V4 .scales .sc .st { color:var(--faint); cursor:pointer; font-size:9px; }
+.V4 .scales .sc .st:hover { color:var(--accent); }
+
+/* ===== V5 · focus blooms to a row ===== */
+.V5 .cell .chip { cursor:pointer; }
+.V5 .cell.lit .chip { border-color:var(--accent); background:rgb(from var(--accent) r g b / 0.12); }
+.V5 .bloom { display:none; margin-top:5px; padding:4px 5px; border:1px solid rgb(from var(--accent) r g b / 0.45); border-radius:4px; }
+.V5 .bloom.open { display:flex; align-items:center; gap:6px; }
+.V5 .bloom .tok { display:inline-flex; align-items:center; gap:3px; border:1px solid var(--sep); border-radius:4px; padding:1px 4px; font-size:8.5px; }
+.V5 .bloom .tok b { color:var(--accent); font-weight:500; }
+.V5 .bloom .tok .st { cursor:pointer; color:var(--faint); }
+.V5 .bloom .tok .st:hover { color:var(--accent); }
+
+/* ===== V6 · legend toggle px⇄tok ===== */
+.V6 .microseg { display:inline-flex; border:1px solid var(--sep); border-radius:3px; overflow:hidden; }
+.V6 .microseg button { all:unset; font-family:inherit; font-size:7.5px; letter-spacing:0.06em; padding:1px 5px; color:var(--muted); cursor:pointer; text-transform:uppercase; }
+.V6 .microseg button.on { background:rgb(from var(--accent) r g b / 0.2); color:var(--accent); }
+.V6 [data-view="tok"] .cell.tok .chip i2 { display:none; }
+.V6 [data-view="px"] .cell.tok .chip b2 { display:none; }
+.V6 .cell.tok .chip b2 { color:var(--accent); font-weight:500; font-style:normal; }
+.V6 .cell.tok .chip i2 { font-style:normal; }
+.V6 .cell:not(.tok) .chip { opacity:0.92; }
+.V6 [data-view="tok"] .cell:not(.tok) .chip { opacity:0.45; }
+
+/* ===== V7 · rung popover ===== */
+.V7 .cell.tok .chip { cursor:pointer; border-bottom:1px solid var(--accent); border-radius:4px 4px 3px 3px; }
+.V7 .rungs { position:absolute; z-index:5; top:34px; left:0; min-width:92px; background:var(--surface); border:1px solid rgb(from var(--accent) r g b / 0.5); border-radius:6px; box-shadow:var(--shadow-card); padding:3px; display:none; }
+.V7 .rungs.open { display:block; }
+.V7 .rungs .r { display:flex; justify-content:space-between; gap:8px; padding:2px 5px; border-radius:3px; font-size:8.5px; cursor:pointer; }
+.V7 .rungs .r:hover { background:rgb(from var(--text) r g b / 0.08); }
+.V7 .rungs .r.on { background:rgb(from var(--accent) r g b / 0.18); }
+.V7 .rungs .r b { color:var(--accent); font-weight:500; }
+.V7 .rungs .r s { color:var(--faint); text-decoration:none; font-variant-numeric:tabular-nums; }
+
+/* ===== V8 · the synthesis ===== */
+.V8 .cell.tok .chip::after { content:""; position:absolute; top:-1px; right:-1px; width:5px; height:5px; border-radius:0 3px 0 3px; background:var(--accent); opacity:0.85; }
+.V8 .cell.tok .chip { cursor:pointer; }
+.V8 .cell.lit .chip { border-color:var(--accent); background:rgb(from var(--accent) r g b / 0.12); }
+</style>
+</head>
+<body>
+
+<nav class="topbar"><div class="wrap topbar-in">
+  <p class="topbar-title">CCP · typography grid · round two</p>
+  <div class="jump">
+    <a href="#v1">1</a><a href="#v2">2</a><a href="#v3">3</a><a href="#v4">4</a>
+    <a href="#v5">5</a><a href="#v6">6</a><a href="#v7">7</a><a href="#v8">8</a>
+  </div>
+</div></nav>
+
+<header class="masthead wrap">
+  <p class="eyebrow">Round two · refining 07</p>
+  <h1>The mini-grid meets design tokens and long text</h1>
+  <p class="lede">The 3×2 grid won round one, then met the two things the panel
+    is actually good at: naming the token a value sits on, and now holding the
+    element's words. Mock state throughout: size on <code>text-lg</code>,
+    leading on <code>leading-6</code>, weight and tracking off-scale, and a
+    text too long for its field. Eight ways to say all of that in three rows.</p>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ V1 ============ -->
+  <section class="proto" id="v1">
+    <div class="proto-head">
+      <span class="proto-num">01</span>
+      <h2>Corner tick, caption on approach</h2>
+      <p class="thesis">Quietest possible claim: a cell whose value sits on a scale
+        wears a 5px accent tick in its corner. Pointing at it names the token in
+        the caption line and arms ‹ › stepping on the scroll wheel and arrow keys.
+        Nothing widens, ever.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep V1">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+            <div class="grid3">
+              <span class="cell tok"><k>size</k><span class="chip">18<span class="u">px</span></span></span>
+              <span class="cell"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell tok"><k>leading</k><span class="chip">24<span class="u">px</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#d97757</span></span></span>
+            </div>
+            <p class="caption"><b>size · text-lg</b> <s>— ‹ › steps the scale</s></p>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip" style="flex:none;width:58px">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">The tick is the whole claim: <b>this value has a
+          name</b>. The caption — one line the grid already owns — does the
+          naming, so the cell never has to. Shown here with the pointer on
+          <span class="h">size</span>.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Zero height cost and zero new furniture; the tick is exactly as loud as the information ("a scale exists here") deserves at rest.</dd>
+      <dt>Costs</dt><dd>Stepping becomes an invisible gesture — wheel or arrows on a hovered cell — which the settings page will have to teach; the tick says "a token" but never which without a visit.</dd>
+      <dt>Scales to</dt><dd>Every dense layout in the panel; the tick could mark tokenized values anywhere, one dialect for "this is on a scale".</dd>
+    </dl>
+  </section>
+
+  <!-- ============ V2 ============ -->
+  <section class="proto" id="v2">
+    <div class="proto-head">
+      <span class="proto-num">02</span>
+      <h2>Token-first cells</h2>
+      <p class="thesis">Where a scale exists, the scale is the value: the cell reads
+        <code>‹ lg ›</code> in accent with the pixels demoted to the caption. Where
+        none exists, the number stays. The grid itself answers "which of these are
+        designed?" at a glance.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep V2">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+            <div class="grid3">
+              <span class="cell tok"><k>size</k><span class="chip"><span class="st">‹</span><b>lg</b><span class="st">›</span></span></span>
+              <span class="cell"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell tok"><k>leading</k><span class="chip"><span class="st">‹</span><b>6</b><span class="st">›</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#bb9af7</span></span></span>
+            </div>
+            <p class="caption"><b>text-lg (18px)</b> <s>· leading-6 (24px)</s></p>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip" style="flex:none;width:58px">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">This is the <b>token pref made spatial</b>: the
+          "on a design token, show token" setting stops being a mode and becomes
+          per-cell truth. Scrubbing a token cell drops it to pixels —
+          <span class="h">off the rung</span> — and the cell says so by turning
+          plain.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The most designed-system-literate reading: the grid shows names where names exist, and the ‹ › arrows are real click targets, not a hidden gesture.</dd>
+      <dt>Costs</dt><dd>Two value languages in one grid; short step names ("6") need the caption to mean anything, and the raw number is a glance away rather than present.</dd>
+      <dt>Scales to</dt><dd>Spacing and radius grids beautifully — those are the most tokenized properties on real pages.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ V3 ============ -->
+  <section class="proto" id="v3">
+    <div class="proto-head">
+      <span class="proto-num">03</span>
+      <h2>Two-deck cells, editor open</h2>
+      <p class="thesis">Every cell carries both truths: value on the top deck, token
+        name (or a quiet —) on the bottom. Nothing is hidden, nothing needs hover.
+        The long-text editor is shown open beside the panel, where the colour
+        picker taught surfaces to go.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage" style="position:relative">
+        <div class="ep V3">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot on"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand" data-txp>⤢</button></div>
+            <div class="grid3">
+              <span class="cell"><k>size</k><span class="deck"><div class="v">18<span class="u">px</span></div><div class="t"><span class="st">‹</span>lg<span class="st">›</span></div></span></span>
+              <span class="cell"><k>weight</k><span class="deck"><div class="v">600</div><div class="t off">—</div></span></span>
+              <span class="cell"><k>leading</k><span class="deck"><div class="v">24<span class="u">px</span></div><div class="t"><span class="st">‹</span>6<span class="st">›</span></div></span></span>
+              <span class="cell"><k>tracking</k><span class="deck"><div class="v">0<span class="u">px</span></div><div class="t off">—</div></span></span>
+              <span class="cell"><k>align</k><span class="deck"><div class="v" style="letter-spacing:3px">≡≡≡</div><div class="t off">left</div></span></span>
+              <span class="cell"><k>colour</k><span class="deck"><div class="v" style="display:flex;align-items:center;justify-content:center;gap:3px"><span class="swatch" style="width:9px;height:9px"></span>#88c0d0</div><div class="t off">—</div></span></span>
+            </div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="txped open" style="top:60px" data-txped>
+          <p class="legend">Text <button title="Close">×</button></p>
+          <textarea spellcheck="false">Craft, taste, and the long way around</textarea>
+          <p class="cnt">37 chars · Enter commits · Esc abandons</p>
+        </div>
+        <p class="stage-note" style="margin-left:230px">Both decks always visible —
+          the only variation where <b>no state is one interaction away</b>. The
+          editor holds the full words with a live count; the field keeps its
+          ellipsis.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Total honesty at rest: value, token and steppers all present, and off-scale cells admit it with a dash instead of pretending.</dd>
+      <dt>Costs</dt><dd>The tallest grid of the eight — two-deck cells are ~26px, pushing the group back toward four classic rows and diluting the reason 07 won.</dd>
+      <dt>Scales to</dt><dd>Panels where tokens are the point (a design-system audit mode); too heavy as the everyday default.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ V4 ============ -->
+  <section class="proto" id="v4">
+    <div class="proto-head">
+      <span class="proto-num">04</span>
+      <h2>The scale shelf</h2>
+      <p class="thesis">Cells stay pure pixels. Tokens live on one dashed shelf under
+        the grid — <code>size ‹text-lg›  lead ‹6›</code> — which exists only when
+        scales were detected. The shelf is the degraded-marker philosophy inverted:
+        present exactly when there is something to say.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep V4">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+            <div class="grid3">
+              <span class="cell"><k>size</k><span class="chip">18<span class="u">px</span></span></span>
+              <span class="cell"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell"><k>leading</k><span class="chip">24<span class="u">px</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#bd93f9</span></span></span>
+            </div>
+            <div class="scales">
+              <span class="sc"><k2>size</k2><span class="st">‹</span><b>text-lg</b><span class="st">›</span></span>
+              <span class="sc"><k2>lead</k2><span class="st">‹</span><b>6</b><span class="st">›</span></span>
+            </div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">Numbers where the eyes tune, names where the system
+          thinks. The shelf costs <b>one short row when tokens exist</b> — a page
+          with no design system pays nothing at all.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Clean separation of concerns — scrubbing stays spatial in the grid, stepping stays nominal on the shelf — and full token names fit without squeezing cells.</dd>
+      <dt>Costs</dt><dd>The eye must pair shelf entries with cells by label; three or more tokenized metrics make the shelf wrap and the saving evaporates.</dd>
+      <dt>Scales to</dt><dd>Groups with a tokenized minority. Fully-tokenized spacing would want V2 instead.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ V5 ============ -->
+  <section class="proto" id="v5">
+    <div class="proto-head">
+      <span class="proto-num">05</span>
+      <h2>Cell blooms to a row</h2>
+      <p class="thesis">Resting, the pure grid. Clicking a cell blooms a single
+        full-width detail row beneath — the classic anatomy with the complete
+        stepper, token name and all — for that property only. One property gets
+        depth; six stay shallow. Click size or leading.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="monokai">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep V5">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+            <div class="grid3">
+              <span class="cell tok" data-bloom="size"><k>size</k><span class="chip">18<span class="u">px</span></span></span>
+              <span class="cell" data-bloom="weight"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell tok" data-bloom="leading"><k>leading</k><span class="chip">24<span class="u">px</span></span></span>
+              <span class="cell" data-bloom="tracking"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#f92672</span></span></span>
+            </div>
+            <div class="bloom" data-bloomrow>
+              <i class="rdot"></i><span class="rlabel" data-bloomlabel>size</span>
+              <span class="chip" style="flex:none;width:52px" data-bloomval>18<span class="u">px</span></span>
+              <span class="tok"><span class="st">‹</span><b data-bloomtok>text-lg</b><span class="st">›</span></span>
+            </div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">The grid is the index, the bloom is the page. The
+          full stepper — dot, label, chip, <span class="h">‹ text-lg ›</span> —
+          appears only for the property being worked, then folds away.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Full classic affordances on demand — nothing shrunk, nothing renamed — while the resting height stays 07's three rows.</dd>
+      <dt>Costs</dt><dd>Every token interaction costs a click first, and the panel breathes (one row in, one row out) with each focus change — motion where the eye is trying to compare.</dd>
+      <dt>Scales to</dt><dd>The whole panel as a universal pattern: any dense group could bloom its focused property.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ V6 ============ -->
+  <section class="proto" id="v6">
+    <div class="proto-head">
+      <span class="proto-num">06</span>
+      <h2>px ⇄ tok, on the legend</h2>
+      <p class="thesis">The whole grid flips at once: a micro-toggle beside the group
+        legend switches every tokenized cell between pixel truth and token truth.
+        The existing "on a design token, show" preference stops being a settings-page
+        decision and becomes a one-click stance. Try it.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="solarized-dark">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep V6">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <div class="legendline">
+              <p class="legend">Typography</p>
+              <span class="microseg" data-seg><button class="on" data-v="px">px</button><button data-v="tok">tok</button></span>
+            </div>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+            <div class="grid3" data-view="px" data-grid>
+              <span class="cell tok"><k>size</k><span class="chip"><i2>18<span class="u">px</span></i2><b2>lg</b2></span></span>
+              <span class="cell"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell tok"><k>leading</k><span class="chip"><i2>24<span class="u">px</span></i2><b2>6</b2></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#cb4b16</span></span></span>
+            </div>
+            <p class="caption" data-v6cap>pixel view — tokens dim nothing</p>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">In <b>tok</b> view the off-scale cells fade — the
+          grid becomes a design-system conformance report: two named, four
+          loose. Flip back to work in pixels.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">One mental mode at a time instead of two per cell, and the tok view doubles as an audit: what here is on the system, what has drifted.</dd>
+      <dt>Costs</dt><dd>Modes hide state — in px view nothing distinguishes named values until you flip; the toggle is per-group furniture that spacing and border will then also want.</dd>
+      <dt>Scales to</dt><dd>Panel-wide as a single global toggle in the head, which may be its truest form (and the existing pref's third value, "both", dies).</dd>
+    </dl>
+  </section>
+
+  <!-- ============ V7 ============ -->
+  <section class="proto" id="v7">
+    <div class="proto-head">
+      <span class="proto-num">07</span>
+      <h2>The rung menu</h2>
+      <p class="thesis">A tokenized cell wears an accent baseline. Clicking it drops
+        the whole family — sm 14, base 16, lg 18, xl 20 — as a menu with the current
+        rung lit. Stepping is for neighbours; the menu is for going straight to a
+        rung. Click size.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep V7">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+            <div class="grid3">
+              <span class="cell tok" data-rungcell><k>size</k><span class="chip">18<span class="u">px</span></span>
+                <span class="rungs" data-rungs>
+                  <span class="r"><b>text-sm</b><s>14</s></span>
+                  <span class="r"><b>text-base</b><s>16</s></span>
+                  <span class="r on"><b>text-lg</b><s>18</s></span>
+                  <span class="r"><b>text-xl</b><s>20</s></span>
+                </span>
+              </span>
+              <span class="cell"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell tok"><k>leading</k><span class="chip">24<span class="u">px</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#c2603f</span></span></span>
+            </div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip" style="flex:none;width:58px">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">Today's stepper walks the scale <b>one rung at a
+          time</b>; the menu shows the whole ladder and jumps. The accent
+          baseline is the only resting-state cost.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Strictly more capable than the ‹ › stepper — see the ladder, jump anywhere on it — and the values beside each name teach the scale as it's used.</dd>
+      <dt>Costs</dt><dd>A dropdown is heavier furniture than the panel has ever used, needs the picker's own-root treatment to escape the panel's overflow, and hides the scrub affordance behind a click-first cell.</dd>
+      <dt>Scales to</dt><dd>Long scales especially — an 11-rung spacing family is miserable to step through and trivial to pick from.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ V8 ============ -->
+  <section class="proto" id="v8">
+    <div class="proto-head">
+      <span class="proto-num">08</span>
+      <h2>The synthesis</h2>
+      <p class="thesis">What round two would ship: V1's corner ticks at rest, V5's
+        bloom on click for the full stepper, the caption naming whatever the
+        pointer touches, and the text editor open beside the panel holding the
+        words the field truncates. Every piece has a precedent elsewhere in the
+        extension.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage" style="position:relative">
+        <div class="ep V8">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot on"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand" data-txp8>⤢</button></div>
+            <div class="grid3">
+              <span class="cell tok lit"><k>size</k><span class="chip">18<span class="u">px</span></span></span>
+              <span class="cell"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell tok"><k>leading</k><span class="chip">24<span class="u">px</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#bb9af7</span></span></span>
+            </div>
+            <div class="V5 " style="display:contents">
+              <div class="bloom open">
+                <i class="rdot"></i><span class="rlabel">size</span>
+                <span class="chip" style="flex:none;width:52px">18<span class="u">px</span></span>
+                <span class="tok"><span class="st">‹</span><b>text-lg</b><span class="st">›</span></span>
+              </div>
+            </div>
+            <p class="caption"><b>size · text-lg (18px)</b> <s>— wheel steps the scale</s></p>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="txped open" style="top:56px" data-txped8>
+          <p class="legend">Text <button title="Close">×</button></p>
+          <textarea spellcheck="false">Craft, taste, and the long way around</textarea>
+          <p class="cnt">37 chars · Enter commits · Esc abandons</p>
+        </div>
+        <p class="stage-note" style="margin-left:230px">Resting: <b>3 rows + ticks</b>.
+          Working: the lit cell blooms its stepper row, the caption narrates, the
+          editor holds the words. Nothing here the panel hasn't already done
+          somewhere.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Each state pays only for what it uses: silent page, ticked scales, one bloomed property, one text editor — and all four pieces reuse existing dialects (dot, row, popover, caption).</dd>
+      <dt>Costs</dt><dd>Four small mechanisms to build and test instead of one; the interaction spec (tick → hover → caption → click → bloom) needs writing down or it will drift.</dd>
+      <dt>Scales to</dt><dd>This is the blueprint for densifying the whole panel: grid + tick + bloom generalises to spacing, border and shadow unchanged.</dd>
+    </dl>
+  </section>
+
+</main>
+
+<footer class="wrap" style="padding:2.5rem 0 4rem; color:var(--g-muted); font-size:var(--step-0);">
+  <p style="max-width:70ch">A reading order: V1 and V4 are the quiet candidates (tick vs shelf);
+    V2 and V6 make tokens the first-class value (always vs on demand); V3 refuses to hide anything
+    and pays in height; V5 and V7 spend a click to buy full affordances; V8 is V1+V5 assembled and
+    is the recommendation. Whatever wins, the text row is settled: truncate in place,
+    edit long words in a popover beside the panel.</p>
+</footer>
+
+<script>
+// Theme dots on every viewport.
+const THEMES = ["terracotta-dark","terracotta-light","dracula","monokai","nord","solarized-dark","tokyo-night"];
+const SWATCHES = { "terracotta-dark":"#d97757","terracotta-light":"#c2603f",dracula:"#bd93f9",monokai:"#f92672",nord:"#88c0d0","solarized-dark":"#cb4b16","tokyo-night":"#bb9af7" };
+for (const vp of document.querySelectorAll(".viewport")) {
+  const dots = vp.querySelector(".dots");
+  for (const t of THEMES) {
+    const b = document.createElement("button");
+    b.className = "tdot"; b.style.background = SWATCHES[t]; b.title = t;
+    b.addEventListener("click", () => vp.setAttribute("data-ccp-theme", t));
+    dots.appendChild(b);
+  }
+}
+
+// V3 + V8 — the text editors toggle from their ⤢.
+document.querySelector("[data-txp]").addEventListener("click", () =>
+  document.querySelector("[data-txped]").classList.toggle("open"));
+document.querySelector("[data-txp8]").addEventListener("click", () =>
+  document.querySelector("[data-txped8]").classList.toggle("open"));
+
+// V5 — a cell blooms its detail row.
+{
+  const FAM = {
+    size: { val: '18<span class="u">px</span>', tok: "text-lg", named: true },
+    weight: { val: "600", tok: "no scale", named: false },
+    leading: { val: '24<span class="u">px</span>', tok: "leading-6", named: true },
+    tracking: { val: '0<span class="u">px</span>', tok: "no scale", named: false },
+  };
+  const row = document.querySelector("[data-bloomrow]");
+  let open = null;
+  for (const cell of document.querySelectorAll(".V5 [data-bloom]")) {
+    cell.addEventListener("click", () => {
+      const key = cell.dataset.bloom;
+      for (const c of document.querySelectorAll(".V5 [data-bloom]")) c.classList.remove("lit");
+      if (open === key) { open = null; row.classList.remove("open"); return; }
+      open = key;
+      cell.classList.add("lit");
+      row.classList.add("open");
+      document.querySelector("[data-bloomlabel]").textContent = key;
+      document.querySelector("[data-bloomval]").innerHTML = FAM[key].val;
+      const tok = document.querySelector("[data-bloomtok]");
+      tok.textContent = FAM[key].tok;
+      tok.style.opacity = FAM[key].named ? 1 : 0.45;
+    });
+  }
+}
+
+// V6 — px ⇄ tok.
+{
+  const grid = document.querySelector("[data-grid]");
+  const cap = document.querySelector("[data-v6cap]");
+  for (const btn of document.querySelectorAll("[data-seg] button")) {
+    btn.addEventListener("click", () => {
+      for (const b of document.querySelectorAll("[data-seg] button")) b.classList.toggle("on", b === btn);
+      grid.setAttribute("data-view", btn.dataset.v);
+      cap.textContent = btn.dataset.v === "tok"
+        ? "token view — off-scale values fade"
+        : "pixel view — tokens dim nothing";
+    });
+  }
+}
+
+// V7 — the rung menu.
+{
+  const cell = document.querySelector("[data-rungcell]");
+  const rungs = document.querySelector("[data-rungs]");
+  cell.querySelector(".chip").addEventListener("click", () => rungs.classList.toggle("open"));
+  for (const r of rungs.querySelectorAll(".r")) {
+    r.addEventListener("click", (e) => {
+      e.stopPropagation();
+      for (const x of rungs.querySelectorAll(".r")) x.classList.toggle("on", x === r);
+      cell.querySelector(".chip").innerHTML = r.querySelector("s").textContent + '<span class="u">px</span>';
+      rungs.classList.remove("open");
+    });
+  }
+}
+</script>
+</body>
+</html>

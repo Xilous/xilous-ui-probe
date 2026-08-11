@@ -1,0 +1,23 @@
+/* A stylesheet the page is not allowed to read.
+
+   The harness links this from the *other* spelling of the loopback host —
+   localhost when the page is on 127.0.0.1, or the reverse — so the browser
+   treats it as a third-party sheet. test/cdp.mjs's server withholds the CORS
+   header from stylesheet requests and grants it to fetches, which reproduces
+   the exact asymmetry the extension lives with: the page cannot read this, the
+   service worker can fetch it.
+
+   Nothing else in the fixture declares these names, so their presence in the
+   panel is proof the top-up landed, and their absence before it is proof the
+   page really could not read them. */
+:root {
+  --remote-brand: #b5179e;
+  --remote-shade: oklch(0.55 0.2 340);
+
+  --remote-gap-1: 7px;
+  --remote-gap-2: 14px;
+  --remote-gap-3: 28px;
+}
+
+.remote-pad-2 { padding: 14px; }
+.remote-pad-3 { padding: 28px; }

@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Probe — Type styles, round three</title>
+<!--
+  Round three. Rounds one and two picked the layout (the 3×2 mini-grid with
+  ticks, bloom and caption — V8). The grilling then settled how composite
+  typography tokens work:
+
+    · three sources, equal citizens: multi-declaration classes, var stems,
+      the font shorthand
+    · styles are a layer above per-prop families; multi-prop values are
+      carved OUT of per-prop ladders (one value, one owner)
+    · claiming needs the source in force + all constituents matching;
+      in force + deviation = "modified"; coincidence = nothing
+    · a style row above the grid; stepping swaps the whole source
+    · the cell dot reverts MY edit; the style row conforms drift
+    · ladders: same source kind, font-size as the axis; solo styles show
+      their name but get no arrows
+    · delta: one line, name leading, changed constituents echoed in parens
+
+  This page is that one design in four states, interactive where the
+  decision was about interaction. The tick vocabulary throughout:
+
+    ● filled corner tick — this cell's value comes from the style
+    ○ hollow corner tick — this cell sits on its own single-prop token
+    ▲ drift mark — this cell deviates from the style that covers it
+
+  Click things: 01's ‹ › steps the ladder (watch cells and the delta line),
+  02's style chip conforms the drift, 03 steps a var-stem ladder.
+-->
+<style>
+/* ============================================================
+   GALLERY SHELL — the same quiet frame.
+   ============================================================ */
+:root {
+  --g-ground:#f7f6f2; --g-raised:#ffffff; --g-ink:#17160f; --g-dim:#56534a;
+  --g-muted:#8d8a80; --g-rule:#e0ddd3; --g-rule-hi:#cbc7ba; --g-accent:#b8542f;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --step-0:0.8125rem; --step-1:0.9375rem; --step-2:1.25rem; --step-3:1.75rem; --step-4:2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --g-ground:#131210; --g-raised:#1b1a17; --g-ink:#ece9e1; --g-dim:#a5a196; --g-muted:#7d7a71; --g-rule:#2a2824; --g-rule-hi:#3d3a34; --g-accent:#e08b68; }
+}
+*, *::before, *::after { box-sizing:border-box; }
+body { margin:0; background:var(--g-ground); color:var(--g-ink); font-family:var(--sans); font-size:var(--step-1); line-height:1.6; -webkit-font-smoothing:antialiased; }
+.wrap { max-width:1180px; margin:0 auto; padding:0 clamp(1rem,4vw,3rem); }
+.topbar { position:sticky; top:0; z-index:50; background:color-mix(in srgb, var(--g-ground) 88%, transparent); backdrop-filter:blur(12px); border-bottom:1px solid var(--g-rule); }
+.topbar-in { display:flex; align-items:center; gap:1.5rem; padding:0.75rem 0; flex-wrap:wrap; }
+.topbar-title { font-family:var(--mono); font-size:var(--step-0); text-transform:uppercase; letter-spacing:0.1em; color:var(--g-dim); margin:0; white-space:nowrap; }
+.jump { display:flex; gap:0.25rem; margin-left:auto; }
+.jump a { font-family:var(--mono); font-size:0.75rem; text-decoration:none; color:var(--g-dim); border:1px solid var(--g-rule); border-radius:6px; width:2rem; height:2rem; display:grid; place-items:center; transition:background .15s,color .15s,border-color .15s; }
+.jump a:hover { background:var(--g-accent); border-color:var(--g-accent); color:var(--g-ground); }
+.masthead { padding:clamp(2.5rem,7vw,5rem) 0 2rem; border-bottom:1px solid var(--g-rule); }
+.eyebrow { font-family:var(--mono); font-size:0.75rem; text-transform:uppercase; letter-spacing:0.14em; color:var(--g-accent); margin:0 0 1rem; }
+h1 { font-family:var(--mono); font-weight:500; font-size:clamp(1.75rem,4.5vw,var(--step-4)); line-height:1.1; letter-spacing:-0.02em; margin:0 0 1.25rem; text-wrap:balance; }
+.lede { font-size:var(--step-2); line-height:1.5; color:var(--g-dim); max-width:62ch; margin:0 0 1.5rem; }
+.vocab { display:flex; gap:2rem; flex-wrap:wrap; font-family:var(--mono); font-size:0.75rem; color:var(--g-dim); border-top:1px solid var(--g-rule); padding-top:1.25rem; }
+.vocab b { color:var(--g-accent); font-weight:600; }
+.proto { padding:clamp(2.5rem,6vw,4.5rem) 0; border-bottom:1px solid var(--g-rule); scroll-margin-top:4.5rem; }
+.proto-head { display:grid; grid-template-columns:auto 1fr; gap:0 1.25rem; align-items:baseline; margin-bottom:1.75rem; }
+.proto-num { font-family:var(--mono); font-size:var(--step-3); font-weight:500; color:var(--g-rule-hi); line-height:1; font-variant-numeric:tabular-nums; }
+.proto-head h2 { font-family:var(--mono); font-weight:500; font-size:var(--step-2); margin:0; letter-spacing:-0.01em; }
+.thesis { grid-column:2; margin:0.5rem 0 0; color:var(--g-dim); max-width:68ch; }
+.viewport { position:relative; background:var(--page); border:1px solid var(--g-rule-hi); border-radius:10px; overflow:hidden; }
+.viewport-bar { display:flex; align-items:center; gap:0.5rem; padding:0.5rem 0.75rem; background:color-mix(in srgb, var(--surface) 55%, var(--page)); border-bottom:1px solid var(--sep); }
+.dot { width:9px; height:9px; border-radius:50%; background:var(--faint); opacity:0.6; }
+.viewport-url { font-family:var(--mono); font-size:10px; color:var(--muted); margin-left:0.5rem; }
+.dots { display:flex; gap:4px; margin-left:auto; }
+.tdot { width:13px; height:13px; border-radius:4px; padding:0; cursor:pointer; border:1px solid rgba(127,127,127,.4); }
+.tdot:hover { transform:scale(1.15); }
+.stage { display:flex; gap:36px; align-items:flex-start; padding:26px 28px 30px; }
+.stage-note { font:11px/1.6 var(--mono); color:var(--muted); max-width:32ch; padding-top:8px; }
+.stage-note b { color:var(--page-ink); font-weight:600; }
+.stage-note .h { color:var(--accent); }
+.tradeoff { display:grid; grid-template-columns:max-content 1fr; gap:0.35rem 1rem; margin:1.5rem 0 0; font-size:var(--step-0); }
+.tradeoff dt { font-family:var(--mono); font-size:0.6875rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--g-muted); padding-top:0.2em; }
+.tradeoff dd { margin:0; color:var(--g-dim); }
+.tradeoff .win { color:var(--g-ink); }
+
+/* ============================================================
+   THEME TOKENS
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] { --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64; --sep:#3a3a35; --accent:#d97757; --on-accent:#1a0d07; --shadow-card:0 8px 24px -8px rgba(0,0,0,.55),0 2px 6px rgba(20,20,19,.4); --page:#1e1e1c; --page-ink:#c8c5bc; }
+[data-ccp-theme="terracotta-light"] { --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780; --sep:#ddd9cf; --accent:#c2603f; --on-accent:#fff8f4; --shadow-card:0 8px 24px -10px rgba(60,45,35,.28),0 1px 3px rgba(60,45,35,.14); --page:#ffffff; --page-ink:#3a3a35; }
+[data-ccp-theme="dracula"] { --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4; --sep:#44475a; --accent:#bd93f9; --on-accent:#1a1626; --shadow-card:0 8px 24px -8px rgba(0,0,0,.6),0 2px 6px rgba(20,20,30,.45); --page:#21222c; --page-ink:#cfd0e0; }
+[data-ccp-theme="nord"] { --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1; --sep:#3b4252; --accent:#88c0d0; --on-accent:#16202b; --shadow-card:0 8px 24px -8px rgba(0,0,0,.5),0 2px 6px rgba(20,25,35,.4); --page:#272c36; --page-ink:#d8dee9; }
+[data-ccp-theme="solarized-dark"] { --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75; --sep:#073642; --accent:#cb4b16; --on-accent:#1a0700; --shadow-card:0 8px 24px -8px rgba(0,0,0,.55),0 2px 6px rgba(0,20,25,.45); --page:#01212b; --page-ink:#93a1a1; }
+[data-ccp-theme="tokyo-night"] { --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89; --sep:#292e42; --accent:#bb9af7; --on-accent:#16111f; --shadow-card:0 8px 24px -8px rgba(0,0,0,.6),0 2px 6px rgba(15,15,25,.45); --page:#16161e; --page-ink:#a9b1d6; }
+[data-ccp-theme="monokai"] { --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e; --sep:#3e3d32; --accent:#f92672; --on-accent:#2a0512; --shadow-card:0 8px 24px -8px rgba(0,0,0,.6),0 2px 6px rgba(20,20,15,.45); --page:#1e1f1a; --page-ink:#d9d8cd; }
+
+/* ============================================================
+   PANEL ANATOMY (round-two vocabulary, plus the style row)
+   ============================================================ */
+.ep { width:248px; flex:none; background:var(--surface); color:var(--text); border:1px solid rgb(from var(--accent) r g b / 0.5); border-radius:12px; box-shadow:var(--shadow-card); font-family:var(--mono); font-size:10px; overflow:hidden; user-select:none; }
+.ep-head { display:flex; align-items:center; gap:6px; padding:6px 8px; border-bottom:1px solid var(--sep); cursor:grab; }
+.ep-back { width:20px; height:20px; flex:none; display:grid; place-items:center; border:1px solid var(--sep); border-radius:4px; color:var(--dim); font-size:11px; }
+.ep-id { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:500; color:var(--dim); }
+.ep-id b { color:var(--accent); font-weight:700; }
+.ep-id i { color:#8bd0bd; font-style:normal; }
+.ep-act { width:20px; height:20px; flex:none; display:grid; place-items:center; border:1px solid var(--sep); border-radius:4px; color:var(--dim); font-size:10px; }
+.ep-body { padding:8px 12px 10px; }
+.legend { font-weight:500; font-size:9px; letter-spacing:0.13em; text-transform:uppercase; color:var(--muted); margin:0 0 6px; }
+.row { display:flex; align-items:center; gap:6px; padding:2px 0; }
+.rdot { width:9px; height:9px; flex:none; border-radius:50%; border:1px solid var(--sep); }
+.rdot.on { background:var(--accent); border-color:var(--accent); }
+.rlabel { flex:1; min-width:0; font-size:10px; color:var(--muted); }
+.chip { display:inline-flex; align-items:baseline; justify-content:center; gap:1px; flex:none; width:58px; padding:2px 4px; border:1px solid var(--sep); border-radius:4px; background:rgb(from var(--text) r g b / 0.06); font-weight:500; color:var(--text); font-variant-numeric:tabular-nums; cursor:ew-resize; }
+.chip .u { font-size:8px; color:var(--faint); }
+.chip.wide { flex:1; min-width:0; width:auto; cursor:text; justify-content:flex-start; }
+.chip.wide span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.expand { width:18px; height:18px; flex:none; display:grid; place-items:center; border:1px solid var(--sep); border-radius:4px; color:var(--dim); font-size:9px; cursor:pointer; background:transparent; padding:0; font-family:inherit; }
+.expand:hover { border-color:var(--accent); color:var(--accent); }
+.seg { display:inline-flex; flex:none; border:1px solid var(--sep); border-radius:4px; overflow:hidden; }
+.seg b { width:19px; height:16px; display:grid; place-items:center; font-weight:400; color:var(--muted); font-size:9px; }
+.seg b.on { background:rgb(from var(--accent) r g b / 0.2); color:var(--accent); }
+.swatch { width:14px; height:14px; flex:none; border-radius:4px; border:1px solid var(--sep); background:var(--accent); }
+.hex { font-size:10px; color:var(--text); font-variant-numeric:tabular-nums; }
+.stub { margin-top:8px; padding-top:6px; border-top:1px solid var(--sep); opacity:0.38; }
+.stub .row { padding:1px 0; }
+.caption { font-size:8px; color:var(--faint); padding:3px 0 0 1px; min-height:13px; }
+.caption b { color:var(--accent); font-weight:500; }
+
+/* THE STYLE ROW — the composite's seat, above the grid */
+.stylerow { display:flex; align-items:center; gap:6px; padding:3px 0 4px; }
+.stylerow .rlabel { flex:none; width:auto; }
+.stylechip { flex:1; display:flex; align-items:center; justify-content:center; gap:5px; border:1px solid rgb(from var(--accent) r g b / 0.55); border-radius:4px; padding:2px 6px; background:rgb(from var(--accent) r g b / 0.10); font-weight:500; }
+.stylechip .nm { color:var(--accent); }
+.stylechip .st { color:var(--faint); cursor:pointer; font-size:10px; padding:0 2px; }
+.stylechip .st:hover { color:var(--accent); }
+.stylechip .mod { color:var(--dim); font-size:8px; }
+.stylechip.drifted { border-style:dashed; cursor:pointer; }
+.stylechip.drifted:hover { background:rgb(from var(--accent) r g b / 0.2); }
+.stylechip.solo { cursor:default; }
+
+/* grid + tick vocabulary */
+.grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:5px 6px; margin-top:2px; }
+.cell { position:relative; }
+.cell k { display:block; font-size:7.5px; letter-spacing:0.1em; text-transform:uppercase; color:var(--faint); margin-bottom:2px; }
+.cell .chip { width:100%; }
+.cell .seg { width:100%; }
+.cell .seg b { flex:1; }
+.cwrap { display:flex; align-items:center; gap:4px; border:1px solid var(--sep); border-radius:4px; padding:2px 4px; background:rgb(from var(--text) r g b / 0.06); }
+.cwrap .swatch { width:11px; height:11px; }
+.cwrap .hex { font-size:9px; }
+/* filled: value comes from the style */
+.cell.from-style .chip::after { content:""; position:absolute; top:-1px; right:-1px; width:5px; height:5px; border-radius:0 3px 0 3px; background:var(--accent); }
+/* hollow: cell sits on its own single-prop token */
+.cell.own-token .chip::after { content:""; position:absolute; top:-1px; right:-1px; width:5px; height:5px; border-radius:0 3px 0 3px; border:1px solid var(--accent); background:var(--surface); }
+/* drift: covered by the style but deviating */
+.cell.drift .chip { border-color:rgb(from var(--accent) r g b / 0.6); border-style:dashed; }
+.cell.drift .chip::after { content:"▲"; position:absolute; top:-4px; right:-2px; font-size:6px; color:var(--accent); background:none; border:none; width:auto; height:auto; }
+
+/* the live delta preview under a panel */
+.deltaline { margin-top:10px; font:9.5px/1.6 var(--mono); color:var(--page-ink); background:color-mix(in srgb, var(--surface) 70%, var(--page)); border:1px solid var(--sep); border-radius:6px; padding:6px 9px; white-space:pre; overflow-x:auto; max-width:430px; }
+.deltaline em { font-style:normal; color:var(--accent); }
+.deltaline .quiet { opacity:0.55; }
+</style>
+</head>
+<body>
+
+<nav class="topbar"><div class="wrap topbar-in">
+  <p class="topbar-title">CCP · type styles · round three</p>
+  <div class="jump"><a href="#s1">1</a><a href="#s2">2</a><a href="#s3">3</a><a href="#s4">4</a></div>
+</div></nav>
+
+<header class="masthead wrap">
+  <p class="eyebrow">Round three · one design, four states</p>
+  <h1>The style row: composite tokens land in the grid</h1>
+  <p class="lede">Rounds one and two chose the layout. The grilling chose the
+    semantics: styles above, carve-out below; claim only what's in force;
+    the dot reverts my edit, the style row conforms drift; solo styles get a
+    name but no arrows. This page is that design in its four states — step,
+    drift, var-stem, solo — with the delta line updating underneath.</p>
+  <div class="vocab">
+    <span><b>●</b> filled tick — value comes from the style</span>
+    <span><b>○</b> hollow tick — cell's own single-prop token</span>
+    <span><b>▲</b> drift — covered by the style, deviating</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ 01 — on the ladder ============ -->
+  <section class="proto" id="s1">
+    <div class="proto-head">
+      <span class="proto-num">01</span>
+      <h2>On the ladder — step the class</h2>
+      <p class="thesis">The element wears <code>.text-lg</code> and every constituent
+        matches. The style row claims it; size and leading wear filled ticks
+        (owned by the style), weight and tracking stay plain (loose values).
+        Click ‹ › — one class swap moves two cells, one undo entry, one delta line.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div>
+          <div class="ep" data-s1>
+            <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+            <div class="ep-body">
+              <p class="legend">Typography</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+              <div class="stylerow"><i class="rdot" data-s1dot></i><span class="rlabel">style</span>
+                <span class="stylechip"><span class="st" data-s1down>‹</span><span class="nm" data-s1name>text-lg</span><span class="st" data-s1up>›</span></span>
+              </div>
+              <div class="grid3">
+                <span class="cell from-style"><k>size</k><span class="chip" data-s1size>18<span class="u">px</span></span></span>
+                <span class="cell"><k>weight</k><span class="chip">600</span></span>
+                <span class="cell from-style"><k>leading</k><span class="chip" data-s1lead>28<span class="u">px</span></span></span>
+                <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+                <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+                <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#d97757</span></span></span>
+              </div>
+              <p class="caption" data-s1cap><b>style · text-lg</b> — size + leading</p>
+              <div class="stub">
+                <p class="legend">Spacing</p>
+                <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="deltaline" data-s1delta><span class="quiet"># nothing edited yet — step the style to see the line</span></div>
+        </div>
+        <p class="stage-note">The ladder is <b>text-sm 14/20 · base 16/24 ·
+          lg 18/28 · xl 20/28</b>, ordered by size, aliases collapsed. Stepping
+          writes <span class="h">one class swap</span>; the verify-and-fallback
+          machinery is today's, untouched. The style row's dot lights when the
+          element has moved off its found state.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Check</dt><dd class="win">Two cells move together when you step — that togetherness is the entire composite claim, made visible.</dd>
+      <dt>Also</dt><dd>Weight and tracking never wear a tick here: they are honest loose values, steppable only if they had their own single-prop families.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 02 — drifted, conform ============ -->
+  <section class="proto" id="s2">
+    <div class="proto-head">
+      <span class="proto-num">02</span>
+      <h2>Drifted — the chip conforms</h2>
+      <p class="thesis">Same element, but someone inlined <code>line-height: 32px</code> —
+        maybe you, maybe the page as it shipped. The style row reads
+        <code>text-lg · modified</code> with a dashed border; the leading cell wears
+        the drift mark. Clicking the chip conforms: every constituent back to the
+        style's values, one gesture, one delta line. The cell dots never change meaning.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div>
+          <div class="ep" data-s2>
+            <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+            <div class="ep-body">
+              <p class="legend">Typography</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Craft, taste, and the l…</span></span><button class="expand">⤢</button></div>
+              <div class="stylerow"><i class="rdot" data-s2dot></i><span class="rlabel">style</span>
+                <span class="stylechip drifted" data-s2chip title="Conform to text-lg"><span class="st">‹</span><span class="nm">text-lg</span><span class="mod" data-s2mod>· modified</span><span class="st">›</span></span>
+              </div>
+              <div class="grid3">
+                <span class="cell from-style"><k>size</k><span class="chip">18<span class="u">px</span></span></span>
+                <span class="cell"><k>weight</k><span class="chip">600</span></span>
+                <span class="cell drift" data-s2cell><k>leading</k><span class="chip" data-s2lead>32<span class="u">px</span></span></span>
+                <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+                <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+                <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#bb9af7</span></span></span>
+              </div>
+              <p class="caption" data-s2cap><b>text-lg · modified</b> — leading 32px, style says 28px</p>
+              <div class="stub">
+                <p class="legend">Spacing</p>
+                <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">16<span class="u">px</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="deltaline" data-s2delta><span class="quiet"># drift found on arrival — conform to see how the delta reports it</span></div>
+        </div>
+        <p class="stage-note"><b>Two ways back, two controls.</b> A cell dot
+          reverts <span class="h">my</span> edit to its found state — even when
+          found means drifted. The chip conforms to the
+          <span class="h">style</span> — meaningful precisely when the page
+          shipped the drift and no dot is lit.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Check</dt><dd class="win">After conforming, the chip solidifies, the ▲ clears, and the delta narrates it as one style line — not as a loose leading edit.</dd>
+      <dt>Also</dt><dd>The claim stayed honest throughout: the row never said "on text-lg", it said "text-lg · modified" — in force, deviating, named.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 03 — var-stem ladder ============ -->
+  <section class="proto" id="s3">
+    <div class="proto-head">
+      <span class="proto-num">03</span>
+      <h2>Var-stem styles — same face, different verbs</h2>
+      <p class="thesis">No classes here: the page defines
+        <code>--heading-sm/-md/-lg</code> stems, each a size + leading + weight
+        trio, consumed by the winning declarations. Detection groups them by stem;
+        the style row looks identical. Stepping writes three custom properties
+        instead of swapping one class — same gesture, same single undo entry.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div>
+          <div class="ep" data-s3>
+            <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.hero-h</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+            <div class="ep-body">
+              <p class="legend">Typography</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>The long way around</span></span><button class="expand">⤢</button></div>
+              <div class="stylerow"><i class="rdot" data-s3dot></i><span class="rlabel">style</span>
+                <span class="stylechip"><span class="st" data-s3down>‹</span><span class="nm" data-s3name>--heading-md</span><span class="st" data-s3up>›</span></span>
+              </div>
+              <div class="grid3">
+                <span class="cell from-style"><k>size</k><span class="chip" data-s3size>24<span class="u">px</span></span></span>
+                <span class="cell from-style"><k>weight</k><span class="chip" data-s3wght>650</span></span>
+                <span class="cell from-style"><k>leading</k><span class="chip" data-s3lead>32<span class="u">px</span></span></span>
+                <span class="cell"><k>tracking</k><span class="chip">-0.2<span class="u">px</span></span></span>
+                <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+                <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#88c0d0</span></span></span>
+              </div>
+              <p class="caption" data-s3cap><b>style · --heading-md</b> — size + weight + leading</p>
+              <div class="stub">
+                <p class="legend">Spacing</p>
+                <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip" style="flex:none;width:58px">24<span class="u">px</span></span></div>
+              </div>
+            </div>
+          </div>
+          <div class="deltaline" data-s3delta><span class="quiet"># step the stem ladder — the delta names vars, not classes</span></div>
+        </div>
+        <p class="stage-note">Three filled ticks: this style owns
+          <b>three cells</b>. The ladder is same-source-only —
+          <span class="h">stems never ladder with classes</span> — so stepping
+          never has to switch write mechanisms mid-climb.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Check</dt><dd class="win">The row is indistinguishable from 01's until you read the name — one face for both source kinds is the point.</dd>
+      <dt>Also</dt><dd>The delta line names the stem and echoes per-var writes, because that is what the source edit actually is.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 04 — solo & silent ============ -->
+  <section class="proto" id="s4">
+    <div class="proto-head">
+      <span class="proto-num">04</span>
+      <h2>The solo style, and the silent panel</h2>
+      <p class="thesis">Left: <code>.hero-title</code> is real but has no siblings —
+        the row names it, arrows are absent (nothing to step to), and conform
+        still works if it drifts. Right: no style in force at all — the row simply
+        isn't there, because a section that exists only when relevant never
+        renders an empty shell.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h1</b><i>.hero-title</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Make the panel speak t…</span></span><button class="expand">⤢</button></div>
+            <div class="stylerow"><i class="rdot"></i><span class="rlabel">style</span>
+              <span class="stylechip solo"><span class="nm">hero-title</span></span>
+            </div>
+            <div class="grid3">
+              <span class="cell from-style"><k>size</k><span class="chip">48<span class="u">px</span></span></span>
+              <span class="cell from-style"><k>weight</k><span class="chip">800</span></span>
+              <span class="cell from-style"><k>leading</k><span class="chip">53<span class="u">px</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">-1<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#c2603f</span></span></span>
+            </div>
+            <p class="caption"><b>style · hero-title</b> — no siblings, nothing to step</p>
+          </div>
+        </div>
+        <div class="ep">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>p</b><i>.byline</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>Set in whatever was ne…</span></span><button class="expand">⤢</button></div>
+            <div class="grid3">
+              <span class="cell"><k>size</k><span class="chip">14<span class="u">px</span></span></span>
+              <span class="cell"><k>weight</k><span class="chip">400</span></span>
+              <span class="cell own-token"><k>leading</k><span class="chip">21<span class="u">px</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#6a6a64</span></span></span>
+            </div>
+            <p class="caption">no style in force — <b>leading</b> sits on its own --leading-normal</p>
+          </div>
+        </div>
+        <p class="stage-note"><b>Left:</b> filled ticks + a name, no arrows —
+          honesty about a one-off. <b>Right:</b> no style row at all, and the
+          hollow tick shows a <span class="h">single-prop token</span> living
+          its own life. Coincidence with some style's values claims nothing.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Check</dt><dd class="win">The row's absence on the right is the design working — same rule as the Advanced section: never an empty shell.</dd>
+      <dt>Also</dt><dd>Hollow vs filled ticks carry the one-value-one-owner rule into the pixels: a cell is either the style's, its own token's, or nobody's.</dd>
+    </dl>
+  </section>
+
+</main>
+
+<footer class="wrap" style="padding:2.5rem 0 4rem; color:var(--g-muted); font-size:var(--step-0);">
+  <p style="max-width:70ch">If these four states read right, the build order writes itself:
+    the style entity + carve-out in the token index (pure functions, mirrored tests), the claiming
+    walk, then the style row and tick states on top of the V8 grid — with the delta lines exactly
+    as previewed here.</p>
+</footer>
+
+<script>
+// Theme dots.
+const THEMES = ["terracotta-dark","terracotta-light","dracula","monokai","nord","solarized-dark","tokyo-night"];
+const SW = { "terracotta-dark":"#d97757","terracotta-light":"#c2603f",dracula:"#bd93f9",monokai:"#f92672",nord:"#88c0d0","solarized-dark":"#cb4b16","tokyo-night":"#bb9af7" };
+for (const vp of document.querySelectorAll(".viewport")) {
+  const dots = vp.querySelector(".dots");
+  for (const t of THEMES) {
+    const b = document.createElement("button");
+    b.className = "tdot"; b.style.background = SW[t]; b.title = t;
+    b.addEventListener("click", () => vp.setAttribute("data-ccp-theme", t));
+    dots.appendChild(b);
+  }
+}
+
+// 01 — the class ladder. text-sm 14/20 · base 16/24 · lg 18/28 · xl 20/28.
+{
+  const LADDER = [
+    { nm: "text-sm", size: 14, lead: 20 },
+    { nm: "text-base", size: 16, lead: 24 },
+    { nm: "text-lg", size: 18, lead: 28 },
+    { nm: "text-xl", size: 20, lead: 28 },
+  ];
+  const FOUND = 2;
+  let at = FOUND;
+  const q = (s) => document.querySelector(s);
+  const paint = () => {
+    const r = LADDER[at];
+    q("[data-s1name]").textContent = r.nm;
+    q("[data-s1size]").innerHTML = r.size + '<span class="u">px</span>';
+    q("[data-s1lead]").innerHTML = r.lead + '<span class="u">px</span>';
+    q("[data-s1cap]").innerHTML = "<b>style · " + r.nm + "</b> — size + leading";
+    q("[data-s1dot]").classList.toggle("on", at !== FOUND);
+    const f = LADDER[FOUND];
+    q("[data-s1delta]").innerHTML = at === FOUND
+      ? '<span class="quiet"># stepped away and back — not an edit, and not history</span>'
+      : "# type style: <em>" + f.nm + "</em> → <em>" + r.nm + "</em> (size " + f.size + "→" + r.size +
+        (r.lead !== f.lead ? ", leading " + f.lead + "→" + r.lead : "") + ")";
+  };
+  q("[data-s1down]").addEventListener("click", () => { at = Math.max(0, at - 1); paint(); });
+  q("[data-s1up]").addEventListener("click", () => { at = Math.min(LADDER.length - 1, at + 1); paint(); });
+}
+
+// 02 — conform. Found drifted (leading 32 vs style 28).
+{
+  const q = (s) => document.querySelector(s);
+  let drifted = true;
+  q("[data-s2chip]").addEventListener("click", () => {
+    if (!drifted) return;
+    drifted = false;
+    q("[data-s2lead]").innerHTML = '28<span class="u">px</span>';
+    q("[data-s2cell]").classList.remove("drift");
+    q("[data-s2cell]").classList.add("from-style");
+    q("[data-s2mod]").remove();
+    q("[data-s2chip]").classList.remove("drifted");
+    q("[data-s2chip]").title = "";
+    q("[data-s2dot]").classList.add("on");
+    q("[data-s2cap]").innerHTML = "<b>style · text-lg</b> — size + leading";
+    q("[data-s2delta]").innerHTML = "# type style: <em>text-lg (modified)</em> → <em>text-lg</em> (leading 32px→28px)";
+  });
+}
+
+// 03 — the var-stem ladder.
+{
+  const LADDER = [
+    { nm: "--heading-sm", size: 20, wght: 600, lead: 28 },
+    { nm: "--heading-md", size: 24, wght: 650, lead: 32 },
+    { nm: "--heading-lg", size: 32, wght: 700, lead: 40 },
+  ];
+  const FOUND = 1;
+  let at = FOUND;
+  const q = (s) => document.querySelector(s);
+  const paint = () => {
+    const r = LADDER[at];
+    q("[data-s3name]").textContent = r.nm;
+    q("[data-s3size]").innerHTML = r.size + '<span class="u">px</span>';
+    q("[data-s3wght]").textContent = r.wght;
+    q("[data-s3lead]").innerHTML = r.lead + '<span class="u">px</span>';
+    q("[data-s3cap]").innerHTML = "<b>style · " + r.nm + "</b> — size + weight + leading";
+    q("[data-s3dot]").classList.toggle("on", at !== FOUND);
+    const f = LADDER[FOUND];
+    q("[data-s3delta]").innerHTML = at === FOUND
+      ? '<span class="quiet"># back where it was found</span>'
+      : "# type style: <em>" + f.nm + "</em> → <em>" + r.nm + "</em> (size " + f.size + "→" + r.size +
+        ", weight " + f.wght + "→" + r.wght + ", leading " + f.lead + "→" + r.lead + ")";
+  };
+  q("[data-s3down]").addEventListener("click", () => { at = Math.max(0, at - 1); paint(); });
+  q("[data-s3up]").addEventListener("click", () => { at = Math.min(LADDER.length - 1, at + 1); paint(); });
+}
+</script>
+</body>
+</html>

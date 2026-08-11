@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="en" data-ccp-theme="terracotta-dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Probe — Settings</title>
+<!--
+  tokens.css and content.css are the real stylesheets the content script uses.
+  Loading them here rather than restyling a lookalike is what stops the preview
+  drifting: the mock below uses the same ids and classes as the injected chrome,
+  so it renders through the same rules. settings.css adds the page shell and
+  the few overrides the mock needs — mainly undoing position: fixed.
+-->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../content.css">
+<link rel="stylesheet" href="settings.css">
+</head>
+<body>
+
+<main class="sp">
+  <header class="sp-header">
+    <h1>Claude Code Probe</h1>
+    <p class="sp-version">Settings</p>
+  </header>
+
+  <div class="sp-body">
+
+    <!-- Settings column. Scrolls; the preview rail does not. Every section is a
+         native <details>, which is the collapse mechanism: free keyboard
+         support, free semantics, no JS. Open by default — collapsing is for
+         getting a long page out of the way, not a state worth persisting. -->
+    <div class="sp-scroll">
+
+      <details class="sp-section" open data-focus="theme">
+        <summary class="sp-summary">
+          <i class="sp-caret" aria-hidden="true"></i>
+          <h2 class="sp-legend" id="appearance-legend">Appearance</h2>
+        </summary>
+        <div class="sp-section-body">
+          <p class="sp-sub">
+            Theme for the probe's own interface — the selection outline, the info
+            panel and the toolbar. Nothing on the page you are inspecting changes.
+            <strong>System</strong> follows your operating system's light and dark
+            setting, and switches with it.
+          </p>
+          <div class="sp-pills" role="radiogroup" aria-labelledby="appearance-legend" id="theme-pills"></div>
+          <p class="sp-saved" id="saved-appearance" role="status" aria-live="polite"></p>
+        </div>
+      </details>
+
+      <hr class="sp-hr">
+
+      <!-- The measuring sheet. Dense dotted-leader rows in the probe's own
+           register: label, leader, control. Two-value choices are segmented
+           pairs; booleans are real switches. Hovering a row spotlights the part
+           of the vignette in the rail that the row controls (data-hi). -->
+      <details class="sp-section" open data-focus="measure">
+        <summary class="sp-summary">
+          <i class="sp-caret" aria-hidden="true"></i>
+          <h2 class="sp-legend" id="measuring-legend">Measuring</h2>
+        </summary>
+        <div class="sp-section-body">
+          <p class="sp-sub">
+            With an element selected, hold <strong>Option</strong> (Alt on
+            Windows and Linux) and point anywhere to measure the spacing between
+            them. These control how the measurements read and draw; changes apply
+            to open pages immediately — even mid-measurement.
+          </p>
+
+          <!-- Two chunks at the sheet's natural seam: what the numbers say,
+               then what gets drawn. Category labels are a register quieter
+               than the section legend — a spec sheet's own sub-headings. -->
+          <div class="sp-sheet" id="measure-sheet">
+            <div class="sp-sheet-group">
+              <p class="sp-sheet-cat" aria-hidden="true">Readout</p>
+              <div class="sp-spec" data-hi="unit">
+                <span class="sp-spec-label" id="lbl-unit">Unit</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg" role="radiogroup" aria-labelledby="lbl-unit">
+                  <button type="button" role="radio" data-set="redlineUnit" data-val="px">px</button>
+                  <button type="button" role="radio" data-set="redlineUnit" data-val="rem">rem</button>
+                </span>
+              </div>
+              <div class="sp-spec" data-hi="precision">
+                <span class="sp-spec-label" id="lbl-precision">Precision</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg" role="radiogroup" aria-labelledby="lbl-precision">
+                  <button type="button" role="radio" data-set="redlinePrecision" data-val="whole">whole</button>
+                  <button type="button" role="radio" data-set="redlinePrecision" data-val="tenths">tenths</button>
+                </span>
+              </div>
+            </div>
+            <div class="sp-sheet-group">
+              <p class="sp-sheet-cat" aria-hidden="true">Drawing</p>
+              <div class="sp-spec" data-hi="placement">
+                <span class="sp-spec-label" id="lbl-placement">Value pill</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg" role="radiogroup" aria-labelledby="lbl-placement">
+                  <button type="button" role="radio" data-set="redlinePillPlacement" data-val="beside">beside</button>
+                  <button type="button" role="radio" data-set="redlinePillPlacement" data-val="online">on the line</button>
+                </span>
+              </div>
+              <div class="sp-spec" data-hi="guides">
+                <span class="sp-spec-label" id="lbl-guides">Extension guides</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="redlineGuides" aria-labelledby="lbl-guides"></button>
+              </div>
+              <div class="sp-spec" data-hi="quiet">
+                <span class="sp-spec-label" id="lbl-quiet">Quiet overlay while measuring</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="redlineQuietOverlay" aria-labelledby="lbl-quiet"></button>
+              </div>
+              <div class="sp-spec" data-hi="zeros">
+                <span class="sp-spec-label" id="lbl-zeros">Mark flush edges with 0</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="redlineZeroPills" aria-labelledby="lbl-zeros"></button>
+              </div>
+            </div>
+          </div>
+          <button type="button" class="sp-reset" id="measure-reset">Reset to defaults</button>
+          <p class="sp-saved" id="saved-measuring" role="status" aria-live="polite"></p>
+        </div>
+      </details>
+
+      <details class="sp-section" open data-focus="edit">
+        <summary class="sp-summary">
+          <i class="sp-caret" aria-hidden="true"></i>
+          <h2 class="sp-legend" id="editing-legend">Editing</h2>
+        </summary>
+        <div class="sp-section-body">
+          <p class="sp-sub">
+            With an element selected, the pencil in the toolbar opens a panel
+            that tunes it live and copies what changed. These control how much
+            of that panel you see; changes apply to open pages immediately, even
+            with the panel already open.
+          </p>
+
+          <div class="sp-sheet" id="edit-sheet">
+            <div class="sp-sheet-group">
+              <div class="sp-spec" data-hi="groups">
+                <span class="sp-spec-label" id="lbl-groups">Groups the panel shows</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg" role="radiogroup" aria-labelledby="lbl-groups">
+                  <button type="button" role="radio" data-set="editGroups" data-val="standard">all</button>
+                  <button type="button" role="radio" data-set="editGroups" data-val="adaptive">relevant</button>
+                </span>
+              </div>
+              <div class="sp-spec" data-hi="tokens">
+                <span class="sp-spec-label" id="lbl-tokens">On a design token, show</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg" role="radiogroup" aria-labelledby="lbl-tokens">
+                  <button type="button" role="radio" data-set="editTokenControls" data-val="both">both</button>
+                  <button type="button" role="radio" data-set="editTokenControls" data-val="token">token</button>
+                  <button type="button" role="radio" data-set="editTokenControls" data-val="value">value</button>
+                </span>
+              </div>
+              <div class="sp-spec">
+                <span class="sp-spec-label" id="lbl-deep-shader">Deep shader capture</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="editDeepShaderCapture" aria-labelledby="lbl-deep-shader"></button>
+              </div>
+              <p class="sp-note">
+                The panel's <strong>Advanced</strong> section tunes a WebGL
+                canvas by attaching to its shader while you edit — which can
+                miss one that drew a single frame before you got there. On,
+                a small hook records which canvases receive WebGL programs
+                from page load instead. It runs on every page, keeps what it
+                sees inside that page, and nothing is read until you open the
+                edit panel on a canvas — nothing is stored, and nothing
+                leaves the browser either way.
+              </p>
+            </div>
+          </div>
+          <p class="sp-saved" id="saved-editing" role="status" aria-live="polite"></p>
+        </div>
+      </details>
+
+      <hr class="sp-hr">
+
+      <!-- The copy sheet. Two axes: which fields ride along in the comment
+           header, and how much of the rendered subtree comes with them. The
+           rail assembles the real payload from these, so every row's effect is
+           legible before anything is copied. -->
+      <details class="sp-section" open data-focus="copy">
+        <summary class="sp-summary">
+          <i class="sp-caret" aria-hidden="true"></i>
+          <h2 class="sp-legend" id="copying-legend">Copying</h2>
+        </summary>
+        <div class="sp-section-body">
+          <p class="sp-sub">
+            What <strong>Copy Code</strong> and the edit panel's copy button put
+            on the clipboard. The payload is a pointer — it names the construct
+            you mean and then gets out of the way, so your own instruction stays
+            the loudest thing in the prompt. Defaults are what the extension
+            copied before this section existed.
+          </p>
+
+          <div class="sp-sheet" id="copy-sheet">
+            <div class="sp-sheet-group">
+              <div class="sp-spec">
+                <span class="sp-spec-label" id="lbl-preset">Fields</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg sp-seg-act" role="group" aria-labelledby="lbl-preset">
+                  <button type="button" data-preset="pointer">pointer</button>
+                  <button type="button" data-preset="pointerplus">+ place</button>
+                  <button type="button" data-preset="all">everything</button>
+                </span>
+              </div>
+            </div>
+
+            <div class="sp-sheet-group">
+              <p class="sp-sheet-cat" aria-hidden="true">Names the construct</p>
+              <div class="sp-spec" data-hi="source">
+                <span class="sp-spec-label" id="lbl-c-source">Source location</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copySource" aria-labelledby="lbl-c-source"></button>
+              </div>
+              <div class="sp-spec" data-hi="component">
+                <span class="sp-spec-label" id="lbl-c-component">Component chain</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyComponent" aria-labelledby="lbl-c-component"></button>
+              </div>
+              <div class="sp-spec" data-hi="anchor">
+                <span class="sp-spec-label" id="lbl-c-anchor">Greppable anchor</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyAnchor" aria-labelledby="lbl-c-anchor"></button>
+              </div>
+              <div class="sp-spec" data-hi="handlers">
+                <span class="sp-spec-label" id="lbl-c-handlers">Handler names</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyHandlers" aria-labelledby="lbl-c-handlers"></button>
+              </div>
+            </div>
+
+            <div class="sp-sheet-group">
+              <p class="sp-sheet-cat" aria-hidden="true">Places it</p>
+              <div class="sp-spec" data-hi="page">
+                <span class="sp-spec-label" id="lbl-c-page">Page</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyPage" aria-labelledby="lbl-c-page"></button>
+              </div>
+              <div class="sp-spec" data-hi="selector">
+                <span class="sp-spec-label" id="lbl-c-selector">CSS selector path</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copySelector" aria-labelledby="lbl-c-selector"></button>
+              </div>
+              <div class="sp-spec" data-hi="position">
+                <span class="sp-spec-label" id="lbl-c-position">Position &amp; neighbours</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyPosition" aria-labelledby="lbl-c-position"></button>
+              </div>
+              <div class="sp-spec" data-hi="repeated">
+                <span class="sp-spec-label" id="lbl-c-repeated">Repetition warning</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyRepeated" aria-labelledby="lbl-c-repeated"></button>
+              </div>
+              <div class="sp-spec" data-hi="text">
+                <span class="sp-spec-label" id="lbl-c-text">Visible text</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyText" aria-labelledby="lbl-c-text"></button>
+              </div>
+            </div>
+
+            <div class="sp-sheet-group">
+              <p class="sp-sheet-cat" aria-hidden="true">Diagnosis — off by default</p>
+              <div class="sp-spec" data-hi="layout">
+                <span class="sp-spec-label" id="lbl-c-layout">Layout diagnosis</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyLayout" aria-labelledby="lbl-c-layout"></button>
+              </div>
+              <div class="sp-spec" data-hi="styles">
+                <span class="sp-spec-label" id="lbl-c-styles">Matched CSS &amp; origin</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyStyles" aria-labelledby="lbl-c-styles"></button>
+              </div>
+              <div class="sp-spec" data-hi="props">
+                <span class="sp-spec-label" id="lbl-c-props">Props snapshot</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyProps" aria-labelledby="lbl-c-props"></button>
+              </div>
+              <p class="sp-note">
+                Every other field names things — files, components, functions.
+                <strong>Props snapshot</strong> is the one that reports values,
+                so it is the one that can carry the page's own data into a
+                prompt. It is never included in a preset.
+              </p>
+            </div>
+
+            <div class="sp-sheet-group">
+              <p class="sp-sheet-cat" aria-hidden="true">The HTML block</p>
+              <div class="sp-spec" data-hi="html">
+                <span class="sp-spec-label" id="lbl-c-html">How much rides along</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg" role="radiogroup" aria-labelledby="lbl-c-html">
+                  <button type="button" role="radio" data-set="copyHtml" data-val="root">root</button>
+                  <button type="button" role="radio" data-set="copyHtml" data-val="shape">shape</button>
+                  <button type="button" role="radio" data-set="copyHtml" data-val="full">full</button>
+                  <button type="button" role="radio" data-set="copyHtml" data-val="none">none</button>
+                </span>
+              </div>
+              <div class="sp-spec" data-hi="html" id="row-depth">
+                <span class="sp-spec-label" id="lbl-c-depth">Depth of the subtree</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <span class="sp-seg" role="radiogroup" aria-labelledby="lbl-c-depth">
+                  <button type="button" role="radio" data-set="copyDepth" data-val="3">3</button>
+                  <button type="button" role="radio" data-set="copyDepth" data-val="2">2</button>
+                  <button type="button" role="radio" data-set="copyDepth" data-val="1">1</button>
+                </span>
+              </div>
+              <div class="sp-spec" data-hi="html">
+                <span class="sp-spec-label" id="lbl-c-fallback">Full subtree when nothing points at source</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyHtmlFallback" aria-labelledby="lbl-c-fallback"></button>
+              </div>
+            </div>
+
+            <div class="sp-sheet-group">
+              <p class="sp-sheet-cat" aria-hidden="true">Wrapper</p>
+              <div class="sp-spec" data-hi="fence">
+                <span class="sp-spec-label" id="lbl-c-fence">Fence the block</span>
+                <i class="sp-spec-leader" aria-hidden="true"></i>
+                <button type="button" class="sp-switch" role="switch" data-sw="copyFence" aria-labelledby="lbl-c-fence"></button>
+              </div>
+              <p class="sp-note">
+                <code>#</code> starts a markdown heading. Anywhere a prompt is
+                rendered rather than shown raw, an unfenced header turns every
+                line of the pointer into an H1 — louder than the sentence you
+                wrote. The fence costs eight characters.
+              </p>
+            </div>
+          </div>
+          <button type="button" class="sp-reset" id="copy-reset">Reset to defaults</button>
+          <p class="sp-saved" id="saved-copying" role="status" aria-live="polite"></p>
+        </div>
+      </details>
+
+      <!--
+        These point at the repository rather than at ../PRIVACY.md and
+        ../DESIGN.md: build.sh ships no markdown, so relative links would 404 in
+        the packaged extension even though they resolve when loaded from source.
+      -->
+      <footer class="sp-footer">
+        <p>
+          Your settings are stored on this device and never leave it.
+          <a href="https://github.com/Jingquank/Claude-Code-Probe/blob/main/PRIVACY.md"
+             target="_blank" rel="noreferrer">Privacy</a> ·
+          <a href="https://github.com/Jingquank/Claude-Code-Probe/blob/main/DESIGN.md"
+             target="_blank" rel="noreferrer">Design</a>
+        </p>
+      </footer>
+
+    </div>
+
+    <!--
+      Preview rail. Context-sensitive: it answers whichever section you are in —
+      the chrome mock while you pick a theme, the measuring vignette while you
+      tune redlines (settings.js swaps data-mode as the pointer or focus moves).
+      Six grid columns wide, which clears the toolbar's 470px compact
+      breakpoint — the chrome previews at full width, labels and all.
+    -->
+    <aside class="sp-rail" id="preview-rail" data-mode="theme">
+      <!-- The rail stretches so its raised ground runs the full column; this
+           inner wrapper is what sticks, keeping the content pinned to the top
+           of the viewport while the settings scroll. -->
+      <div class="sp-rail-in">
+      <!-- The tag names the section the rail is currently answering. Both
+           tags share one inline cell so the legend's width never shifts. -->
+      <h2 class="sp-legend">Preview
+        <span class="sp-tag-slot">
+          <span class="sp-tag" data-pv="theme">appearance</span>
+          <span class="sp-tag" data-pv="measure">measuring</span>
+          <span class="sp-tag" data-pv="edit">editing</span>
+          <span class="sp-tag" data-pv="copy">copying</span>
+        </span>
+      </h2>
+      <!-- Both subs share one grid cell so the crossfade swaps them in place
+           instead of stacking them for a frame. -->
+      <div class="sp-pv-slot">
+        <p class="sp-sub" data-pv="theme">
+          Every surface the theme paints, piece by piece — the hover outline,
+          the selection with its sweep, the info panel, the toolbar, the gear.
+        </p>
+        <p class="sp-sub" data-pv="measure">
+          A held-Option measurement, drawn to scale: gaps, dashed extension
+          guides, a flush edge. The readouts follow the settings on the left.
+        </p>
+        <p class="sp-sub" data-pv="edit">
+          The panel that opens on the pencil, at its real scale — a group of
+          rows, a value that types, arrows and scrubs, and the token stepper
+          beside it.
+        </p>
+        <p class="sp-sub" data-pv="copy">
+          The clipboard payload for one real element — a row in an invoice
+          table — assembled from the settings on the left, exactly as the
+          extension assembles it.
+        </p>
+      </div>
+
+      <div class="sp-preview">
+        <!--
+          The Appearance mock is an anatomy sheet: each piece of chrome pinned
+          under a quiet caption on the shared blueprint grid. The label,
+          toolbar, and gear keep their real ids so they render through the
+          real content.css rules; the hover and selection specimens are
+          settings.css's own, the selection carrying the same conic sweep
+          content.css spins around a live selection.
+        -->
+        <div class="ccp-mock">
+
+          <div class="an-item">
+            <p class="an-cap" aria-hidden="true">Hover</p>
+            <div class="an-hover">
+              <span class="sp-element-title">Free Plan</span>
+              <span class="sp-element-body">For trying it out.</span>
+            </div>
+          </div>
+
+          <div class="an-item">
+            <p class="an-cap" aria-hidden="true">Selection</p>
+            <div class="an-beam" aria-hidden="true">
+              <div class="an-sel">
+                <span class="sp-element-title">Pro Plan</span>
+                <span class="sp-element-body">For teams that need more.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="an-item">
+            <p class="an-cap" aria-hidden="true">Gear</p>
+            <button type="button" id="ccp-settings-btn" tabindex="-1" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          </button>
+          </div>
+
+          <!--
+            The info panel, with the same markup updateLabel() builds. Kept short
+            on purpose: #ccp-label is white-space: nowrap, so a longer readout
+            would overflow the rail rather than wrap.
+          -->
+          <div class="an-item an-span an-label">
+          <p class="an-cap" aria-hidden="true">Info panel</p>
+          <div id="ccp-label">
+            <!--
+              Clawd, so --ccp-clawd-body and --ccp-clawd-leg get previewed too.
+              This is the compact silhouette rather than the full mascot from
+              content.js — a static preview does not need the walk cycle, and
+              settings.css holds it still.
+            -->
+            <div class="ccp-clawd" aria-hidden="true">
+              <svg viewBox="-4 -4 120 80" fill="none">
+                <rect class="ccp-clawd-body" x="8" y="0" width="96" height="56" rx="4"/>
+                <rect class="ccp-clawd-body" x="-4" y="25.6" width="12" height="14.4" rx="3"/>
+                <rect class="ccp-clawd-body" x="104" y="25.6" width="12" height="14.4" rx="3"/>
+                <rect class="ccp-clawd-eye" x="28" y="14" width="8" height="16" rx="2"/>
+                <rect class="ccp-clawd-eye" x="76" y="14" width="8" height="16" rx="2"/>
+                <rect class="ccp-clawd-leg" x="16" y="56" width="9.6" height="20" rx="2"/>
+                <rect class="ccp-clawd-leg" x="30.4" y="56" width="9.6" height="20" rx="2"/>
+                <rect class="ccp-clawd-leg" x="72" y="56" width="9.6" height="20" rx="2"/>
+                <rect class="ccp-clawd-leg" x="86.4" y="56" width="9.6" height="20" rx="2"/>
+              </svg>
+            </div>
+            <div class="ccp-label-content">
+              <div class="ccp-label-line ccp-line-identity">
+                <span class="ccp-label-tag">div</span
+                ><span class="ccp-label-class">.card</span>
+                <span class="ccp-label-size">320 × 208</span>
+              </div>
+              <div class="ccp-label-line ccp-line-meta">
+                <span class="ccp-label-prop">flex</span>
+                <span class="ccp-label-sep">·</span>
+                <span class="ccp-label-prop">column</span>
+              </div>
+              <div class="ccp-label-line ccp-line-visual">
+                <span class="ccp-label-prop"><span class="ccp-color-swatch" style="background-color:#ffffff"></span>#ffffff</span>
+                <span class="ccp-label-sep">·</span>
+                <span class="ccp-label-prop">radius 12px</span>
+              </div>
+              <div class="ccp-label-line ccp-line-breadcrumb ccp-label-breadcrumb">
+                div.grid <span class="ccp-label-sep">›</span> <span class="ccp-label-tag">div</span>
+              </div>
+            </div>
+          </div>
+          </div>
+
+          <!-- The toolbar, full width — the rail is wide enough now -->
+          <div class="an-item an-span">
+          <p class="an-cap" aria-hidden="true">Toolbar</p>
+          <div id="ccp-toolbar">
+            <div class="ccp-bar">
+              <button type="button" tabindex="-1" title="Copy Code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span>Copy Code</span>
+              </button>
+              <button type="button" tabindex="-1" title="Screenshot">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg><span>Screenshot</span>
+              </button>
+            </div>
+            <button type="button" class="ccp-parent-btn" tabindex="-1" title="Select Parent">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3"/><path d="M12 20v-8"/><polyline points="9 15 12 12 15 15"/></svg><span>Select Parent</span>
+            </button>
+          </div>
+          </div>
+
+        </div>
+
+        <!--
+          The measuring vignette, drawn as the blueprint the name comes from:
+          the shared grid ground, coordinate notes, a title block whose second
+          line is the live settings summary. Still a composite catalogue, not a
+          simulation — one diagonal pair (two gap lines, two dashed guides, two
+          pills), one flush neighbour (the zero pill), tint on the selection
+          (the quiet toggle). Hand-placed nodes: computeRedline lives inside
+          the content script's IIFE and cannot be imported, so the geometry is
+          drawn to the same rules by hand. Every line spans the gap it claims
+          to measure; the pill values are formatted by the same function the
+          extension uses (settings.js mirrors formatRedlineValue — change both).
+        -->
+        <div class="sp-vig" id="measure-vig" aria-hidden="true"
+             data-placement="beside" data-guides="on" data-quiet="off" data-zeros="on">
+          <span class="sv-note" style="left: 70px; top: 28px;">x 70 · y 46</span>
+          <div class="sv-el sv-sel"><span class="sv-tag">selected</span></div>
+          <div class="sv-el sv-flush"></div>
+          <div class="sv-el sv-hov"><span class="sv-tag">hover</span></div>
+          <span class="sv-note" style="left: 396px; top: 310px;">w 140 · h 76</span>
+          <i class="sv-line sv-line-v"></i>
+          <i class="sv-line sv-line-h"></i>
+          <i class="sv-guide sv-guide-h"></i>
+          <i class="sv-guide sv-guide-v"></i>
+          <b class="sv-pill sv-pill-a" id="vig-pill-a">70</b>
+          <b class="sv-pill sv-pill-b" id="vig-pill-b">87</b>
+          <b class="sv-pill sv-pill-z" id="vig-pill-z">0</b>
+          <div class="sv-title">
+            <b>Redline</b>
+            <p class="sv-caption" id="vig-caption">px · whole · beside</p>
+          </div>
+        </div>
+
+        <!--
+          The Editing specimen is the panel at its real 248px, built from the
+          same content.css rules the live panel uses — so what is on screen
+          here is the chrome, not a drawing of it. The two settings act on it
+          directly: `groups` adds or removes the greyed Border group, `tokens`
+          shows or hides the value chip and the stepper.
+        -->
+        <div class="ep-mock" id="edit-mock" aria-hidden="true"
+             data-groups="standard" data-tokens="both">
+          <div id="ccp-edit-panel">
+            <div class="ccp-edit-head">
+              <button type="button" class="ccp-edit-back" tabindex="-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+                </svg>
+              </button>
+              <span class="ccp-edit-id"><b class="ccp-edit-id-tag">h2</b><b class="ccp-edit-id-class">.card-title</b></span>
+              <button type="button" class="ccp-edit-act" tabindex="-1">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+                </svg><i class="ccp-edit-count">2</i>
+              </button>
+              <button type="button" class="ccp-edit-act ccp-edit-on" tabindex="-1">↺</button>
+            </div>
+            <div class="ccp-edit-body">
+              <div class="ccp-edit-group" data-ep="typography">
+                <p class="ccp-edit-legend">Typography</p>
+                <div class="ccp-edit-row ccp-edit-dirty" data-ep-row="token">
+                  <button type="button" class="ccp-edit-dot ccp-edit-on" tabindex="-1"></button>
+                  <span class="ccp-edit-label">size</span>
+                  <span class="ccp-edit-numwrap">
+                    <span class="ccp-edit-num"><input class="ccp-edit-input" value="28" readonly tabindex="-1"><i class="ccp-edit-unit">px</i></span>
+                    <span class="ccp-edit-tok"><button type="button" tabindex="-1">‹</button><b>lg</b><button type="button" tabindex="-1">›</button></span>
+                  </span>
+                </div>
+                <div class="ccp-edit-row">
+                  <button type="button" class="ccp-edit-dot" tabindex="-1"></button>
+                  <span class="ccp-edit-label">weight</span>
+                  <span class="ccp-edit-num"><input class="ccp-edit-input" value="600" readonly tabindex="-1"></span>
+                </div>
+                <div class="ccp-edit-row">
+                  <button type="button" class="ccp-edit-dot" tabindex="-1"></button>
+                  <span class="ccp-edit-label">colour</span>
+                  <span class="ccp-edit-color">
+                    <button type="button" class="ccp-edit-swatch" tabindex="-1"><i></i></button>
+                    <span class="ccp-edit-hex ccp-edit-token">--ink</span>
+                  </span>
+                </div>
+              </div>
+              <div class="ccp-edit-group" data-ep="border">
+                <p class="ccp-edit-legend">Border</p>
+                <div class="ccp-edit-row">
+                  <button type="button" class="ccp-edit-add" tabindex="-1">+ add border</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!--
+          The copy payload, rendered as the clipboard would receive it. Unlike
+          the two specimens above, this one is text, so it is assembled rather
+          than drawn: settings.js mirrors COPY_ORDER, renderCopyHeader and the
+          fence shapes from content.js (change both — test/mirror-drift.mjs
+          checks it), and feeds them one fixture element's literal lines. The
+          page still learns none of the extension's logic; it formats strings
+          it was handed, which is the same seam the vignette keeps.
+
+          The resolved chips are page state, not a setting: they flip the one
+          condition the payload cannot demonstrate on its own, which is what
+          happens to the HTML block when nothing points at the source.
+        -->
+        <div class="sp-pay" id="copy-pay">
+          <div class="sp-pay-bar">
+            <span class="sp-pay-q" id="lbl-src">pointer resolves</span>
+            <span class="sp-seg sp-seg-sm" role="radiogroup" aria-labelledby="lbl-src">
+              <button type="button" role="radio" data-src="1">yes</button>
+              <button type="button" role="radio" data-src="0">no</button>
+            </span>
+            <span class="sp-pay-count" id="copy-count"></span>
+          </div>
+          <pre class="sp-pay-out" id="copy-out" aria-live="polite"></pre>
+          <p class="sp-pay-note" id="copy-note"></p>
+        </div>
+      </div>
+      </div>
+    </aside>
+
+  </div>
+</main>
+
+<script src="settings.js"></script>
+</body>
+</html>

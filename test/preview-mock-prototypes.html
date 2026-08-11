@@ -1,0 +1,1261 @@
+<meta charset="utf-8">
+<title>Claude Code Probe — Preview mock prototypes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* ============================================================
+   GALLERY SHELL — same quiet frame as the other two galleries.
+   ============================================================ */
+:root {
+  --g-ground:  #f7f6f2;
+  --g-raised:  #ffffff;
+  --g-ink:     #17160f;
+  --g-dim:     #56534a;
+  --g-muted:   #8d8a80;
+  --g-rule:    #e0ddd3;
+  --g-rule-hi: #cbc7ba;
+  --g-accent:  #b8542f;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.25rem;
+  --step-3: 1.75rem;
+  --step-4: 2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-ground:  #131210;
+    --g-raised:  #1b1a17;
+    --g-ink:     #ece9e1;
+    --g-dim:     #a5a196;
+    --g-muted:   #7d7a71;
+    --g-rule:    #2a2824;
+    --g-rule-hi: #3d3a34;
+    --g-accent:  #e08b68;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--g-ground);
+  color: var(--g-ink);
+  font-family: var(--sans);
+  font-size: var(--step-1);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--g-ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--g-rule);
+}
+.topbar-in { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 0; flex-wrap: wrap; }
+.topbar-title {
+  font-family: var(--mono); font-size: var(--step-0);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--g-dim); margin: 0; white-space: nowrap;
+}
+.jump { display: flex; gap: 0.25rem; margin-left: auto; flex-wrap: wrap; }
+.jump a {
+  font-family: var(--mono); font-size: 0.7rem;
+  text-decoration: none; color: var(--g-dim);
+  border: 1px solid var(--g-rule); border-radius: 6px;
+  min-width: 2rem; height: 2rem; padding: 0 0.3rem;
+  display: grid; place-items: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.jump a:hover, .jump a:focus-visible {
+  background: var(--g-accent); border-color: var(--g-accent); color: var(--g-ground);
+  outline: none;
+}
+
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 2rem; border-bottom: 1px solid var(--g-rule); }
+.eyebrow {
+  font-family: var(--mono); font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--g-accent); margin: 0 0 1rem;
+}
+h1 {
+  font-family: var(--mono); font-weight: 500;
+  font-size: clamp(1.75rem, 4.5vw, var(--step-4));
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin: 0 0 1.25rem; text-wrap: balance;
+}
+.lede { font-size: var(--step-2); line-height: 1.5; color: var(--g-dim); max-width: 62ch; margin: 0 0 2rem; }
+.howto {
+  display: grid; gap: 0.75rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  font-size: var(--step-0); color: var(--g-dim);
+  border-top: 1px solid var(--g-rule); padding-top: 1.5rem;
+}
+.howto p { margin: 0; }
+.howto strong { color: var(--g-ink); font-weight: 600; }
+
+.family {
+  font-family: var(--mono); font-weight: 500; font-size: var(--step-3);
+  letter-spacing: -0.01em; margin: 3.5rem 0 0; padding-top: 1rem;
+}
+.family small { display: block; font-size: var(--step-0); color: var(--g-muted); letter-spacing: 0.06em; }
+
+.proto { padding: clamp(2rem, 5vw, 3.5rem) 0; border-bottom: 1px solid var(--g-rule); scroll-margin-top: 4.5rem; }
+.proto-head { display: grid; grid-template-columns: auto 1fr; gap: 0 1.25rem; align-items: baseline; margin-bottom: 1.5rem; }
+.proto-num {
+  font-family: var(--mono); font-size: var(--step-3); font-weight: 500;
+  color: var(--g-rule-hi); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.proto-head h2 { font-family: var(--mono); font-weight: 500; font-size: var(--step-2); margin: 0; letter-spacing: -0.01em; line-height: 1.25; }
+.thesis { grid-column: 2; margin: 0.5rem 0 0; color: var(--g-dim); max-width: 68ch; }
+
+.tradeoff { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 1.5rem 0 0; font-size: var(--step-0); }
+.tradeoff dt {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--g-muted); padding-top: 0.2em;
+}
+.tradeoff dd { margin: 0; color: var(--g-dim); }
+.tradeoff .win { color: var(--g-ink); }
+
+/* ============================================================
+   THEME TOKENS — the real eight
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] {
+  --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64;
+  --sep:#3a3a35; --accent:#d97757; --on-accent:#1a0d07; --id:#6a9bcc; --class:#788c5d;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(20,20,19,.4);
+  --shadow-bar: 0 4px 16px rgba(20,20,19,.6);
+  --page:#1e1e1c; --page-ink:#c8c5bc; --page-rule:#2e2e2a;
+}
+[data-ccp-theme="terracotta-light"] {
+  --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780;
+  --sep:#ddd9cf; --accent:#c2603f; --on-accent:#fff8f4; --id:#2f6291; --class:#4d6a36;
+  --shadow-card: 0 8px 24px -10px rgba(60,45,35,.28), 0 1px 3px rgba(60,45,35,.14);
+  --shadow-bar: 0 4px 14px rgba(60,45,35,.18);
+  --page:#ffffff; --page-ink:#3a3a35; --page-rule:#eae7de;
+}
+[data-ccp-theme="dracula"] {
+  --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4;
+  --sep:#44475a; --accent:#bd93f9; --on-accent:#1a1626; --id:#8be9fd; --class:#50fa7b;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,30,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,30,.65);
+  --page:#21222c; --page-ink:#cfd0e0; --page-rule:#343746;
+}
+[data-ccp-theme="monokai"] {
+  --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e;
+  --sep:#3e3d32; --accent:#f92672; --on-accent:#2a0512; --id:#66d9ef; --class:#a6e22e;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,15,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,15,.65);
+  --page:#1e1f1a; --page-ink:#d9d8cd; --page-rule:#32332b;
+}
+[data-ccp-theme="nord"] {
+  --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1;
+  --sep:#3b4252; --accent:#88c0d0; --on-accent:#16202b; --id:#81a1c1; --class:#a3be8c;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.5), 0 2px 6px rgba(20,25,35,.4);
+  --shadow-bar: 0 4px 16px rgba(20,25,35,.6);
+  --page:#272c36; --page-ink:#d8dee9; --page-rule:#343b48;
+}
+[data-ccp-theme="solarized-dark"] {
+  --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75;
+  --sep:#073642; --accent:#cb4b16; --on-accent:#1a0700; --id:#268bd2; --class:#859900;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,20,25,.45);
+  --shadow-bar: 0 4px 16px rgba(0,20,25,.65);
+  --page:#01212b; --page-ink:#93a1a1; --page-rule:#062b35;
+}
+[data-ccp-theme="tokyo-night"] {
+  --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89;
+  --sep:#292e42; --accent:#bb9af7; --on-accent:#16111f; --id:#7aa2f7; --class:#9ece6a;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(15,15,25,.45);
+  --shadow-bar: 0 4px 16px rgba(15,15,25,.65);
+  --page:#16161e; --page-ink:#a9b1d6; --page-rule:#232430;
+}
+
+/* ============================================================
+   THE RAIL FRAME — every prototype renders inside the real
+   thing it will live in: a ~700px raised rail column.
+   ============================================================ */
+.railframe {
+  width: 700px; max-width: 100%;
+  margin: 0 auto;
+  background: color-mix(in srgb, var(--surface) 94%, var(--text));
+  border: 1px solid color-mix(in srgb, var(--surface) 84%, var(--text));
+  border-radius: 10px;
+  padding: 20px 22px;
+  font-family: var(--mono);
+  color: var(--text);
+  position: relative;
+}
+.rf-legend {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; font-weight: 500; letter-spacing: 0.14em;
+  text-transform: uppercase; color: var(--muted);
+  margin: 0 0 12px;
+}
+.rf-tag {
+  color: var(--accent);
+  border: 1px solid rgb(from var(--accent) r g b / 0.4);
+  border-radius: 4px; padding: 1px 5px; letter-spacing: 0.06em;
+}
+.rf-dots { margin-left: auto; display: flex; gap: 5px; }
+.rf-dots i {
+  width: 11px; height: 11px; border-radius: 3px; cursor: pointer;
+  border: 1px solid rgba(127,127,127,.4); background: var(--accent);
+  display: inline-block;
+}
+.rf-stage {
+  background: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--surface) 84%, var(--text));
+  border-radius: 8px;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+  min-height: 300px;
+}
+
+/* ============================================================
+   SHARED CHROME PIECES (11px real scale)
+   ============================================================ */
+.m-el {
+  border: 2px solid var(--accent); border-radius: 8px;
+  background: rgb(from var(--accent) r g b / 0.07);
+  padding: 12px 16px; display: flex; flex-direction: column; gap: 4px;
+  width: max-content;
+}
+.m-el b { font-size: 13px; font-weight: 700; color: var(--text); }
+.m-el span { font-size: 11px; color: var(--muted); }
+
+.m-label {
+  background: var(--surface); color: var(--text);
+  border: 1px solid rgb(from var(--accent) r g b / 0.25);
+  border-radius: 8px; box-shadow: var(--shadow-card);
+  padding: 6px 10px; font-size: 11px; line-height: 1.5;
+  display: flex; flex-direction: column; gap: 3px; width: max-content;
+}
+.l-row { display: flex; align-items: baseline; gap: 5px; white-space: nowrap; }
+.t-tag { color: var(--accent); font-weight: 600; }
+.t-id { color: var(--id); font-weight: 500; }
+.t-class { color: var(--class); }
+.t-size { color: var(--faint); font-size: 10px; font-variant-numeric: tabular-nums; }
+.t-prop { color: var(--muted); font-size: 10px; }
+.t-sep { color: var(--sep); }
+.t-crumb { color: var(--faint); font-size: 10px; }
+
+.m-toolbar { display: flex; align-items: stretch; gap: 8px; width: max-content; }
+.m-bar {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--surface);
+  border: 1px solid rgb(from var(--accent) r g b / 0.5);
+  border-radius: 10px; box-shadow: var(--shadow-bar);
+}
+.m-bar u, .m-parent {
+  text-decoration: none; font-size: 11px; font-weight: 500;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 7px 12px; border-radius: 7px; color: var(--text); white-space: nowrap;
+}
+.m-parent {
+  background: var(--surface); color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 10px; box-shadow: var(--shadow-bar);
+  display: flex; align-items: center;
+}
+.m-gear {
+  position: absolute; top: 12px; right: 12px;
+  width: 30px; height: 30px; border-radius: 10px;
+  background: var(--surface); color: var(--accent);
+  border: 1px solid var(--accent); box-shadow: var(--shadow-bar);
+  display: grid; place-items: center; font-size: 13px;
+}
+
+/* ============================================================
+   SHARED DRAWING PRIMITIVES (measuring)
+   ============================================================ */
+.d-box { position: absolute; border-radius: 6px; }
+.d-sel {
+  border: 1.5px dashed var(--accent);
+  background: rgb(from var(--accent) r g b / 0.1);
+}
+.d-hov { border: 1px solid var(--accent); border-radius: 10px; }
+.d-flush { border: 1px solid rgb(from var(--faint) r g b / 0.55); }
+.d-tagname {
+  position: absolute; left: 7px; top: 5px;
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+}
+.d-line { position: absolute; background: var(--accent); }
+.d-guide-h { position: absolute; height: 0; border-top: 1px dashed rgb(from var(--accent) r g b / 0.6); }
+.d-guide-v { position: absolute; width: 0; border-left: 1px dashed rgb(from var(--accent) r g b / 0.6); }
+.d-pill {
+  position: absolute; transform: translate(-50%, -50%);
+  background: var(--accent); color: var(--on-accent);
+  font-size: 10px; font-weight: 600; line-height: 1;
+  padding: 4px 7px; border-radius: 8px; white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.d-note {
+  position: absolute; font-size: 9px; letter-spacing: 0.08em;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* ============================================================
+   A1 — PAGE DIORAMA
+   ============================================================ */
+.a1-page {
+  background: var(--page); border: 1px solid var(--page-rule); border-radius: 8px;
+  padding: 16px; position: relative; min-height: 330px;
+}
+.a1-nav { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; }
+.a1-logo { width: 18px; height: 18px; border-radius: 5px; background: var(--page-rule); }
+.a1-nav i { width: 44px; height: 7px; border-radius: 4px; background: var(--page-rule); }
+.a1-h { font-family: var(--sans); font-size: 17px; font-weight: 650; color: var(--page-ink); margin: 0 0 4px; }
+.a1-p { font-family: var(--sans); font-size: 11px; color: color-mix(in srgb, var(--page-ink) 65%, transparent); margin: 0 0 16px; max-width: 46ch; }
+.a1-cards { display: flex; gap: 16px; }
+.a1-card {
+  width: 168px; border-radius: 8px; border: 1px solid var(--page-rule);
+  padding: 12px; font-size: 10px; color: var(--page-ink);
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+}
+.a1-card b { display: block; font-family: var(--sans); font-size: 12px; margin-bottom: 3px; }
+.a1-card.sel { border: 2px dashed var(--accent); background: rgb(from var(--accent) r g b / 0.08); }
+.a1-label { position: absolute; left: 372px; top: 118px; }
+.a1-toolbar { position: absolute; left: 16px; bottom: 16px; }
+
+/* ============================================================
+   A2 — BREATHING STACK
+   ============================================================ */
+.a2 .rf-stage { display: flex; flex-direction: column; gap: 26px; padding: 30px 26px; }
+
+/* ============================================================
+   A3 — ANATOMY SHEET
+   ============================================================ */
+.a3 .rf-stage {
+  background-image: radial-gradient(rgb(from var(--faint) r g b / 0.25) 1px, transparent 1px);
+  background-size: 22px 22px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 26px 30px; padding: 26px;
+}
+.a3-item { display: flex; flex-direction: column; gap: 8px; align-items: start; }
+.a3-cap {
+  font-size: 9px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px dotted var(--sep); padding-bottom: 2px;
+}
+
+/* ============================================================
+   A4 — SELECTION MOMENT (real overlay visuals)
+   ============================================================ */
+.a4-wrap { position: relative; min-height: 320px; }
+.a4-margin {
+  position: absolute; left: 96px; top: 30px; width: 400px; height: 190px;
+  background: rgb(from var(--accent) r g b / 0.08); border-radius: 12px;
+}
+.a4-elbox {
+  position: absolute; left: 120px; top: 52px; width: 352px; height: 146px;
+  border-radius: 10px; background: var(--page);
+  outline: 2px dashed var(--accent); outline-offset: 2px;
+}
+.a4-padding {
+  position: absolute; inset: 14px;
+  border: 1px dashed rgb(from var(--id) r g b / 0.55); border-radius: 6px;
+  display: grid; place-items: center;
+  font-family: var(--sans); font-size: 12px; color: var(--page-ink);
+}
+.a4-corner { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+.a4-label { position: absolute; left: 330px; top: 212px; }
+.a4-chip {
+  position: absolute; font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--muted); background: var(--surface); padding: 2px 6px;
+  border: 1px solid var(--sep); border-radius: 4px;
+}
+
+/* ============================================================
+   A5 — PALETTE BOARD
+   ============================================================ */
+.a5 .rf-stage { display: grid; grid-template-columns: 240px 1fr; gap: 24px; padding: 22px; }
+.a5-rows { display: flex; flex-direction: column; gap: 7px; }
+.a5-row { display: flex; align-items: center; gap: 9px; font-size: 10px; color: var(--dim); }
+.a5-row i { width: 26px; height: 14px; border-radius: 4px; border: 1px solid rgba(127,127,127,.3); flex: none; }
+.a5-row span { color: var(--faint); margin-left: auto; font-variant-numeric: tabular-nums; }
+.a5-chrome { display: flex; flex-direction: column; gap: 16px; align-items: start; justify-content: center; }
+
+/* ============================================================
+   A6 — STORYBOARD STRIP
+   ============================================================ */
+.a6 .rf-stage { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; padding: 16px; }
+.a6-frame {
+  border: 1px solid var(--sep); border-radius: 8px; background: var(--page);
+  padding: 12px; position: relative; min-height: 250px; overflow: hidden;
+}
+.a6-cap {
+  position: absolute; left: 10px; bottom: 8px;
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+}
+.a6-elbox {
+  width: 120px; height: 60px; border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+  border: 1px solid var(--page-rule); margin: 12px auto 10px;
+}
+.a6-frame .m-label { zoom: 0.82; margin: 0 auto; }
+.a6-frame .m-toolbar { zoom: 0.72; margin: 8px auto 0; }
+.a6-ants { outline: 2px dashed var(--accent); outline-offset: 2px; }
+
+/* ============================================================
+   A7 — FLOATING STAGE
+   ============================================================ */
+.a7 .rf-stage {
+  background:
+    linear-gradient(rgb(from var(--page-ink) r g b / 0.05), transparent 45%),
+    var(--page);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 20px; min-height: 330px;
+}
+.a7-ghost { position: absolute; border-radius: 8px; background: rgb(from var(--page-ink) r g b / 0.06); }
+
+/* ============================================================
+   A8 — CLAWD'S STAGE
+   ============================================================ */
+.a8 .rf-stage { display: grid; grid-template-columns: 190px 1fr; gap: 20px; align-items: center; padding: 24px; }
+.a8-clawd svg { width: 150px; height: auto; display: block; margin: 0 auto; }
+.a8-clawd .body { fill: var(--accent); }
+.a8-clawd .eye { fill: var(--surface); }
+.a8-right { display: flex; flex-direction: column; gap: 16px; align-items: start; }
+
+/* ============================================================
+   M1 — GRAND COMPOSITE
+   ============================================================ */
+.m1-stage { position: relative; height: 340px; }
+
+/* ============================================================
+   M2 — CASE CARDS
+   ============================================================ */
+.m2 .rf-stage { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px; }
+.m2-card {
+  position: relative; height: 150px; border: 1px solid var(--sep); border-radius: 8px;
+  background: var(--page); overflow: hidden;
+}
+.m2-cap {
+  position: absolute; left: 10px; bottom: 7px;
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+}
+
+/* ============================================================
+   M3 — IN-SITU MEASUREMENT
+   ============================================================ */
+.m3-page {
+  background: var(--page); border: 1px solid var(--page-rule); border-radius: 8px;
+  padding: 18px; position: relative; min-height: 320px;
+}
+.m3-h { font-family: var(--sans); font-size: 15px; font-weight: 650; color: var(--page-ink); margin: 0 0 4px; }
+.m3-p { font-family: var(--sans); font-size: 11px; color: color-mix(in srgb, var(--page-ink) 65%, transparent); margin: 0 0 20px; }
+.m3-card {
+  position: absolute; width: 180px; height: 96px; border-radius: 8px;
+  border: 1px solid var(--page-rule); padding: 10px;
+  font-size: 10px; color: var(--page-ink);
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+}
+.m3-card b { display: block; font-family: var(--sans); font-size: 12px; }
+
+/* ============================================================
+   M4 — PLAYGROUND
+   ============================================================ */
+.m4-stage { position: relative; height: 300px; }
+.m4-poses { display: flex; gap: 6px; margin-top: 12px; }
+.m4-poses button {
+  font-family: var(--mono); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 5px 10px; border-radius: 8px; cursor: pointer;
+  border: 1px solid var(--sep); background: transparent; color: var(--muted);
+}
+.m4-poses button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.m4-stage [data-pose] { display: none; }
+.m4-stage[data-show="side"] [data-pose="side"],
+.m4-stage[data-show="below"] [data-pose="below"],
+.m4-stage[data-show="inside"] [data-pose="inside"] { display: block; }
+
+/* ============================================================
+   M5 — ANNOTATED ANATOMY
+   ============================================================ */
+.m5-stage { position: relative; height: 340px; }
+.m5-call {
+  position: absolute; font-size: 9px; letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--dim); background: var(--surface); border: 1px solid var(--sep);
+  border-radius: 4px; padding: 2px 6px; white-space: nowrap;
+}
+.m5-lead { position: absolute; border-top: 1px solid rgb(from var(--muted) r g b / 0.5); }
+
+/* ============================================================
+   M6 — FILM STRIP
+   ============================================================ */
+.m6 .rf-stage { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; padding: 16px; }
+.m6-frame {
+  position: relative; height: 240px; border: 1px solid var(--sep); border-radius: 8px;
+  background: var(--page); overflow: hidden;
+}
+.m6-cap {
+  position: absolute; left: 10px; bottom: 7px;
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+}
+.m6-key {
+  position: absolute; right: 10px; top: 8px;
+  font-size: 10px; border: 1px solid var(--sep); border-radius: 4px;
+  padding: 1px 6px; color: var(--dim); background: var(--surface);
+}
+
+/* ============================================================
+   M7 — BLUEPRINT
+   ============================================================ */
+.m7-stage {
+  position: relative; height: 340px; border-radius: 8px; overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgb(from var(--accent) r g b / 0.05) 0 1px, transparent 1px 24px),
+    repeating-linear-gradient(90deg, rgb(from var(--accent) r g b / 0.05) 0 1px, transparent 1px 24px),
+    var(--page);
+  border: 1px solid var(--sep);
+}
+.m7-title {
+  position: absolute; right: 12px; bottom: 12px;
+  border: 1px solid var(--sep); background: var(--surface);
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--muted); padding: 6px 10px; border-radius: 4px;
+  display: grid; gap: 2px;
+}
+.m7-title b { color: var(--dim); font-weight: 600; }
+
+/* ============================================================
+   M8 — SPLIT COMPARE
+   ============================================================ */
+.m8 .rf-stage { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; padding: 16px; }
+.m8-half {
+  position: relative; height: 260px; border: 1px solid var(--sep); border-radius: 8px;
+  background: var(--page); overflow: hidden;
+}
+.m8-cap {
+  position: absolute; left: 10px; top: 8px;
+  font-size: 9px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted);
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <p class="topbar-title">Probe · Preview mocks · 8 + 8</p>
+    <nav class="jump" aria-label="Jump to prototype">
+      <a href="#a1">A1</a><a href="#a2">A2</a><a href="#a3">A3</a><a href="#a4">A4</a>
+      <a href="#a5">A5</a><a href="#a6">A6</a><a href="#a7">A7</a><a href="#a8">A8</a>
+      <a href="#m1">M1</a><a href="#m2">M2</a><a href="#m3">M3</a><a href="#m4">M4</a>
+      <a href="#m5">M5</a><a href="#m6">M6</a><a href="#m7">M7</a><a href="#m8">M8</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="masthead">
+    <p class="eyebrow">Phase 0 · pick one per family</p>
+    <h1>Sixteen mocks for a seven-column rail</h1>
+    <p class="lede">
+      The preview rail grew from 300px to ~700px, but its two mocks were designed
+      for the old squeeze. Eight redesigns of the Appearance chrome mock, eight of
+      the Measuring vignette — every one rendered inside the rail width it will
+      actually live in.
+    </p>
+    <div class="howto">
+      <p><strong>Every frame is the real rail.</strong> 700px raised panel, real
+        theme tokens, chrome at its true 11px scale. Click the swatch dots to
+        re-theme any prototype.</p>
+      <p><strong>Two picks.</strong> One A and one M — they're independent, and
+        hybrids across numbers are legal as always.</p>
+      <p><strong>Pick by the tradeoff line,</strong> not the prettiest render.
+        Fidelity, maintenance, and what each mock teaches all differ.</p>
+    </div>
+  </div>
+
+  <h2 class="family" id="fam-a">A · Appearance mock <small>what the theme preview becomes</small></h2>
+
+  <!-- ============ A1 ============ -->
+  <section class="proto" id="a1">
+    <div class="proto-head">
+      <span class="proto-num">A1</span>
+      <h2>Page diorama</h2>
+      <p class="thesis">The chrome shown doing its job on a miniature webpage — nav,
+        heading, two cards, one selected. The label and toolbar sit where the real
+        placement solver would put them.</p>
+    </div>
+    <div class="railframe" data-ccp-theme="terracotta-dark" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage" style="padding: 0; background: transparent; border: 0;">
+        <div class="a1-page">
+          <div class="a1-nav"><i class="a1-logo"></i><i></i><i></i><i></i></div>
+          <p class="a1-h">Pricing that scales with you</p>
+          <p class="a1-p">Three plans, one bill. Every tier includes the inspector and the copy actions.</p>
+          <div class="a1-cards">
+            <div class="a1-card"><b>Free</b>For trying it out.</div>
+            <div class="a1-card sel"><b>Pro Plan</b>For teams that need more.</div>
+          </div>
+          <div class="m-label a1-label">
+            <div class="l-row" style="font-size:12px"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#plan-pro</span><span class="t-size">168 × 64</span></div>
+            <div class="l-row"><span class="t-prop">flex</span><span class="t-sep">·</span><span class="t-prop">column</span><span class="t-sep">·</span><span class="t-prop">gap 4px</span></div>
+            <div class="l-row t-crumb">body › main › div.grid › <span class="t-tag">div</span></div>
+          </div>
+          <div class="m-toolbar a1-toolbar">
+            <div class="m-bar"><u>Copy Code</u><u>Screenshot</u></div>
+            <span class="m-parent">Select Parent</span>
+          </div>
+          <span class="m-gear">⚙</span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The most honest preview possible: chrome in context, at page scale, with the selection actually selecting something. Answers "what will this look like on my page" directly.</dd>
+      <dt>Costs</dt><dd>The mini-page is content to maintain and its own palette must stay neutral or it fights the themes. Busiest frame of the eight.</dd>
+      <dt>Scales to</dt><dd>Future chrome (new buttons, badges) naturally — the page absorbs them where they'd really go.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ A2 ============ -->
+  <section class="proto" id="a2">
+    <div class="proto-head">
+      <span class="proto-num">A2</span>
+      <h2>Breathing stack</h2>
+      <p class="thesis">Today's mock, given the room it never had: the same element,
+        label, and toolbar, stacked with real air and full-width pieces. The
+        conservative option.</p>
+    </div>
+    <div class="railframe a2" data-ccp-theme="nord" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="m-el"><b>Pro Plan</b><span>For teams that need more.</span></div>
+        <div class="m-label">
+          <div class="l-row" style="font-size:12px"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#plan-pro</span><span class="t-size">320 × 208</span></div>
+          <div class="l-row"><span class="t-prop">flex</span><span class="t-sep">·</span><span class="t-prop">column</span><span class="t-sep">·</span><span class="t-prop">gap 12px</span><span class="t-sep">·</span><span class="t-prop">3 children</span></div>
+          <div class="l-row"><span class="t-prop">#ffffff</span><span class="t-sep">·</span><span class="t-prop">radius 12px</span><span class="t-sep">·</span><span class="t-prop">shadow</span></div>
+          <div class="l-row t-crumb">body › main › div.grid › <span class="t-tag">div</span></div>
+        </div>
+        <div class="m-toolbar">
+          <div class="m-bar"><u>Copy Code</u><u>Screenshot</u></div>
+          <span class="m-parent">Select Parent</span>
+        </div>
+        <span class="m-gear">⚙</span>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Zero new content, zero new maintenance — the existing mock finally shown at full width with honest spacing. Cheapest to build and to keep true.</dd>
+      <dt>Costs</dt><dd>Still a stack in a void: the pieces never relate to each other the way they do on a page, and the extra room mostly becomes margin.</dd>
+      <dt>Scales to</dt><dd>Whatever the chrome grows into, but always as a specimen list, never as a scene.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ A3 ============ -->
+  <section class="proto" id="a3">
+    <div class="proto-head">
+      <span class="proto-num">A3</span>
+      <h2>Anatomy sheet</h2>
+      <p class="thesis">The chrome pinned like specimens on a dotted grid, each piece
+        under a quiet caption — the spec-sheet register the settings page already
+        speaks, applied to the preview itself.</p>
+    </div>
+    <div class="railframe a3" data-ccp-theme="solarized-dark" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="a3-item">
+          <span class="a3-cap">Info panel</span>
+          <div class="m-label">
+            <div class="l-row" style="font-size:12px"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#plan-pro</span></div>
+            <div class="l-row"><span class="t-prop">flex</span><span class="t-sep">·</span><span class="t-prop">column</span><span class="t-sep">·</span><span class="t-prop">gap 12px</span></div>
+            <div class="l-row t-crumb">body › main › <span class="t-tag">div</span></div>
+          </div>
+        </div>
+        <div class="a3-item">
+          <span class="a3-cap">Selection</span>
+          <div class="m-el"><b>Pro Plan</b><span>For teams that need more.</span></div>
+        </div>
+        <div class="a3-item">
+          <span class="a3-cap">Toolbar</span>
+          <div class="m-toolbar">
+            <div class="m-bar"><u>Copy Code</u><u>Screenshot</u></div>
+            <span class="m-parent">Select Parent</span>
+          </div>
+        </div>
+        <div class="a3-item">
+          <span class="a3-cap">Gear</span>
+          <span class="m-gear" style="position: static;">⚙</span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Every themed surface visible at once, none overlapping — the best frame for judging a palette part by part. Perfectly on-register with the sheet beside it.</dd>
+      <dt>Costs</dt><dd>Museum fidelity, zero situational fidelity: nothing shows how the pieces sit on a page. The captions add reading where the theme picker wants glancing.</dd>
+      <dt>Scales to</dt><dd>New chrome pieces — each is one more pinned specimen.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ A4 ============ -->
+  <section class="proto" id="a4">
+    <div class="proto-head">
+      <span class="proto-num">A4</span>
+      <h2>The selection moment</h2>
+      <p class="thesis">Zoomed into the probe's signature instant: one selected
+        element wearing the full overlay — margin tint, padding hint, dashed ring,
+        corner accents — with the label riding its edge. Today's mock shows none of
+        the overlay; this makes it the hero.</p>
+    </div>
+    <div class="railframe" data-ccp-theme="terracotta-light" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="a4-wrap">
+          <div class="a4-margin"></div>
+          <div class="a4-elbox">
+            <div class="a4-padding">Pro Plan — for teams that need more.</div>
+            <i class="a4-corner" style="left:-5px;top:-5px"></i>
+            <i class="a4-corner" style="right:-5px;bottom:-5px"></i>
+          </div>
+          <span class="a4-chip" style="left:96px;top:8px">margin</span>
+          <span class="a4-chip" style="left:150px;top:74px">padding</span>
+          <div class="m-label a4-label">
+            <div class="l-row" style="font-size:12px"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#plan-pro</span><span class="t-size">352 × 146</span></div>
+            <div class="l-row"><span class="t-prop">margin 24</span><span class="t-sep">·</span><span class="t-prop">padding 14</span><span class="t-sep">·</span><span class="t-prop">radius 10px</span></div>
+            <div class="l-row t-crumb">body › main › div.grid › <span class="t-tag">div</span></div>
+          </div>
+          <span class="m-gear">⚙</span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Previews what no other frame does — the box-model tints and ring that are half of what a theme actually colours. The accent, id-blue, and tint alphas all get judged where they matter.</dd>
+      <dt>Costs</dt><dd>Drops the toolbar from the scene (it returns as a stray or not at all); the overlay drawn by hand is a second mock of content.js's hardest visuals to keep honest.</dd>
+      <dt>Scales to</dt><dd>Overlay evolutions (new tints, rings) — but chrome additions have no home.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ A5 ============ -->
+  <section class="proto" id="a5">
+    <div class="proto-head">
+      <span class="proto-num">A5</span>
+      <h2>Palette board</h2>
+      <p class="thesis">The swatch column the pills only hint at — every semantic
+        token as a labeled chip beside a compact chrome stack. Half preview, half
+        specification.</p>
+    </div>
+    <div class="railframe a5" data-ccp-theme="dracula" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="a5-rows">
+          <div class="a5-row"><i style="background:var(--surface)"></i>surface<span>panel ground</span></div>
+          <div class="a5-row"><i style="background:var(--text)"></i>text<span>primary</span></div>
+          <div class="a5-row"><i style="background:var(--dim)"></i>text-dim<span>secondary</span></div>
+          <div class="a5-row"><i style="background:var(--muted)"></i>text-muted<span>labels</span></div>
+          <div class="a5-row"><i style="background:var(--accent)"></i>accent<span>selection</span></div>
+          <div class="a5-row"><i style="background:var(--id)"></i>syntax-id<span>#ids</span></div>
+          <div class="a5-row"><i style="background:var(--class)"></i>syntax-class<span>.classes</span></div>
+          <div class="a5-row"><i style="background:var(--sep)"></i>sep<span>hairlines</span></div>
+        </div>
+        <div class="a5-chrome">
+          <div class="m-label">
+            <div class="l-row" style="font-size:12px"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#plan-pro</span></div>
+            <div class="l-row"><span class="t-prop">flex</span><span class="t-sep">·</span><span class="t-prop">column</span></div>
+            <div class="l-row t-crumb">body › main › <span class="t-tag">div</span></div>
+          </div>
+          <div class="m-toolbar">
+            <div class="m-bar"><u>Copy Code</u><u>Screenshot</u></div>
+            <span class="m-parent">Select Parent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only frame where a palette can be audited, not just glimpsed — token by token, with its role named. DESIGN.md's "the swatch is the palette" principle, taken literally.</dd>
+      <dt>Costs</dt><dd>Reads as documentation, not preview; the chrome becomes a footnote to its own colour chart. Most users choose themes by vibe, not by token.</dd>
+      <dt>Scales to</dt><dd>Token growth automatically — but more rows make it more of a spec and less of a preview.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ A6 ============ -->
+  <section class="proto" id="a6">
+    <div class="proto-head">
+      <span class="proto-num">A6</span>
+      <h2>Storyboard strip</h2>
+      <p class="thesis">Three beats of the probe's whole life — hover, select,
+        measure — as a film strip. The theme previews across every state it will
+        ever paint, including a cameo from the redline.</p>
+    </div>
+    <div class="railframe a6" data-ccp-theme="tokyo-night" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="a6-frame">
+          <div class="a6-elbox a6-ants"></div>
+          <div class="m-label">
+            <div class="l-row"><span class="t-tag">div</span><span class="t-class">.card</span></div>
+            <div class="l-row t-crumb">body › main › <span class="t-tag">div</span></div>
+          </div>
+          <span class="a6-cap">1 · hover</span>
+        </div>
+        <div class="a6-frame">
+          <div class="a6-elbox" style="border: 2px solid var(--accent); background: rgb(from var(--accent) r g b / 0.07);"></div>
+          <div class="m-label">
+            <div class="l-row"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#pro</span></div>
+            <div class="l-row"><span class="t-prop">flex · column</span></div>
+          </div>
+          <div class="m-toolbar"><div class="m-bar"><u style="padding:5px 8px">Copy</u><u style="padding:5px 8px">Shot</u></div></div>
+          <span class="a6-cap">2 · select</span>
+        </div>
+        <div class="a6-frame">
+          <div class="a6-elbox" style="border: 1.5px dashed var(--accent); width: 90px; height: 44px; margin-bottom: 34px;"></div>
+          <i class="d-line" style="left:104px;top:56px;width:1px;height:64px;position:absolute"></i>
+          <b class="d-pill" style="left:120px;top:88px;position:absolute">32</b>
+          <div class="d-box d-hov" style="left:60px;top:120px;width:96px;height:48px;position:absolute"></div>
+          <span class="a6-cap">3 · measure ⌥</span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only appearance frame that previews the theme across every mode, redline included — and it quietly teaches the product's flow while doing it.</dd>
+      <dt>Costs</dt><dd>Three small stages instead of one good one: everything renders at reduced scale, which is the condensation this redesign set out to kill.</dd>
+      <dt>Scales to</dt><dd>New modes as new frames — at the price of ever-smaller frames.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ A7 ============ -->
+  <section class="proto" id="a7">
+    <div class="proto-head">
+      <span class="proto-num">A7</span>
+      <h2>Floating stage</h2>
+      <p class="thesis">Chrome floating over an abstracted page — ghost blocks
+        suggesting content without being content. The shadows and translucencies
+        finally have something to cast against, with none of A1's upkeep.</p>
+    </div>
+    <div class="railframe a7" data-ccp-theme="monokai" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <i class="a7-ghost" style="left:24px;top:22px;width:180px;height:12px"></i>
+        <i class="a7-ghost" style="left:24px;top:44px;width:260px;height:8px"></i>
+        <i class="a7-ghost" style="left:24px;top:60px;width:220px;height:8px"></i>
+        <i class="a7-ghost" style="right:24px;top:22px;width:90px;height:90px"></i>
+        <i class="a7-ghost" style="left:24px;bottom:30px;width:140px;height:70px"></i>
+        <i class="a7-ghost" style="right:40px;bottom:44px;width:200px;height:10px"></i>
+        <div class="m-el"><b>Pro Plan</b><span>For teams that need more.</span></div>
+        <div class="m-label">
+          <div class="l-row" style="font-size:12px"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#plan-pro</span><span class="t-size">320 × 208</span></div>
+          <div class="l-row"><span class="t-prop">flex</span><span class="t-sep">·</span><span class="t-prop">column</span><span class="t-sep">·</span><span class="t-prop">gap 12px</span></div>
+          <div class="l-row t-crumb">body › main › div.grid › <span class="t-tag">div</span></div>
+        </div>
+        <div class="m-toolbar">
+          <div class="m-bar"><u>Copy Code</u><u>Screenshot</u></div>
+          <span class="m-parent">Select Parent</span>
+        </div>
+        <span class="m-gear">⚙</span>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Depth without upkeep: shadows, borders, and the accent read against believable ground, and the ghost blocks never need copywriting or theming discipline.</dd>
+      <dt>Costs</dt><dd>The abstraction is a mood, not a test — nothing is selected, so the chrome floats as furniture rather than doing its job.</dd>
+      <dt>Scales to</dt><dd>Anything, indifferently — the stage doesn't care what stands on it.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ A8 ============ -->
+  <section class="proto" id="a8">
+    <div class="proto-head">
+      <span class="proto-num">A8</span>
+      <h2>Clawd's stage</h2>
+      <p class="thesis">The mascot carries the palette: a big themed Clawd anchors
+        the frame, chrome arranged beside it. The only prototype that spends the
+        new space on personality instead of fidelity.</p>
+    </div>
+    <div class="railframe a8" data-ccp-theme="terracotta-dark" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">appearance</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="a8-clawd" aria-hidden="true">
+          <svg viewBox="-8 -8 128 96" fill="none">
+            <rect class="body" x="8" y="0" width="96" height="56" rx="6"/>
+            <rect class="body" x="-6" y="24" width="14" height="16" rx="4"/>
+            <rect class="body" x="104" y="24" width="14" height="16" rx="4"/>
+            <rect class="eye" x="28" y="14" width="9" height="17" rx="3"/>
+            <rect class="eye" x="76" y="14" width="9" height="17" rx="3"/>
+            <rect class="body" x="16" y="56" width="10" height="22" rx="3"/>
+            <rect class="body" x="31" y="56" width="10" height="22" rx="3"/>
+            <rect class="body" x="71" y="56" width="10" height="22" rx="3"/>
+            <rect class="body" x="86" y="56" width="10" height="22" rx="3"/>
+          </svg>
+        </div>
+        <div class="a8-right">
+          <div class="m-label">
+            <div class="l-row" style="font-size:12px"><span class="t-tag">div</span><span class="t-class">.card</span><span class="t-id">#plan-pro</span><span class="t-size">320 × 208</span></div>
+            <div class="l-row"><span class="t-prop">flex</span><span class="t-sep">·</span><span class="t-prop">column</span><span class="t-sep">·</span><span class="t-prop">gap 12px</span></div>
+            <div class="l-row t-crumb">body › main › div.grid › <span class="t-tag">div</span></div>
+          </div>
+          <div class="m-toolbar">
+            <div class="m-bar"><u>Copy Code</u><u>Screenshot</u></div>
+            <span class="m-parent">Select Parent</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Instant warmth and brand memory — the mascot at hero size makes each theme feel like a character, not a colour table. Genuinely differentiating.</dd>
+      <dt>Costs</dt><dd>Spends a third of the frame on charm that previews only two tokens; the chrome that users are actually theming plays second fiddle.</dd>
+      <dt>Scales to</dt><dd>Delight moments (seasonal Clawd?), not chrome growth.</dd>
+    </dl>
+  </section>
+
+  <h2 class="family" id="fam-m">M · Measuring vignette <small>what the redline preview becomes</small></h2>
+
+  <!-- ============ M1 ============ -->
+  <section class="proto" id="m1">
+    <div class="proto-head">
+      <span class="proto-num">M1</span>
+      <h2>Grand composite</h2>
+      <p class="thesis">Today's catalogue — diagonal pair, guides, flush neighbour,
+        quiet tint — redrawn natively at rail scale instead of zoomed. Everything
+        spreads out; nothing new to learn.</p>
+    </div>
+    <div class="railframe" data-ccp-theme="terracotta-dark" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="m1-stage">
+          <div class="d-box d-sel" style="left:60px;top:36px;width:230px;height:110px"><span class="d-tagname">selected</span></div>
+          <div class="d-box d-flush" style="left:290px;top:36px;width:110px;height:76px"></div>
+          <b class="d-pill" style="left:290px;top:74px">0</b>
+          <div class="d-box d-hov" style="left:388px;top:212px;width:170px;height:100px"><span class="d-tagname">hover</span></div>
+          <i class="d-line" style="left:175px;top:146px;width:1px;height:66px"></i>
+          <b class="d-pill" style="left:203px;top:179px">66</b>
+          <i class="d-line" style="left:290px;top:91px;width:98px;height:1px"></i>
+          <b class="d-pill" style="left:339px;top:114px">98</b>
+          <i class="d-guide-h" style="left:167px;top:212px;width:221px"></i>
+          <i class="d-guide-v" style="left:388px;top:83px;height:129px"></i>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Same mental model as today, triple the legibility — every primitive keeps its meaning and gains real separation. Cheapest redesign that fully uses the width.</dd>
+      <dt>Costs</dt><dd>Still a composite: three relationships crammed into one fictional scene that no single real measurement would produce.</dd>
+      <dt>Scales to</dt><dd>A few more primitives before it re-condenses into today's problem.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ M2 ============ -->
+  <section class="proto" id="m2">
+    <div class="proto-head">
+      <span class="proto-num">M2</span>
+      <h2>Case cards</h2>
+      <p class="thesis">The composite unbundled: four small stages — gap, diagonal,
+        insets, flush — each showing exactly one real solver case. Settings restyle
+        all four at once.</p>
+    </div>
+    <div class="railframe m2" data-ccp-theme="nord" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="m2-card">
+          <div class="d-box d-sel" style="left:22px;top:34px;width:90px;height:56px"></div>
+          <div class="d-box d-hov" style="left:186px;top:34px;width:80px;height:56px"></div>
+          <i class="d-line" style="left:112px;top:62px;width:74px;height:1px"></i>
+          <b class="d-pill" style="left:149px;top:79px">74</b>
+          <span class="m2-cap">gap</span>
+        </div>
+        <div class="m2-card">
+          <div class="d-box d-sel" style="left:22px;top:18px;width:96px;height:50px"></div>
+          <div class="d-box d-hov" style="left:180px;top:88px;width:84px;height:46px"></div>
+          <i class="d-line" style="left:70px;top:68px;width:1px;height:20px"></i>
+          <b class="d-pill" style="left:88px;top:78px">20</b>
+          <i class="d-guide-h" style="left:66px;top:88px;width:114px"></i>
+          <i class="d-line" style="left:118px;top:43px;width:62px;height:1px"></i>
+          <b class="d-pill" style="left:149px;top:60px">62</b>
+          <i class="d-guide-v" style="left:180px;top:39px;height:49px"></i>
+          <span class="m2-cap">diagonal + guides</span>
+        </div>
+        <div class="m2-card">
+          <div class="d-box d-sel" style="left:30px;top:20px;width:210px;height:104px"></div>
+          <div class="d-box d-hov" style="left:96px;top:50px;width:88px;height:48px"></div>
+          <i class="d-line" style="left:30px;top:74px;width:66px;height:1px"></i>
+          <b class="d-pill" style="left:63px;top:88px">66</b>
+          <i class="d-line" style="left:140px;top:20px;width:1px;height:30px"></i>
+          <b class="d-pill" style="left:157px;top:35px">30</b>
+          <span class="m2-cap">insets</span>
+        </div>
+        <div class="m2-card">
+          <div class="d-box d-sel" style="left:36px;top:40px;width:100px;height:56px"></div>
+          <div class="d-box d-flush" style="left:136px;top:40px;width:74px;height:44px"></div>
+          <b class="d-pill" style="left:136px;top:62px">0</b>
+          <span class="m2-cap">flush · zero pill</span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Each card is a true story — a real case the solver actually produces — so the vignette stops being a fiction. Guides, zeros, and placement each have an obvious home card.</dd>
+      <dt>Costs</dt><dd>Four stages shrink each drawing back toward the old condensation; the eye must hop between cards to see one setting's full effect.</dd>
+      <dt>Scales to</dt><dd>New cases as new cards — the grid grows honestly.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ M3 ============ -->
+  <section class="proto" id="m3">
+    <div class="proto-head">
+      <span class="proto-num">M3</span>
+      <h2>In-situ measurement</h2>
+      <p class="thesis">A measurement on a miniature page — the redline stretched
+        between two real cards, the way it looks mid-gesture. The measuring twin of
+        A1's diorama.</p>
+    </div>
+    <div class="railframe" data-ccp-theme="dracula" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage" style="padding: 0; background: transparent; border: 0;">
+        <div class="m3-page">
+          <p class="m3-h">Pricing that scales with you</p>
+          <p class="m3-p">Hold Option and point — the gap reads out in the accent.</p>
+          <div class="m3-card" style="left:18px;top:96px;border:2px dashed var(--accent);background:rgb(from var(--accent) r g b / 0.08)"><b>Free</b>For trying it out.</div>
+          <div class="m3-card" style="left:300px;top:206px"><b>Pro Plan</b>For teams that need more.</div>
+          <div class="d-box d-hov" style="left:300px;top:206px;width:180px;height:96px;border-radius:8px"></div>
+          <i class="d-line" style="left:108px;top:192px;width:1px;height:14px"></i>
+          <b class="d-pill" style="left:126px;top:199px">14</b>
+          <i class="d-guide-h" style="left:104px;top:206px;width:196px"></i>
+          <i class="d-line" style="left:198px;top:144px;width:102px;height:1px"></i>
+          <b class="d-pill" style="left:249px;top:161px">102</b>
+          <i class="d-guide-v" style="left:300px;top:140px;height:66px"></i>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Shows the feature, not a diagram of it — measurement in the exact visual context users will see, page ink and all. Pairs seamlessly with A1 if both dioramas win.</dd>
+      <dt>Costs</dt><dd>One case only: no flush edge, no insets, and the quiet-overlay toggle has almost nothing to quiet. The page content is shared upkeep with A1.</dd>
+      <dt>Scales to</dt><dd>Whatever one gesture can show — the composite cases don't fit a single scene.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ M4 ============ -->
+  <section class="proto" id="m4">
+    <div class="proto-head">
+      <span class="proto-num">M4</span>
+      <h2>Playground poses</h2>
+      <p class="thesis">The hover box moves: three poses — beside, below, inside —
+        switched by chips, each redrawing the measurement set the solver would
+        produce. The closest a static mock gets to holding Option yourself.</p>
+    </div>
+    <div class="railframe" data-ccp-theme="terracotta-light" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="m4-stage" data-show="side" id="m4stage">
+          <div class="d-box d-sel" style="left:60px;top:60px;width:200px;height:110px"><span class="d-tagname">selected</span></div>
+          <div data-pose="side">
+            <div class="d-box d-hov" style="left:400px;top:80px;width:150px;height:80px"><span class="d-tagname">hover</span></div>
+            <i class="d-line" style="left:260px;top:115px;width:140px;height:1px"></i>
+            <b class="d-pill" style="left:330px;top:133px">140</b>
+          </div>
+          <div data-pose="below">
+            <div class="d-box d-hov" style="left:80px;top:230px;width:150px;height:60px"><span class="d-tagname">hover</span></div>
+            <i class="d-line" style="left:160px;top:170px;width:1px;height:60px"></i>
+            <b class="d-pill" style="left:180px;top:200px">60</b>
+          </div>
+          <div data-pose="inside">
+            <div class="d-box d-hov" style="left:110px;top:90px;width:90px;height:50px"><span class="d-tagname">hover</span></div>
+            <i class="d-line" style="left:60px;top:115px;width:50px;height:1px"></i>
+            <b class="d-pill" style="left:85px;top:130px">50</b>
+            <i class="d-line" style="left:155px;top:60px;width:1px;height:30px"></i>
+            <b class="d-pill" style="left:172px;top:75px">30</b>
+          </div>
+        </div>
+        <div class="m4-poses" role="group" aria-label="Hover pose">
+          <button type="button" aria-pressed="true" data-setpose="side">beside</button>
+          <button type="button" aria-pressed="false" data-setpose="below">below</button>
+          <button type="button" aria-pressed="false" data-setpose="inside">inside</button>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Interactive without lying — three hand-authored poses, each a genuine solver output, teach the geometry cases better than any single frame can.</dd>
+      <dt>Costs</dt><dd>A control inside a preview: the rail acquires its own little UI, and every future setting must be hand-drawn into all three poses.</dd>
+      <dt>Scales to</dt><dd>More poses at linear authoring cost — each is a full hand-laid scene.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ M5 ============ -->
+  <section class="proto" id="m5">
+    <div class="proto-head">
+      <span class="proto-num">M5</span>
+      <h2>Annotated anatomy</h2>
+      <p class="thesis">The composite, with its parts named — callouts for the gap
+        line, extension guide, value pill, and zero marker. The vignette becomes the
+        manual for the settings beside it.</p>
+    </div>
+    <div class="railframe" data-ccp-theme="solarized-dark" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="m5-stage">
+          <div class="d-box d-sel" style="left:70px;top:50px;width:200px;height:100px"><span class="d-tagname">selected</span></div>
+          <div class="d-box d-flush" style="left:270px;top:50px;width:90px;height:66px"></div>
+          <b class="d-pill" style="left:270px;top:83px">0</b>
+          <div class="d-box d-hov" style="left:380px;top:210px;width:150px;height:90px"><span class="d-tagname">hover</span></div>
+          <i class="d-line" style="left:170px;top:150px;width:1px;height:60px"></i>
+          <b class="d-pill" style="left:190px;top:180px">60</b>
+          <i class="d-guide-h" style="left:166px;top:210px;width:214px"></i>
+          <i class="d-guide-v" style="left:380px;top:96px;height:114px"></i>
+          <i class="d-line" style="left:270px;top:100px;width:110px;height:1px"></i>
+          <b class="d-pill" style="left:325px;top:120px">110</b>
+          <span class="m5-call" style="right:16px;top:44px">value pill · placement</span>
+          <i class="m5-lead" style="right:150px;top:52px;width:60px"></i>
+          <span class="m5-call" style="left:12px;top:230px">extension guide</span>
+          <i class="m5-lead" style="left:118px;top:238px;width:46px"></i>
+          <span class="m5-call" style="right:16px;top:120px">gap line</span>
+          <span class="m5-call" style="left:230px;top:14px">flush edge · zero</span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Closes the vocabulary loop — "Extension guides" in the sheet points at a thing literally labeled extension guide. The spotlight hover gains a permanent, always-visible fallback.</dd>
+      <dt>Costs</dt><dd>Callouts add permanent reading noise to a preview meant for glancing, and they crowd the very breathing room the redesign is buying.</dd>
+      <dt>Scales to</dt><dd>A few more labels before it becomes a diagram in a textbook.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ M6 ============ -->
+  <section class="proto" id="m6">
+    <div class="proto-head">
+      <span class="proto-num">M6</span>
+      <h2>Film strip</h2>
+      <p class="thesis">The gesture as three beats — hold, sweep, re-anchor — showing
+        that measuring is a motion, not a picture. The only prototype that explains
+        the Option-click re-anchor trick.</p>
+    </div>
+    <div class="railframe m6" data-ccp-theme="tokyo-night" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="m6-frame">
+          <span class="m6-key">⌥ hold</span>
+          <div class="d-box d-sel" style="left:24px;top:50px;width:100px;height:56px"></div>
+          <div class="d-box d-hov" style="left:80px;top:150px;width:96px;height:52px"></div>
+          <i class="d-line" style="left:74px;top:106px;width:1px;height:44px"></i>
+          <b class="d-pill" style="left:92px;top:128px">44</b>
+          <span class="m6-cap">1 · chrome hushes, gaps read out</span>
+        </div>
+        <div class="m6-frame">
+          <span class="m6-key">sweep</span>
+          <div class="d-box d-sel" style="left:24px;top:50px;width:100px;height:56px"></div>
+          <div class="d-box d-hov" style="left:110px;top:44px;width:80px;height:110px;opacity:.35"></div>
+          <div class="d-box d-hov" style="left:64px;top:170px;width:120px;height:50px"></div>
+          <i class="d-line" style="left:74px;top:106px;width:1px;height:64px"></i>
+          <b class="d-pill" style="left:92px;top:138px">64</b>
+          <span class="m6-cap">2 · measurements glide with you</span>
+        </div>
+        <div class="m6-frame">
+          <span class="m6-key">⌥ click</span>
+          <div class="d-box d-sel" style="left:64px;top:170px;width:120px;height:50px"></div>
+          <div class="d-box d-hov" style="left:24px;top:50px;width:100px;height:56px"></div>
+          <i class="d-line" style="left:94px;top:106px;width:1px;height:64px"></i>
+          <b class="d-pill" style="left:112px;top:138px">64</b>
+          <span class="m6-cap">3 · click re-anchors, keep measuring</span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Teaches the workflow, not just the drawing — hold, sweep, re-anchor is the feature's real shape, and no other frame mentions it.</dd>
+      <dt>Costs</dt><dd>Three shrunken stages again, and the settings' visual effects (placement, guides) become subtle at this scale — it previews the gesture better than the preferences.</dd>
+      <dt>Scales to</dt><dd>Interaction changes; poorly to visual-setting changes.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ M7 ============ -->
+  <section class="proto" id="m7">
+    <div class="proto-head">
+      <span class="proto-num">M7</span>
+      <h2>Blueprint sheet</h2>
+      <p class="thesis">The vignette leaning into its heritage: graph paper, a title
+        block, dimensions on every edge — the redline drawn as the engineering
+        drawing the name comes from.</p>
+    </div>
+    <div class="railframe" data-ccp-theme="terracotta-dark" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage" style="padding: 12px; background: transparent; border: 0;">
+        <div class="m7-stage">
+          <div class="d-box d-sel" style="left:96px;top:72px;width:264px;height:120px"><span class="d-tagname">selected</span></div>
+          <div class="d-box d-hov" style="left:432px;top:216px;width:144px;height:72px"><span class="d-tagname">hover</span></div>
+          <i class="d-line" style="left:228px;top:192px;width:1px;height:24px"></i>
+          <b class="d-pill" style="left:248px;top:204px">24</b>
+          <i class="d-guide-h" style="left:224px;top:216px;width:208px"></i>
+          <i class="d-line" style="left:360px;top:132px;width:72px;height:1px"></i>
+          <b class="d-pill" style="left:396px;top:150px">72</b>
+          <i class="d-guide-v" style="left:432px;top:128px;height:88px"></i>
+          <span class="d-note" style="left:96px;top:52px">x 96 · y 72</span>
+          <span class="d-note" style="right:24px;bottom:64px">w 144 · h 72</span>
+          <div class="m7-title"><b>REDLINE</b><span>scale 1 : 1 · unit px</span></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The strongest aesthetic point of view of the eight — the grid gives every measurement visible truth, and the title block makes unit/precision settings feel at home.</dd>
+      <dt>Costs</dt><dd>The paper texture and ornaments preview things the extension never draws — highest fiction-per-pixel, and the grid competes with the dashed guides.</dd>
+      <dt>Scales to</dt><dd>More dimensions gracefully; more concepts (quiet overlay?) awkwardly.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ M8 ============ -->
+  <section class="proto" id="m8">
+    <div class="proto-head">
+      <span class="proto-num">M8</span>
+      <h2>Split compare</h2>
+      <p class="thesis">Two identical scenes: shipping defaults on the left, your
+        current settings on the right. The preview stops showing a state and starts
+        showing the difference you've made.</p>
+    </div>
+    <div class="railframe m8" data-ccp-theme="nord" data-proto>
+      <p class="rf-legend">Preview <span class="rf-tag">measuring</span><span class="rf-dots" data-dots></span></p>
+      <div class="rf-stage">
+        <div class="m8-half">
+          <span class="m8-cap">defaults</span>
+          <div class="d-box d-sel" style="left:24px;top:42px;width:110px;height:60px"></div>
+          <div class="d-box d-hov" style="left:180px;top:150px;width:90px;height:56px"></div>
+          <i class="d-line" style="left:79px;top:102px;width:1px;height:48px"></i>
+          <b class="d-pill" style="left:99px;top:126px">48</b>
+          <i class="d-guide-h" style="left:75px;top:150px;width:105px"></i>
+          <i class="d-line" style="left:134px;top:72px;width:46px;height:1px"></i>
+          <b class="d-pill" style="left:157px;top:88px">46</b>
+          <i class="d-guide-v" style="left:180px;top:68px;height:82px"></i>
+        </div>
+        <div class="m8-half">
+          <span class="m8-cap">yours · rem · tenths · on line</span>
+          <div class="d-box d-sel" style="left:24px;top:42px;width:110px;height:60px"></div>
+          <div class="d-box d-hov" style="left:180px;top:150px;width:90px;height:56px"></div>
+          <i class="d-line" style="left:79px;top:102px;width:1px;height:48px"></i>
+          <b class="d-pill" style="left:79px;top:126px">3.03rem</b>
+          <i class="d-line" style="left:134px;top:72px;width:46px;height:1px"></i>
+          <b class="d-pill" style="left:157px;top:72px">2.9rem</b>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only frame that answers "what did my change do?" by showing before and after at once — flips, like turning guides off, become unmissable.</dd>
+      <dt>Costs</dt><dd>Everything renders twice at half size; when settings equal defaults the two halves are identical and the frame looks broken.</dd>
+      <dt>Scales to</dt><dd>Any number of settings — but always at half the canvas.</dd>
+    </dl>
+  </section>
+
+  <p style="padding: 2rem 0 4rem; color: var(--g-muted); font-size: var(--step-0);">
+    Pick one A and one M — hybrids are legal ("A1's diorama with A4's overlay on the
+    selected card", "M1 sized like M7 without the paper"). The winning pair replaces
+    the mock and vignette in <code>settings/index.html</code> + <code>settings.css</code>,
+    wired to the same live settings and crossfade.
+  </p>
+
+</main>
+
+<script>
+/* Theme dots: every prototype frame gets the eight real palettes to flip through. */
+const THEMES = ["terracotta-dark", "terracotta-light", "dracula", "monokai",
+                "nord", "solarized-dark", "tokyo-night"];
+document.querySelectorAll("[data-proto]").forEach((frame) => {
+  const dots = frame.querySelector("[data-dots]");
+  if (!dots) return;
+  dots.innerHTML = THEMES.map((t) =>
+    `<i data-theme="${t}" data-ccp-theme="${t}" title="${t}" role="button" tabindex="0"></i>`
+  ).join("");
+  dots.addEventListener("click", (e) => {
+    const dot = e.target.closest("[data-theme]");
+    if (dot) frame.dataset.ccpTheme = dot.dataset.theme;
+  });
+});
+
+/* M4 pose switcher */
+const m4stage = document.getElementById("m4stage");
+document.querySelectorAll("[data-setpose]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    m4stage.dataset.show = btn.dataset.setpose;
+    document.querySelectorAll("[data-setpose]").forEach((b) =>
+      b.setAttribute("aria-pressed", String(b === btn)));
+  });
+});
+</script>

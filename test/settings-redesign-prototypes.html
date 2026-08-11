@@ -1,0 +1,1295 @@
+<meta charset="utf-8">
+<title>Claude Code Probe — Settings redesign prototypes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* ============================================================
+   GALLERY SHELL
+   Same quiet frame as settings-layout-prototypes.html: the
+   twelve prototypes carry every bit of colour on this page.
+   ============================================================ */
+:root {
+  --g-ground:  #f7f6f2;
+  --g-raised:  #ffffff;
+  --g-ink:     #17160f;
+  --g-dim:     #56534a;
+  --g-muted:   #8d8a80;
+  --g-rule:    #e0ddd3;
+  --g-rule-hi: #cbc7ba;
+  --g-accent:  #b8542f;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.25rem;
+  --step-3: 1.75rem;
+  --step-4: 2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-ground:  #131210;
+    --g-raised:  #1b1a17;
+    --g-ink:     #ece9e1;
+    --g-dim:     #a5a196;
+    --g-muted:   #7d7a71;
+    --g-rule:    #2a2824;
+    --g-rule-hi: #3d3a34;
+    --g-accent:  #e08b68;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--g-ground);
+  color: var(--g-ink);
+  font-family: var(--sans);
+  font-size: var(--step-1);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--g-ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--g-rule);
+}
+.topbar-in { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 0; flex-wrap: wrap; }
+.topbar-title {
+  font-family: var(--mono); font-size: var(--step-0);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--g-dim); margin: 0; white-space: nowrap;
+}
+.jump { display: flex; gap: 0.25rem; margin-left: auto; flex-wrap: wrap; }
+.jump a {
+  font-family: var(--mono); font-size: 0.75rem;
+  text-decoration: none; color: var(--g-dim);
+  border: 1px solid var(--g-rule); border-radius: 6px;
+  width: 2rem; height: 2rem; display: grid; place-items: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.jump a:hover, .jump a:focus-visible {
+  background: var(--g-accent); border-color: var(--g-accent); color: var(--g-ground);
+  outline: none;
+}
+
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 2rem; border-bottom: 1px solid var(--g-rule); }
+.eyebrow {
+  font-family: var(--mono); font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--g-accent); margin: 0 0 1rem;
+}
+h1 {
+  font-family: var(--mono); font-weight: 500;
+  font-size: clamp(1.75rem, 4.5vw, var(--step-4));
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin: 0 0 1.25rem; text-wrap: balance;
+}
+.lede { font-size: var(--step-2); line-height: 1.5; color: var(--g-dim); max-width: 62ch; margin: 0 0 2rem; }
+.howto {
+  display: grid; gap: 0.75rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  font-size: var(--step-0); color: var(--g-dim);
+  border-top: 1px solid var(--g-rule); padding-top: 1.5rem;
+}
+.howto p { margin: 0; }
+.howto strong { color: var(--g-ink); font-weight: 600; }
+
+.proto { padding: clamp(2.5rem, 6vw, 4.5rem) 0; border-bottom: 1px solid var(--g-rule); scroll-margin-top: 4.5rem; }
+.proto-head { display: grid; grid-template-columns: auto 1fr; gap: 0 1.25rem; align-items: baseline; margin-bottom: 1.75rem; }
+.proto-num {
+  font-family: var(--mono); font-size: var(--step-3); font-weight: 500;
+  color: var(--g-rule-hi); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.proto-head h2 { font-family: var(--mono); font-weight: 500; font-size: var(--step-2); margin: 0; letter-spacing: -0.01em; line-height: 1.25; }
+.thesis { grid-column: 2; margin: 0.5rem 0 0; color: var(--g-dim); max-width: 68ch; }
+
+.viewport {
+  position: relative;
+  background: var(--page);
+  border: 1px solid var(--g-rule-hi);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 380px;
+  container-type: inline-size;
+}
+.viewport-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+  border-bottom: 1px solid var(--sep);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); opacity: 0.6; }
+.viewport-url { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-left: 0.5rem; letter-spacing: 0.02em; }
+
+.tradeoff { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 1.5rem 0 0; font-size: var(--step-0); }
+.tradeoff dt {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--g-muted); padding-top: 0.2em;
+}
+.tradeoff dd { margin: 0; color: var(--g-dim); }
+.tradeoff .win { color: var(--g-ink); }
+
+/* ============================================================
+   THEME TOKENS — the real eight, page-side derivations included
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] {
+  --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64;
+  --sep:#3a3a35; --accent:#d97757; --accent-dark:#b06848; --on-accent:#1a0d07;
+  --id:#6a9bcc; --class:#788c5d;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(20,20,19,.4);
+  --shadow-bar: 0 4px 16px rgba(20,20,19,.6);
+  --page:#1e1e1c; --page-ink:#c8c5bc; --page-rule:#2e2e2a;
+}
+[data-ccp-theme="terracotta-light"] {
+  --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780;
+  --sep:#ddd9cf; --accent:#c2603f; --accent-dark:#9c4a2e; --on-accent:#fff8f4;
+  --id:#2f6291; --class:#4d6a36;
+  --shadow-card: 0 8px 24px -10px rgba(60,45,35,.28), 0 1px 3px rgba(60,45,35,.14);
+  --shadow-bar: 0 4px 14px rgba(60,45,35,.18);
+  --page:#ffffff; --page-ink:#3a3a35; --page-rule:#eae7de;
+}
+[data-ccp-theme="dracula"] {
+  --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4;
+  --sep:#44475a; --accent:#bd93f9; --accent-dark:#9a6ee0; --on-accent:#1a1626;
+  --id:#8be9fd; --class:#50fa7b;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,30,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,30,.65);
+  --page:#21222c; --page-ink:#cfd0e0; --page-rule:#343746;
+}
+[data-ccp-theme="monokai"] {
+  --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e;
+  --sep:#3e3d32; --accent:#f92672; --accent-dark:#cc1f5d; --on-accent:#2a0512;
+  --id:#66d9ef; --class:#a6e22e;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,15,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,15,.65);
+  --page:#1e1f1a; --page-ink:#d9d8cd; --page-rule:#32332b;
+}
+[data-ccp-theme="nord"] {
+  --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1;
+  --sep:#3b4252; --accent:#88c0d0; --accent-dark:#5e81ac; --on-accent:#16202b;
+  --id:#81a1c1; --class:#a3be8c;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.5), 0 2px 6px rgba(20,25,35,.4);
+  --shadow-bar: 0 4px 16px rgba(20,25,35,.6);
+  --page:#272c36; --page-ink:#d8dee9; --page-rule:#343b48;
+}
+[data-ccp-theme="solarized-dark"] {
+  --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75;
+  --sep:#073642; --accent:#cb4b16; --accent-dark:#a53c11; --on-accent:#1a0700;
+  --id:#268bd2; --class:#859900;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,20,25,.45);
+  --shadow-bar: 0 4px 16px rgba(0,20,25,.65);
+  --page:#01212b; --page-ink:#93a1a1; --page-rule:#062b35;
+}
+[data-ccp-theme="tokyo-night"] {
+  --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89;
+  --sep:#292e42; --accent:#bb9af7; --accent-dark:#9a78d8; --on-accent:#16111f;
+  --id:#7aa2f7; --class:#9ece6a;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(15,15,25,.45);
+  --shadow-bar: 0 4px 16px rgba(15,15,25,.65);
+  --page:#16161e; --page-ink:#a9b1d6; --page-rule:#232430;
+}
+
+/* ============================================================
+   SHARED SETTINGS FURNITURE (inside every viewport)
+   ============================================================ */
+.sp-legend {
+  font: 500 10px var(--mono); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 8px;
+}
+.sp-sub { font: 11px/1.5 var(--mono); color: var(--muted); margin: 2px 0 10px; }
+.sp-hr { border: 0; border-top: 1px solid var(--sep); margin: 14px 0; }
+.saved { font: 10px var(--mono); color: var(--muted); min-height: 1.4em; margin: 8px 0 0; }
+
+/* theme pills */
+.opt-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  font: 500 10px var(--mono); letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--dim); background: transparent;
+  border: 1px solid var(--sep); border-radius: 20px;
+  padding: 5px 10px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+.pill:hover { border-color: rgb(from var(--accent) r g b / 0.55); }
+.pill[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.sw-dot { width: 11px; height: 11px; border-radius: 3px; border: 1px solid rgba(127,127,127,.35); display: inline-block; }
+
+/* segmented pair */
+.seg { display: inline-flex; border: 1px solid var(--sep); border-radius: 8px; overflow: hidden; flex: none; }
+.seg button {
+  font: 500 10px var(--mono); letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 5px 10px; background: transparent; color: var(--muted);
+  border: 0; cursor: pointer; transition: background 0.15s, color 0.15s;
+}
+.seg button + button { border-left: 1px solid var(--sep); }
+.seg button[aria-checked="true"] { background: var(--accent); color: var(--on-accent); }
+
+/* switch */
+.sw {
+  width: 30px; height: 17px; border-radius: 9px; flex: none;
+  border: 1px solid var(--sep); background: color-mix(in srgb, var(--surface) 70%, var(--sep));
+  position: relative; cursor: pointer; padding: 0;
+}
+.sw i {
+  position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%;
+  background: var(--faint); transition: left 0.15s, background 0.15s;
+}
+.sw[aria-checked="true"] { background: rgb(from var(--accent) r g b / 0.25); border-color: var(--accent); }
+.sw[aria-checked="true"] i { left: 14px; background: var(--accent); }
+
+/* measuring rows */
+.m-rows { display: flex; flex-direction: column; }
+.m-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.m-row .lbl { flex: 1; font: 11px var(--mono); color: var(--dim); }
+
+/* ============================================================
+   REDLINE VIGNETTE
+   A composite catalogue, not a simulation: one diagonal pair
+   (two lines, two dashed guides, two pills), one flush
+   neighbour (the zero pill), tint on the selection (the quiet
+   toggle). Geometry is real: every line spans the gap it
+   claims to measure. True gaps 46.4px and 32.6px.
+   ============================================================ */
+.rv { position: relative; width: 280px; height: 205px; margin: 0 auto; font-family: var(--mono); flex: none; }
+.rv-el { position: absolute; }
+.rv-sel {
+  left: 20px; top: 22px; width: 120px; height: 58px;
+  border: 1.5px dashed var(--accent); border-radius: 6px;
+  background: rgb(from var(--accent) r g b / 0.10);
+  transition: background 0.15s;
+}
+.rv[data-quiet="on"] .rv-sel { background: transparent; }
+.rv-el span {
+  position: absolute; left: 8px; top: 6px;
+  font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint);
+}
+.rv-flush {
+  left: 140px; top: 22px; width: 54px; height: 40px;
+  border: 1px solid color-mix(in srgb, var(--faint) 55%, transparent); border-radius: 6px;
+}
+.rv-hov { left: 172px; top: 126px; width: 84px; height: 52px; border: 1px solid var(--accent); border-radius: 10px; }
+.rv-line { position: absolute; background: var(--accent); }
+.rv-line-v { left: 80px; top: 80px; width: 1px; height: 46px; }
+.rv-line-h { left: 140px; top: 51px; width: 32px; height: 1px; }
+.rv-guide { position: absolute; transition: opacity 0.15s; }
+.rv[data-guides="off"] .rv-guide { opacity: 0; }
+.rv-guide-h { left: 76px; top: 126px; width: 96px; height: 0; border-top: 1px dashed rgb(from var(--accent) r g b / 0.6); }
+.rv-guide-v { left: 172px; top: 47px; width: 0; height: 79px; border-left: 1px dashed rgb(from var(--accent) r g b / 0.6); }
+.rv-pill {
+  position: absolute; transform: translate(-50%, -50%);
+  background: var(--accent); color: var(--on-accent);
+  font: 600 9px/1 var(--mono); letter-spacing: 0.02em;
+  padding: 3px 6px; border-radius: 7px; white-space: nowrap;
+  transition: left 0.15s, top 0.15s, opacity 0.15s;
+}
+.rv-pill-a { left: 80px; top: 103px; }
+.rv[data-placement="beside"] .rv-pill-a { left: 98px; }
+.rv-pill-b { left: 156px; top: 51px; }
+.rv[data-placement="beside"] .rv-pill-b { top: 65px; }
+.rv-pill-z { left: 140px; top: 42px; }
+.rv[data-zeros="off"] .rv-pill-z { opacity: 0; }
+
+/* spec-table hover highlight (prototype 05) */
+.rv[data-hi="unit"] .rv-pill-a, .rv[data-hi="unit"] .rv-pill-b,
+.rv[data-hi="precision"] .rv-pill-a, .rv[data-hi="precision"] .rv-pill-b,
+.rv[data-hi="placement"] .rv-pill-a, .rv[data-hi="placement"] .rv-pill-b,
+.rv[data-hi="zeros"] .rv-pill-z {
+  outline: 2px solid rgb(from var(--accent) r g b / 0.45); outline-offset: 2px;
+}
+.rv[data-hi="guides"] .rv-guide { filter: drop-shadow(0 0 3px rgb(from var(--accent) r g b / 0.8)); }
+.rv[data-hi="quiet"] .rv-sel { outline: 2px solid rgb(from var(--accent) r g b / 0.45); outline-offset: 2px; }
+
+/* ============================================================
+   MOCK PROBE CHROME (compact: identity, props, crumb + toolbar)
+   ============================================================ */
+.pv-chrome { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.ccp-label {
+  background: var(--surface); color: var(--text);
+  border: 1px solid rgb(from var(--accent) r g b / 0.25);
+  border-radius: 8px; box-shadow: var(--shadow-card);
+  padding: 6px 10px; font: 11px/1.5 var(--mono);
+  display: flex; flex-direction: column; gap: 3px;
+  width: max-content; max-width: 100%;
+}
+.l-row { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+.t-tag   { color: var(--accent); font-weight: 600; }
+.t-id    { color: var(--id); font-weight: 500; }
+.t-class { color: var(--class); }
+.t-size  { color: var(--faint); font-size: 10px; font-variant-numeric: tabular-nums; }
+.t-prop  { color: var(--muted); font-size: 10px; }
+.t-sep   { color: var(--sep); }
+.t-crumb { color: var(--faint); font-size: 10px; }
+.ccp-toolbar { display: flex; align-items: stretch; gap: 8px; font-family: var(--mono); }
+.ccp-bar {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--surface);
+  border: 1px solid rgb(from var(--accent) r g b / 0.5);
+  border-radius: 10px; box-shadow: var(--shadow-bar);
+}
+.ccp-bar button, .ccp-parent {
+  font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 7px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text); cursor: pointer;
+}
+.ccp-bar button:hover { border-color: rgb(from var(--accent) r g b / 0.5); }
+.ccp-parent {
+  background: var(--surface); color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 10px; box-shadow: var(--shadow-bar);
+}
+
+/* context-swapping preview host */
+.pv { position: relative; }
+.pv[data-mode="theme"] .pv-measure { display: none; }
+.pv[data-mode="measure"] .pv-theme { display: none; }
+.pv-cap {
+  font: 9px var(--mono); letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--faint); margin: 0 0 10px;
+}
+
+/* ============================================================
+   PER-PROTOTYPE LAYOUTS
+   ============================================================ */
+.sp { font-family: var(--mono); color: var(--text); }
+
+/* 01 — rows + swap rail */
+.L1 { display: grid; grid-template-columns: 1fr 320px; }
+.L1 .scroller { padding: 18px 22px; max-height: 430px; overflow: auto; border-right: 1px solid var(--sep); }
+.L1 .rail { padding: 18px 22px; background: color-mix(in srgb, var(--surface) 45%, var(--page)); align-self: stretch; }
+
+/* 02 — pill groups */
+.L2 { display: grid; grid-template-columns: 1fr 320px; }
+.L2 .scroller { padding: 18px 22px; max-height: 430px; overflow: auto; border-right: 1px solid var(--sep); }
+.L2 .group { margin-bottom: 14px; }
+.L2 .rail { padding: 18px 22px; background: color-mix(in srgb, var(--surface) 45%, var(--page)); }
+
+/* 03 — full-bleed canvas, floating panel */
+.L3 { position: relative; min-height: 430px; padding: 22px; }
+.L3 .page-mock { max-width: 520px; }
+.L3 .page-mock h3 { font: 600 15px/1.3 var(--sans); color: var(--page-ink); margin: 0 0 6px; }
+.L3 .page-mock p { font: 11px/1.6 var(--sans); color: color-mix(in srgb, var(--page-ink) 70%, transparent); margin: 0 0 12px; max-width: 44ch; }
+.L3 .cardrow { display: flex; gap: 46px; position: relative; margin-top: 26px; }
+.L3 .pcard {
+  width: 150px; height: 84px; border-radius: 8px;
+  border: 1px solid var(--page-rule);
+  background: color-mix(in srgb, var(--surface) 60%, var(--page));
+  padding: 10px; font: 10px var(--mono); color: var(--page-ink);
+}
+.L3 .pcard.sel { border: 1.5px dashed var(--accent); background: rgb(from var(--accent) r g b / 0.08); }
+.L3 .pcard.hovd { border: 1px solid var(--accent); }
+.L3 .rl-line { position: absolute; left: 160px; top: 42px; width: 46px; height: 1px; background: var(--accent); }
+.L3 .rl-pill {
+  position: absolute; left: 183px; top: 42px; transform: translate(-50%, -50%);
+  background: var(--accent); color: var(--on-accent);
+  font: 600 9px/1 var(--mono); padding: 3px 6px; border-radius: 7px;
+}
+.L3 .panel {
+  position: absolute; right: 18px; top: 16px; width: 292px;
+  background: var(--surface); border: 1px solid var(--sep); border-radius: 10px;
+  box-shadow: var(--shadow-card); padding: 14px 16px;
+}
+.L3 .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+.L3 .tabs button {
+  flex: 1; font: 500 10px var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 6px 0; border: 1px solid var(--sep); background: transparent; color: var(--muted);
+  border-radius: 7px; cursor: pointer;
+}
+.L3 .tabs button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.L3 .panel [data-tab] { display: none; }
+.L3 .panel [data-tab].on { display: block; }
+
+/* 04 — split stage */
+.L4 .stage {
+  display: flex; gap: 36px; align-items: center; justify-content: center;
+  padding: 18px 22px; border-bottom: 1px solid var(--sep);
+  background: color-mix(in srgb, var(--surface) 45%, var(--page));
+}
+.L4 .stage > div { transition: opacity 0.2s; }
+.L4[data-mode="theme"] .st-measure, .L4[data-mode="measure"] .st-theme { opacity: 0.3; }
+.L4 .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; padding: 18px 22px; }
+
+/* 05 — spec sheet */
+.L5 { display: grid; grid-template-columns: 1.2fr 1fr; }
+.L5 .sheet { padding: 18px 22px; border-right: 1px solid var(--sep); }
+.L5 .spec-row {
+  display: flex; align-items: center; gap: 10px; padding: 5px 8px; margin: 0 -8px;
+  border-radius: 6px; cursor: default;
+}
+.L5 .spec-row:hover { background: color-mix(in srgb, var(--surface) 70%, var(--page)); }
+.L5 .spec-row .k { flex: 1; font: 11px var(--mono); color: var(--muted); }
+.L5 .spec-row .k::after { content: " ·············"; color: var(--sep); letter-spacing: 2px; }
+.L5 .rail { padding: 18px 22px; display: flex; flex-direction: column; justify-content: center; }
+
+/* 06 — sentence */
+.L6 { padding: 26px 30px; max-width: 640px; margin: 0 auto; }
+.L6 .prose { font: 13px/2.3 var(--mono); color: var(--dim); }
+.L6 .prose .seg { vertical-align: middle; margin: 0 2px; }
+.L6 .vig { margin-top: 18px; }
+
+/* 07 — annotated diagram */
+.L7 { padding: 22px; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.L7 .rv { transform: scale(1.25); transform-origin: top center; margin-bottom: 46px; }
+.L7 .rv .rv-pill, .L7 .rv .rv-sel, .L7 .rv .rv-hit { cursor: pointer; }
+.L7 .rv-hit { position: absolute; background: transparent; border: 0; padding: 0; }
+.L7 .hint { font: 10px var(--mono); color: var(--faint); letter-spacing: 0.06em; }
+.L7 .chips { display: flex; gap: 10px; align-items: center; }
+
+/* 08 — card grid */
+.L8 { padding: 18px 22px; }
+.L8 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; }
+.L8 .mcard {
+  border: 1px solid var(--sep); border-radius: 10px; padding: 12px;
+  background: color-mix(in srgb, var(--surface) 65%, var(--page));
+  display: flex; flex-direction: column; gap: 8px; min-height: 108px;
+}
+.L8 .mcard .lbl { font: 500 10px var(--mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim); }
+.L8 .mcard .micro { font: 10px var(--mono); color: var(--faint); flex: 1; }
+.L8 .mcard .ctl { display: flex; }
+
+/* 09 — tabbed groups */
+.L9 .tabbar { display: flex; gap: 2px; padding: 12px 22px 0; border-bottom: 1px solid var(--sep); }
+.L9 .tabbar button {
+  font: 500 11px var(--mono); letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 8px 16px; background: transparent; color: var(--muted);
+  border: 1px solid transparent; border-bottom: 0; border-radius: 8px 8px 0 0; cursor: pointer;
+}
+.L9 .tabbar button[aria-selected="true"] {
+  color: var(--text); border-color: var(--sep);
+  background: color-mix(in srgb, var(--surface) 60%, var(--page));
+}
+.L9 .pane { display: none; padding: 20px 22px; }
+.L9 .pane.on { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; align-items: center; }
+
+/* 10 — wide rail flip */
+.L10 { display: grid; grid-template-columns: 1fr 1.5fr; }
+.L10 .ctrl { padding: 18px 20px; border-right: 1px solid var(--sep); max-height: 430px; overflow: auto; }
+.L10 .rail {
+  padding: 22px; background: color-mix(in srgb, var(--surface) 45%, var(--page));
+  display: flex; flex-direction: column; gap: 18px; align-items: center; justify-content: center;
+}
+.L10 .rail .rv { transform: scale(1.15); transform-origin: center; }
+
+/* 11 — inspector drawer */
+.L11 { display: grid; grid-template-columns: 220px 1fr; min-height: 420px; }
+.L11 .list { border-right: 1px solid var(--sep); padding: 12px; }
+.L11 .gbtn {
+  width: 100%; text-align: left; display: flex; flex-direction: column; gap: 3px;
+  padding: 10px 12px; border-radius: 8px; border: 1px solid transparent;
+  background: transparent; cursor: pointer; margin-bottom: 4px;
+}
+.L11 .gbtn .t { font: 500 11px var(--mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--text); }
+.L11 .gbtn .d { font: 10px var(--mono); color: var(--faint); }
+.L11 .gbtn[aria-selected="true"] { border-color: var(--sep); background: color-mix(in srgb, var(--surface) 70%, var(--page)); }
+.L11 .drawer { padding: 18px 22px; display: none; }
+.L11 .drawer.on { display: grid; grid-template-columns: 1fr auto; gap: 26px; align-items: center; }
+
+/* 12 — interleaved single column */
+.L12 { max-width: 560px; margin: 0 auto; padding: 22px 26px; }
+.L12 .vig-inline {
+  margin: 14px 0 6px; padding: 12px; border: 1px solid var(--sep); border-radius: 10px;
+  background: color-mix(in srgb, var(--surface) 45%, var(--page));
+  display: flex; justify-content: center;
+}
+
+@container (max-width: 700px) {
+  .L1, .L2, .L5, .L10, .L11 { grid-template-columns: 1fr; }
+  .L1 .scroller, .L2 .scroller, .L5 .sheet, .L10 .ctrl, .L11 .list { border-right: 0; border-bottom: 1px solid var(--sep); }
+  .L4 .cols, .L9 .pane.on { grid-template-columns: 1fr; }
+  .L3 .panel { position: static; width: auto; margin-top: 18px; }
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <p class="topbar-title">Probe · Settings redesign · 12 prototypes</p>
+    <nav class="jump" aria-label="Jump to prototype">
+      <a href="#p1">1</a><a href="#p2">2</a><a href="#p3">3</a><a href="#p4">4</a>
+      <a href="#p5">5</a><a href="#p6">6</a><a href="#p7">7</a><a href="#p8">8</a>
+      <a href="#p9">9</a><a href="#p10">10</a><a href="#p11">11</a><a href="#p12">12</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="masthead">
+    <p class="eyebrow">Phase 0 · pick one before implementation</p>
+    <h1>Twelve ways to redesign Settings around Measuring</h1>
+    <p class="lede">
+      Same content in every one — the theme picker, six measuring settings (unit,
+      precision, pill placement, guides, quiet overlay, zero pills), and a preview.
+      What differs is who gets the space, and how the preview answers the setting
+      you're touching.
+    </p>
+    <div class="howto">
+      <p><strong>These are live.</strong> Every control works: flip a measuring
+        setting and the redline vignette updates; click a theme and the prototype
+        re-themes. Defaults everywhere are the extension's current behaviour.</p>
+      <p><strong>The vignette is honest geometry.</strong> Each line spans the gap
+        it claims to measure; true gaps are 46.4px and 32.6px, so precision and
+        unit visibly change the readout.</p>
+      <p><strong>Pick by the tradeoff line,</strong> not the prettiest render —
+        every one of these can be made pretty. Tell me a number (or a hybrid) and
+        I'll build it.</p>
+    </div>
+  </div>
+
+  <!-- ============ 01 ============ -->
+  <section class="proto" id="p1">
+    <div class="proto-head">
+      <span class="proto-num">01</span>
+      <h2>Rows and a rail that answers you</h2>
+      <p class="thesis">The straight-line evolution of the current page. Settings as
+        rows in the scroll column; the sticky rail swaps its content to whatever
+        section you're in — chrome mock for Appearance, redline vignette for
+        Measuring.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="1">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L1">
+        <div class="scroller">
+          <div data-focus="theme">
+            <p class="sp-legend">Appearance</p>
+            <div data-slot="themes"></div>
+          </div>
+          <hr class="sp-hr">
+          <div data-focus="measure">
+            <p class="sp-legend">Measuring</p>
+            <p class="sp-sub">Hold Option over a selected element to measure.</p>
+            <div data-slot="measure" data-style="rows"></div>
+          </div>
+          <p class="saved" data-slot="saved"></p>
+        </div>
+        <aside class="rail">
+          <p class="pv-cap" data-slot="pvcap">Preview</p>
+          <div class="pv" data-slot="pv" data-mode="theme">
+            <div class="pv-theme" data-slot="chrome"></div>
+            <div class="pv-measure" data-slot="vig"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Zero relearning — it's today's page with the rows the layout always promised. The swap gives the rail a reason to be sticky: the preview is never about the wrong thing.</dd>
+      <dt>Costs</dt><dd>The swap is a mode, and modes can surprise: change a theme, drift down, and the chrome mock you wanted to watch is gone. The 300px rail still crops the toolbar.</dd>
+      <dt>Scales to</dt><dd>Many more settings — this remains the long-run shape, now with a rule for what the rail shows.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section class="proto" id="p2">
+    <div class="proto-head">
+      <span class="proto-num">02</span>
+      <h2>Pill groups, one voice</h2>
+      <p class="thesis">Every setting speaks the same dialect as the theme picker —
+        a mini-legend and a pill radiogroup, booleans included. Maximum consistency
+        with the page that exists.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord" data-proto="2">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L2">
+        <div class="scroller">
+          <div class="group" data-focus="theme">
+            <p class="sp-legend">Theme</p>
+            <div data-slot="themes"></div>
+          </div>
+          <hr class="sp-hr">
+          <div data-focus="measure">
+            <div data-slot="measure" data-style="groups"></div>
+          </div>
+        </div>
+        <aside class="rail">
+          <p class="pv-cap" data-slot="pvcap">Preview</p>
+          <div class="pv" data-slot="pv" data-mode="theme">
+            <div class="pv-theme" data-slot="chrome"></div>
+            <div class="pv-measure" data-slot="vig"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">One control idiom for the whole page — nothing new to learn or build beyond what the theme picker already proved, keyboard model included.</dd>
+      <dt>Costs</dt><dd>Six stacked radiogroups are tall and read as repetition; "on / off" as pills is a worse switch than a switch. The column scrolls before the rail earns its stickiness.</dd>
+      <dt>Scales to</dt><dd>More choice-settings fine; more booleans badly — the dialect has one word.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section class="proto" id="p3">
+    <div class="proto-head">
+      <span class="proto-num">03</span>
+      <h2>The page is the preview</h2>
+      <p class="thesis">No preview panel, because the whole stage is a mock webpage
+        being probed — label, toolbar, and a live redline between two cards. Settings
+        float in a compact tabbed panel, like the probe's own chrome floats on a real
+        page.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula" data-proto="3">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L3">
+        <div class="page-mock">
+          <h3>Pricing that scales with you</h3>
+          <p>Three plans, one bill. Every tier includes the inspector, the copy
+            actions, and support that answers.</p>
+          <div class="cardrow">
+            <div class="pcard sel">.card #plan-free<br>320 × 84</div>
+            <div class="pcard hovd">.card #plan-pro<br>320 × 84</div>
+            <i class="rl-line"></i>
+            <b class="rl-pill" data-slot="pagepill">46</b>
+          </div>
+          <div style="margin-top:22px" class="pv-theme" data-slot="chrome"></div>
+        </div>
+        <div class="panel">
+          <div class="tabs" role="tablist">
+            <button role="tab" aria-selected="true" data-tabbtn="theme">Appearance</button>
+            <button role="tab" aria-selected="false" data-tabbtn="measure">Measuring</button>
+          </div>
+          <div data-tab="theme" class="on" data-focus="theme">
+            <div data-slot="themes"></div>
+          </div>
+          <div data-tab="measure" data-focus="measure">
+            <div data-slot="measure" data-style="rows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The most honest preview possible — settings are judged in situ, on a page, at page scale, with the redline measuring real layout distance. Dogfoods the product's own floating-chrome idiom.</dd>
+      <dt>Costs</dt><dd>The mock page is content to maintain that isn't settings; the floating panel covers part of what it configures; tabs hide one group entirely while you're in the other.</dd>
+      <dt>Scales to</dt><dd>A few groups as tabs. A long group turns the floating panel into a scrolling porthole.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section class="proto" id="p4">
+    <div class="proto-head">
+      <span class="proto-num">04</span>
+      <h2>Split stage, nothing hidden</h2>
+      <p class="thesis">Both previews live in a fixed strip on top — chrome mock and
+        redline vignette side by side. Touching a setting doesn't swap anything; it
+        just brightens the half you're affecting.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light" data-proto="4">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L4" data-slot="l4root" data-mode="measure">
+        <div class="stage">
+          <div class="st-theme" data-slot="chrome"></div>
+          <div class="st-measure" data-slot="vig"></div>
+        </div>
+        <div class="cols">
+          <div data-focus="theme">
+            <p class="sp-legend">Appearance</p>
+            <div data-slot="themes"></div>
+          </div>
+          <div data-focus="measure">
+            <p class="sp-legend">Measuring</p>
+            <div data-slot="measure" data-style="rows"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">No modes, no surprises: everything you can affect is always on screen, and the dim/brighten makes cause-and-effect legible without hiding anything.</dd>
+      <dt>Costs</dt><dd>The strip rations both previews — neither ever gets generous room. Two side-by-side columns of unrelated settings can read as one form with a split personality.</dd>
+      <dt>Scales to</dt><dd>Two groups beautifully; a third makes the strip a mosaic.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section class="proto" id="p5">
+    <div class="proto-head">
+      <span class="proto-num">05</span>
+      <h2>Spec sheet</h2>
+      <p class="thesis">Settings as a dense dotted-leader property table — the same
+        register as the probe's own readout. Hovering a row spotlights exactly the
+        part of the vignette that row controls.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="solarized-dark" data-proto="5">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L5">
+        <div class="sheet">
+          <p class="sp-legend" data-focus="theme">Appearance</p>
+          <div data-slot="themes" data-focus="theme"></div>
+          <hr class="sp-hr">
+          <p class="sp-legend">Measuring</p>
+          <div data-slot="measure" data-style="table" data-focus="measure"></div>
+        </div>
+        <aside class="rail">
+          <div class="pv" data-slot="pv" data-mode="measure">
+            <div class="pv-theme" data-slot="chrome"></div>
+            <div class="pv-measure" data-slot="vig"></div>
+          </div>
+        </aside>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Highest information density of the twelve, in the product's native voice. The hover-spotlight teaches what each setting does before you ever flip it.</dd>
+      <dt>Costs</dt><dd>Dotted leaders and 11px rows are expert-tuned; hover affordances don't exist on touch, so the spotlight is a desktop-only lesson.</dd>
+      <dt>Scales to</dt><dd>Dozens of rows without breaking a sweat — it's a table.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section class="proto" id="p6">
+    <div class="proto-head">
+      <span class="proto-num">06</span>
+      <h2>Settings as a sentence</h2>
+      <p class="thesis">The configuration reads as prose with the choices inline —
+        you edit the sentence that describes the behaviour, and the vignette beneath
+        acts it out.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night" data-proto="6">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L6">
+        <div data-focus="theme">
+          <p class="sp-legend">Theme</p>
+          <div data-slot="themes"></div>
+        </div>
+        <hr class="sp-hr">
+        <div data-focus="measure">
+          <p class="sp-legend">Measuring</p>
+          <p class="prose" data-slot="sentence"></p>
+          <div class="vig" data-slot="vig"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Every choice arrives with its meaning attached — no label can be misread when the label is a sentence. Genuinely novel without being a puzzle.</dd>
+      <dt>Costs</dt><dd>Prose doesn't scan for repeat visits; finding "guides" means reading. Localisation of a mad-lib sentence is a real cost the row layouts never pay.</dd>
+      <dt>Scales to</dt><dd>A paragraph, maybe two. Past that it's a terms-of-service.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section class="proto" id="p7">
+    <div class="proto-head">
+      <span class="proto-num">07</span>
+      <h2>The diagram is the control</h2>
+      <p class="thesis">No settings column for measuring at all — you configure the
+        vignette by touching it. Click the pill to move it, the guide to toggle
+        guides, the selection to quiet the overlay, the readout chips for unit and
+        precision.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="monokai" data-proto="7">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L7">
+        <div data-focus="theme" style="align-self:stretch">
+          <p class="sp-legend">Theme</p>
+          <div data-slot="themes"></div>
+          <hr class="sp-hr">
+        </div>
+        <div data-focus="measure" data-slot="vig" data-live="1"></div>
+        <div class="chips" data-focus="measure">
+          <span class="sp-legend" style="margin:0">Readout</span>
+          <span data-slot="chip-unit"></span>
+          <span data-slot="chip-precision"></span>
+        </div>
+        <p class="hint">click the pill · the dashed guide · the selection tint · the 0</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Direct manipulation: the thing you change is the thing that changes, so the preview problem dissolves — there is nothing but preview. Shortest possible distance between intent and effect.</dd>
+      <dt>Costs</dt><dd>Invisible affordances need the hint line; toggling something off leaves a ghost target you have to know to re-click. Accessibility is a from-scratch build — the diagram needs a parallel keyboard surface.</dd>
+      <dt>Scales to</dt><dd>Only settings with a visible avatar in the diagram. Anything abstract needs a second home.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section class="proto" id="p8">
+    <div class="proto-head">
+      <span class="proto-num">08</span>
+      <h2>Card per setting</h2>
+      <p class="thesis">Each setting is a self-contained card — label, control, and a
+        one-line consequence in plain words. No shared preview; the grid is the page.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="8">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L8">
+        <div data-focus="theme">
+          <p class="sp-legend">Theme</p>
+          <div data-slot="themes"></div>
+        </div>
+        <hr class="sp-hr">
+        <p class="sp-legend" data-focus="measure">Measuring</p>
+        <div class="grid" data-slot="measure" data-style="cards" data-focus="measure"></div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Every setting gets equal, unhurried room with its consequence written next to it — the friendliest layout for someone meeting the feature cold.</dd>
+      <dt>Costs</dt><dd>The written consequence is a caption, not a demonstration — the only prototype here where flipping a measuring switch shows you nothing. Cards spend the most pixels per setting of the twelve.</dd>
+      <dt>Scales to</dt><dd>A dozen settings as a pleasant wall; past that, a warehouse.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 09 ============ -->
+  <section class="proto" id="p9">
+    <div class="proto-head">
+      <span class="proto-num">09</span>
+      <h2>Tabs, one thing at a time</h2>
+      <p class="thesis">Appearance and Measuring are separate rooms. Each tab gets the
+        full width for its controls and a large dedicated preview — no sharing, no
+        swapping.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord" data-proto="9">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L9">
+        <div class="tabbar" role="tablist">
+          <button role="tab" aria-selected="false" data-tabbtn="theme">Appearance</button>
+          <button role="tab" aria-selected="true" data-tabbtn="measure">Measuring</button>
+        </div>
+        <div class="pane" data-tab="theme" data-focus="theme">
+          <div>
+            <p class="sp-legend">Theme</p>
+            <div data-slot="themes"></div>
+          </div>
+          <div data-slot="chrome"></div>
+        </div>
+        <div class="pane on" data-tab="measure" data-focus="measure">
+          <div>
+            <p class="sp-legend">Measuring</p>
+            <div data-slot="measure" data-style="rows"></div>
+          </div>
+          <div data-slot="vig"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Each group gets the whole stage — the most room any prototype gives the vignette without scaling tricks. The mental model is a filing cabinet: boring, and boring is learnable.</dd>
+      <dt>Costs</dt><dd>Tabs hide state: you can't see your theme while measuring, and a two-tab bar spends a whole navigation tier on two items.</dd>
+      <dt>Scales to</dt><dd>More groups, one tab each — but every new tab makes the page more of a maze.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 10 ============ -->
+  <section class="proto" id="p10">
+    <div class="proto-head">
+      <span class="proto-num">10</span>
+      <h2>Wide rail flip</h2>
+      <p class="thesis">Inverts the current page's proportions: controls compress into
+        a narrow column and the preview gets the majority share — fixing the recorded
+        "rail too narrow" cost. Both previews stacked, always visible.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light" data-proto="10">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L10">
+        <div class="ctrl">
+          <div data-focus="theme">
+            <p class="sp-legend">Appearance</p>
+            <div data-slot="themes"></div>
+          </div>
+          <hr class="sp-hr">
+          <div data-focus="measure">
+            <p class="sp-legend">Measuring</p>
+            <div data-slot="measure" data-style="rows"></div>
+          </div>
+        </div>
+        <aside class="rail">
+          <div data-slot="chrome"></div>
+          <div data-slot="vig"></div>
+        </aside>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The preview finally gets the room the content deserves — full-width toolbar, breathing space around the vignette — while six settings still fit the narrow column without scrolling.</dd>
+      <dt>Costs</dt><dd>Controls at their space minimum: theme pills wrap into a tall stack, and the narrow column will pinch first when settings grow. Two stacked previews compete vertically.</dd>
+      <dt>Scales to</dt><dd>Preview-heavy futures (more vignettes) better than control-heavy ones.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 11 ============ -->
+  <section class="proto" id="p11">
+    <div class="proto-head">
+      <span class="proto-num">11</span>
+      <h2>Inspector drawer</h2>
+      <p class="thesis">The probe's own model, mirrored: select a group on the left,
+        act on it in the drawer — controls and that group's preview together, nothing
+        else on stage.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula" data-proto="11">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L11">
+        <div class="list" role="tablist" aria-orientation="vertical">
+          <button class="gbtn" role="tab" aria-selected="false" data-tabbtn="theme">
+            <span class="t">Appearance</span>
+            <span class="d" data-slot="sum-theme">Terracotta Dark</span>
+          </button>
+          <button class="gbtn" role="tab" aria-selected="true" data-tabbtn="measure">
+            <span class="t">Measuring</span>
+            <span class="d" data-slot="sum-measure">px · whole · beside</span>
+          </button>
+        </div>
+        <div class="drawer" data-tab="theme" data-focus="theme">
+          <div>
+            <p class="sp-legend">Theme</p>
+            <div data-slot="themes"></div>
+          </div>
+          <div data-slot="chrome"></div>
+        </div>
+        <div class="drawer on" data-tab="measure" data-focus="measure">
+          <div>
+            <p class="sp-legend">Measuring</p>
+            <div data-slot="measure" data-style="rows"></div>
+          </div>
+          <div data-slot="vig"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The group list doubles as a status readout — current values visible before you enter. Same select-then-act grammar as the probe itself, so the product teaches its own settings page.</dd>
+      <dt>Costs</dt><dd>Two groups make a very short list commanding 220px forever; the summaries need upkeep as settings grow or they rot into lies.</dd>
+      <dt>Scales to</dt><dd>Many groups gracefully — this is the shape preference panes grow into.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 12 ============ -->
+  <section class="proto" id="p12">
+    <div class="proto-head">
+      <span class="proto-num">12</span>
+      <h2>One column, previews interleaved</h2>
+      <p class="thesis">No rail. Each group is followed immediately by its own live
+        preview, inline in the flow — you never look sideways, only down.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night" data-proto="12">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L12">
+        <div data-focus="theme">
+          <p class="sp-legend">Appearance</p>
+          <div data-slot="themes"></div>
+          <div class="vig-inline" data-slot="chrome"></div>
+        </div>
+        <hr class="sp-hr">
+        <div data-focus="measure">
+          <p class="sp-legend">Measuring</p>
+          <div data-slot="measure" data-style="rows"></div>
+          <div class="vig-inline" data-slot="vig"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Reading order is the interaction order — the simplest possible relationship between a control and its consequence. Collapses to mobile with zero layout work.</dd>
+      <dt>Costs</dt><dd>Control and preview can't be on screen together once a group grows: flip a switch at the bottom of the rows and its vignette may sit below the fold.</dd>
+      <dt>Scales to</dt><dd>A long page. Fine for four groups; a scroll marathon for ten.</dd>
+    </dl>
+  </section>
+
+  <p style="padding: 2rem 0 4rem; color: var(--g-muted); font-size: var(--step-0);">
+    Hybrids are legal — "01's rows with 10's proportions", "04's stage over 05's
+    sheet". The measuring defaults in every prototype are the extension's shipping
+    behaviour: px, whole, beside, guides on, quiet off, zero pills on.
+  </p>
+
+</main>
+
+<script>
+/* ============================================================
+   SHARED STATE + RENDERERS
+   Every prototype owns an independent copy of the same state.
+   ============================================================ */
+const THEMES = [
+  { id: "terracotta-dark",  name: "Terracotta Dark" },
+  { id: "terracotta-light", name: "Terracotta Light" },
+  { id: "system",           name: "System" },
+  { id: "dracula",          name: "Dracula" },
+  { id: "monokai",          name: "Monokai" },
+  { id: "nord",             name: "Nord" },
+  { id: "solarized-dark",   name: "Solarized Dark" },
+  { id: "tokyo-night",      name: "Tokyo Night" },
+];
+const prefersDark = matchMedia("(prefers-color-scheme: dark)");
+const resolve = (id) => id !== "system" ? id : (prefersDark.matches ? "terracotta-dark" : "terracotta-light");
+
+/* The six measuring settings. `on` is the value that means "current default". */
+const MEASURE = [
+  { key: "unit",      label: "Unit",             type: "seg", opts: [["px", "px"], ["rem", "rem"]] },
+  { key: "precision", label: "Precision",        type: "seg", opts: [["whole", "whole"], ["tenths", "0.1"]] },
+  { key: "placement", label: "Value pill",       type: "seg", opts: [["beside", "beside"], ["online", "on line"]] },
+  { key: "guides",    label: "Extension guides", type: "sw" },
+  { key: "quiet",     label: "Quiet overlay",    type: "sw" },
+  { key: "zeros",     label: "Zero pills",       type: "sw" },
+];
+const CARD_CAPTIONS = {
+  unit: "Readouts in pixels, or rem against the page root.",
+  precision: "Whole pixels, or one decimal for subpixel gaps.",
+  placement: "The value hangs beside its line, or rides on it.",
+  guides: "Dashed edge extensions on diagonal measurements.",
+  quiet: "Hide the box-model tints while measuring.",
+  zeros: "Mark flush edges with a 0, or say nothing.",
+};
+
+const DEFAULTS = { theme: "terracotta-dark", unit: "px", precision: "whole",
+                   placement: "beside", guides: "on", quiet: "off", zeros: "on" };
+
+/* True vignette gaps — fractional so unit and precision visibly matter. */
+const GAP_A = 46.4, GAP_B = 32.6;
+function fmt(px, s) {
+  if (s.unit === "rem") return (px / 16).toFixed(2).replace(/0$/, "") + "rem";
+  return s.precision === "tenths" ? (Math.round(px * 10) / 10).toString() : Math.round(px).toString();
+}
+
+/* ---- fragments ---- */
+const themesHTML = () =>
+  `<div class="opt-pills" role="radiogroup" aria-label="Theme">` +
+  THEMES.map((t) => `
+    <button type="button" class="pill" role="radio" data-set="theme" data-val="${t.id}">
+      <span class="sw-dot" data-ccp-theme="${resolve(t.id)}" style="background:var(--accent)"></span>
+      <span>${t.name}</span>
+    </button>`).join("") + `</div>`;
+
+const segHTML = (m) =>
+  `<span class="seg" role="radiogroup" aria-label="${m.label}">` +
+  m.opts.map(([v, txt]) =>
+    `<button type="button" role="radio" data-set="${m.key}" data-val="${v}">${txt}</button>`
+  ).join("") + `</span>`;
+
+const swHTML = (m) =>
+  `<button type="button" class="sw" role="switch" data-sw="${m.key}" aria-label="${m.label}"><i></i></button>`;
+
+function measureHTML(style) {
+  if (style === "groups") {
+    return MEASURE.map((m) => `
+      <div class="group">
+        <p class="sp-legend">${m.label}</p>
+        ${m.type === "seg" ? segHTML(m) :
+          `<span class="seg" role="radiogroup" aria-label="${m.label}">
+             <button type="button" role="radio" data-set="${m.key}" data-val="on">on</button>
+             <button type="button" role="radio" data-set="${m.key}" data-val="off">off</button>
+           </span>`}
+      </div>`).join("");
+  }
+  if (style === "table") {
+    return MEASURE.map((m) => `
+      <div class="spec-row" data-hi="${m.key}">
+        <span class="k">${m.label.toLowerCase()}</span>
+        ${m.type === "seg" ? segHTML(m) : swHTML(m)}
+      </div>`).join("");
+  }
+  if (style === "cards") {
+    return MEASURE.map((m) => `
+      <div class="mcard">
+        <span class="lbl">${m.label}</span>
+        <span class="micro">${CARD_CAPTIONS[m.key]}</span>
+        <span class="ctl">${m.type === "seg" ? segHTML(m) : swHTML(m)}</span>
+      </div>`).join("");
+  }
+  /* rows */
+  return `<div class="m-rows">` + MEASURE.map((m) => `
+    <div class="m-row">
+      <span class="lbl">${m.label}</span>
+      ${m.type === "seg" ? segHTML(m) : swHTML(m)}
+    </div>`).join("") + `</div>`;
+}
+
+const vigHTML = (live) => `
+  <div class="rv" data-placement="beside" data-guides="on" data-quiet="off" data-zeros="on">
+    <div class="rv-el rv-sel"${live ? ` role="button" tabindex="0" data-sw="quiet" title="Toggle quiet overlay"` : ""}><span>selected</span></div>
+    <div class="rv-el rv-flush"></div>
+    <div class="rv-el rv-hov"><span>hover</span></div>
+    <i class="rv-line rv-line-v"></i>
+    <i class="rv-line rv-line-h"></i>
+    <i class="rv-guide rv-guide-h"></i>
+    <i class="rv-guide rv-guide-v"></i>
+    ${live ? `<button class="rv-hit" style="left:70px;top:118px;width:110px;height:16px" data-sw="guides" title="Toggle guides"></button>` : ""}
+    <b class="rv-pill rv-pill-a" data-pill="a"${live ? ` role="button" tabindex="0" data-cycle="placement" title="Move the pill"` : ""}>46</b>
+    <b class="rv-pill rv-pill-b" data-pill="b">33</b>
+    <b class="rv-pill rv-pill-z"${live ? ` role="button" tabindex="0" data-sw="zeros" title="Toggle zero pills"` : ""}>0</b>
+  </div>`;
+
+const chromeHTML = () => `
+  <div class="pv-chrome">
+    <div class="ccp-label">
+      <div class="l-row" style="font-size:12px">
+        <span class="t-tag">div</span><span class="t-class">.card</span>
+        <span class="t-id">#plan-pro</span><span class="t-size">320 × 208</span>
+      </div>
+      <div class="l-row">
+        <span class="t-prop">flex</span><span class="t-sep">·</span>
+        <span class="t-prop">column</span><span class="t-sep">·</span>
+        <span class="t-prop">gap 12px</span><span class="t-sep">·</span>
+        <span class="t-prop">3 children</span>
+      </div>
+      <div class="l-row t-crumb">
+        body <span class="t-sep">›</span> main <span class="t-sep">›</span>
+        div.grid <span class="t-sep">›</span> <span class="t-tag">div</span>
+      </div>
+    </div>
+    <div class="ccp-toolbar">
+      <div class="ccp-bar">
+        <button type="button">Copy Code</button>
+        <button type="button">Screenshot</button>
+      </div>
+      <button type="button" class="ccp-parent">Select Parent</button>
+    </div>
+  </div>`;
+
+const SENTENCE = (s) => [
+  `Measure in `, segHTML(MEASURE[0]),
+  ` rounded to the `, segHTML(MEASURE[1]),
+  ` pixel. The value sits `, segHTML(MEASURE[2]),
+  ` its line. Extension guides `, swHTML(MEASURE[3]),
+  ` &nbsp;· the overlay goes quiet while measuring `, swHTML(MEASURE[4]),
+  ` &nbsp;· flush edges show a zero `, swHTML(MEASURE[5]), `.`,
+].join("");
+
+/* ============================================================
+   WIRING — one loop, every prototype
+   ============================================================ */
+document.querySelectorAll("[data-proto]").forEach((root) => {
+  const n = root.dataset.proto;
+  const s = { ...DEFAULTS, theme: root.dataset.ccpTheme || DEFAULTS.theme };
+
+  /* fill slots */
+  root.querySelectorAll('[data-slot="themes"]').forEach((h) => h.innerHTML = themesHTML());
+  root.querySelectorAll('[data-slot="measure"]').forEach((h) => h.innerHTML = measureHTML(h.dataset.style));
+  root.querySelectorAll('[data-slot="chrome"]').forEach((h) => h.innerHTML = chromeHTML());
+  root.querySelectorAll('[data-slot="vig"]').forEach((h) => h.innerHTML = vigHTML(h.dataset.live === "1"));
+  const sentence = root.querySelector('[data-slot="sentence"]');
+  if (sentence) sentence.innerHTML = SENTENCE(s);
+  const chipU = root.querySelector('[data-slot="chip-unit"]');
+  if (chipU) chipU.innerHTML = segHTML(MEASURE[0]);
+  const chipP = root.querySelector('[data-slot="chip-precision"]');
+  if (chipP) chipP.innerHTML = segHTML(MEASURE[1]);
+
+  const saved = root.querySelector('[data-slot="saved"]');
+  let savedTimer = null;
+  const announce = (txt) => {
+    if (!saved) return;
+    saved.textContent = "Saved — " + txt;
+    clearTimeout(savedTimer);
+    savedTimer = setTimeout(() => { saved.textContent = ""; }, 2000);
+  };
+
+  const paint = () => {
+    root.dataset.ccpTheme = resolve(s.theme);
+    root.querySelectorAll("[data-set]").forEach((b) => {
+      b.setAttribute("aria-checked", String(s[b.dataset.set] === b.dataset.val));
+    });
+    root.querySelectorAll("[data-sw]").forEach((b) => {
+      if (!b.classList.contains("sw")) return void 0;
+      b.setAttribute("aria-checked", String(s[b.dataset.sw] === "on"));
+    });
+    root.querySelectorAll(".rv").forEach((rv) => {
+      rv.dataset.placement = s.placement === "online" ? "online" : "beside";
+      rv.dataset.guides = s.guides;
+      rv.dataset.quiet = s.quiet;
+      rv.dataset.zeros = s.zeros;
+      rv.querySelector('[data-pill="a"]').textContent = fmt(GAP_A, s);
+      rv.querySelector('[data-pill="b"]').textContent = fmt(GAP_B, s);
+    });
+    const pagepill = root.querySelector('[data-slot="pagepill"]');
+    if (pagepill) pagepill.textContent = fmt(GAP_A, s);
+    const sumT = root.querySelector('[data-slot="sum-theme"]');
+    if (sumT) sumT.textContent = THEMES.find((t) => t.id === s.theme).name;
+    const sumM = root.querySelector('[data-slot="sum-measure"]');
+    if (sumM) {
+      sumM.textContent = [s.unit, s.precision, s.placement === "online" ? "on line" : "beside"].join(" · ")
+        + (s.guides === "off" ? " · no guides" : "");
+    }
+  };
+
+  const setMode = (mode) => {
+    root.querySelectorAll('[data-slot="pv"]').forEach((pv) => pv.dataset.mode = mode);
+    const l4 = root.querySelector('[data-slot="l4root"]');
+    if (l4) l4.dataset.mode = mode;
+    const cap = root.querySelector('[data-slot="pvcap"]');
+    if (cap) cap.textContent = mode === "measure" ? "Preview · Measuring" : "Preview · Appearance";
+  };
+
+  /* clicks: radios, switches, cycles, tabs */
+  root.addEventListener("click", (e) => {
+    const radio = e.target.closest("[data-set]");
+    if (radio && root.contains(radio)) {
+      s[radio.dataset.set] = radio.dataset.val;
+      paint();
+      announce(radio.dataset.set === "theme"
+        ? THEMES.find((t) => t.id === s.theme).name
+        : radio.dataset.set + " · " + radio.dataset.val);
+      setMode(radio.dataset.set === "theme" ? "theme" : "measure");
+      return;
+    }
+    const sw = e.target.closest("[data-sw]");
+    if (sw && root.contains(sw)) {
+      const key = sw.dataset.sw;
+      s[key] = s[key] === "on" ? "off" : "on";
+      paint();
+      announce(key + " · " + s[key]);
+      setMode("measure");
+      return;
+    }
+    const cyc = e.target.closest("[data-cycle]");
+    if (cyc && root.contains(cyc)) {
+      s.placement = s.placement === "beside" ? "online" : "beside";
+      paint();
+      setMode("measure");
+      return;
+    }
+    const tab = e.target.closest("[data-tabbtn]");
+    if (tab && root.contains(tab)) {
+      const key = tab.dataset.tabbtn;
+      root.querySelectorAll("[data-tabbtn]").forEach((b) =>
+        b.setAttribute("aria-selected", String(b === tab)));
+      root.querySelectorAll("[data-tab]").forEach((p) =>
+        p.classList.toggle("on", p.dataset.tab === key));
+      setMode(key);
+    }
+  });
+
+  /* hover: context swap + spec-sheet spotlight */
+  root.querySelectorAll("[data-focus]").forEach((zone) => {
+    zone.addEventListener("pointerenter", () => setMode(zone.dataset.focus));
+  });
+  root.querySelectorAll(".spec-row").forEach((row) => {
+    row.addEventListener("pointerenter", () => {
+      root.querySelectorAll(".rv").forEach((rv) => rv.dataset.hi = row.dataset.hi);
+    });
+    row.addEventListener("pointerleave", () => {
+      root.querySelectorAll(".rv").forEach((rv) => delete rv.dataset.hi);
+    });
+  });
+
+  paint();
+  prefersDark.addEventListener("change", () => { if (s.theme === "system") paint(); });
+});
+</script>

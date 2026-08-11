@@ -1,0 +1,413 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe chrome placement — harness</title>
+<!--
+  The real token layer, so the harness's own chrome can't drift from the
+  extension's. Only the values that exist as tokens are wired up below — the
+  accent and the dark surface/text pair. The HUD's own greys, the pass/fail
+  greens and reds, and the diagram's reference swatches stay literal: they are
+  dev-tool colours with no counterpart in the design system, and inventing
+  tokens for them would fit the system to the harness rather than the product.
+-->
+<link rel="stylesheet" href="../tokens.css">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding-left: 44px;           /* body gutter: the only strip where <body> itself hit-tests */
+    font: 15px/1.5 system-ui, -apple-system, sans-serif;
+    /* The host page, not our chrome — deliberately independent of the theme. */
+    background: #faf9f5;
+    color: #141413;
+  }
+
+  #stage { position: relative; overflow-x: clip; }
+  .slot  { position: relative; border-top: 1px dashed #e3e1da; }
+  .slot::before {
+    content: attr(data-label);
+    position: absolute; top: 8px; left: 8px;
+    font: 11px/1 ui-monospace, monospace; color: #a8a49a; letter-spacing: .04em;
+  }
+
+  .specimen {
+    position: absolute;
+    background: #f0eee7;
+    border: 2px solid var(--ccp-accent);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font: 12px/1.4 ui-monospace, monospace;
+    color: #6a6a64;
+    overflow: hidden;
+  }
+  .specimen b { display: block; color: #141413; font-size: 13px; margin-bottom: 4px; }
+  .specimen.is-degenerate { padding: 0; }
+
+  .fixed-bar {
+    position: fixed; left: 44px; bottom: 0;
+    width: 260px; height: 52px;
+    background: var(--ccp-surface); color: var(--ccp-text);
+    border-radius: 10px 10px 0 0;
+    font: 12px/52px ui-monospace, monospace; text-align: center;
+    z-index: 5;
+  }
+
+  /* ===== HUD =====
+     z-index stays far below the extension's 2147483647 so probe chrome draws on top */
+  #hud {
+    position: fixed; top: 0; right: 0; z-index: 999999;
+    width: 400px; max-height: 100vh; overflow-y: auto;
+    background: var(--ccp-surface); color: var(--ccp-text);
+    font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+    padding: 12px 14px 18px;
+    box-shadow: -8px 0 32px -12px rgba(0,0,0,.5);
+  }
+  #hud.hidden { display: none; }
+  #hud h1 { font-size: 12px; margin: 0 0 2px; letter-spacing: .06em; text-transform: uppercase; color: var(--ccp-accent); }
+  #hud .sub { color: #8a867c; margin: 0 0 10px; }
+  #hud kbd {
+    background: #2a2a27; border: 1px solid #3d3d38; border-radius: 4px;
+    padding: 0 4px; font: inherit; color: var(--ccp-text);
+  }
+  #hud .keys { margin: 0 0 12px; color: #8a867c; }
+  #hud .keys div { margin: 2px 0; }
+
+  #summary { margin: 0 0 10px; padding: 8px 10px; border-radius: 6px; background: #201f1d; }
+  #summary.pass { border-left: 3px solid #4a9d5f; }
+  #summary.fail { border-left: 3px solid var(--ccp-accent); }
+
+  .row {
+    border-top: 1px solid #2a2a27; padding: 8px 0;
+    display: grid; grid-template-columns: 1fr 100px; gap: 8px; align-items: start;
+  }
+  .row.active { background: #221f1c; box-shadow: inset 3px 0 0 var(--ccp-accent); padding-left: 7px; }
+  .row .name { color: var(--ccp-text); }
+  .row .flags { color: var(--ccp-accent); margin-top: 3px; }
+  .row .nums  { color: #6f6c64; margin-top: 3px; font-size: 10px; }
+  .row .verdict { font-weight: 700; }
+  .row .verdict.PASS { color: #4a9d5f; }
+  .row .verdict.FAIL { color: #e0785a; }
+  .row .verdict.SKIP { color: #8a867c; }
+
+  .diagram { position: relative; width: 96px; background: #0d0d0c; border: 1px solid #3d3d38; overflow: hidden; }
+  .diagram i { position: absolute; display: block; }
+  .diagram .el { background: rgb(from var(--ccp-accent) r g b / 0.28); border: 1px solid var(--ccp-accent); }
+  .diagram .lb { background: rgba(250,249,245,.85); }
+  .diagram .tb { background: rgba(120,170,255,.85); }
+  .legend { color: #6f6c64; margin: 8px 0 0; }
+  .legend b { font-weight: 400; }
+  .sw { display: inline-block; width: 8px; height: 8px; vertical-align: middle; margin-right: 3px; }
+</style>
+</head>
+<body>
+
+<div id="hud">
+  <h1>Probe placement harness</h1>
+  <p class="sub">Placement of <code>#ccp-label</code> and <code>#ccp-toolbar</code>, simulated and live.</p>
+  <div class="keys">
+    <div><kbd>s</kbd> run simulation (no extension needed)</div>
+    <div><kbd>r</kbd> run live sweep (probe mode must be ON)</div>
+    <div><kbd>n</kbd>/<kbd>p</kbd> next / prev case &nbsp; <kbd>g</kbd> go to current</div>
+    <div><kbd>d</kbd> dump JSON to console &nbsp; <kbd>h</kbd> hide HUD</div>
+  </div>
+  <div id="summary">Press <kbd>s</kbd> to simulate, or turn on probe mode and press <kbd>r</kbd>.</div>
+  <div id="rows"></div>
+  <p class="legend">
+    <span class="sw" style="background:rgb(from var(--ccp-accent) r g b / 0.6)"></span>element &nbsp;
+    <span class="sw" style="background:rgba(250,249,245,.85)"></span>label &nbsp;
+    <span class="sw" style="background:rgba(120,170,255,.85)"></span>toolbar
+  </p>
+</div>
+
+<main id="stage"></main>
+
+<script type="module">
+// runSimV2 is the algorithm content.js implements. This imported runSim — the
+// superseded two-positioner version — so simulate mode was comparing the live
+// chrome against a reference that has not been shipped since 1.1.0.
+import { CASES, caseRect, evaluate, runSimV2 as simulate } from "./placement.mjs";
+
+const vpw = () => document.documentElement.clientWidth;
+const vph = () => document.documentElement.clientHeight;
+
+// ===================================================================
+// Stage — one slot per case, with a viewport of slack above and below
+// so any case can be scrolled to its exact target geometry.
+// ===================================================================
+
+const stage = document.getElementById("stage");
+const slots = new Map();
+
+function buildStage() {
+  stage.innerHTML = "";
+  slots.clear();
+  document.querySelectorAll(".fixed-bar").forEach((n) => n.remove());
+  const vw = vpw(), vh = vph();
+
+  CASES.forEach((c, i) => {
+    if (c.body) return;                        // <body> needs no specimen
+
+    if (c.fixed) {
+      const bar = document.createElement("div");
+      bar.className = "fixed-bar";
+      bar.id = "sp-" + c.id;
+      bar.textContent = "fixed bar";
+      document.body.appendChild(bar);
+      return;
+    }
+
+    const rect = caseRect(c, vw, vh);
+    const slot = document.createElement("div");
+    slot.className = "slot";
+    slot.dataset.label = `${i + 1} · ${c.id}`;
+    // a viewport of slack above and below, except for the end-of-document case
+    slot.style.height = (c.atEnd ? vh + rect.height : 2 * vh + rect.height) + "px";
+
+    const el = document.createElement("div");
+    el.className = "specimen" + (c.degenerate ? " is-degenerate" : "");
+    el.id = "sp-" + c.id;
+    el.style.cssText = `top:${vh}px; left:${rect.left}px; width:${rect.width}px; height:${rect.height}px;`;
+    if (!c.degenerate) el.innerHTML = `<b>${c.id}</b>${rect.width}×${rect.height}`;
+
+    slot.appendChild(el);
+    stage.appendChild(slot);
+    slots.set(c.id, slot);
+  });
+}
+
+// Scroll so the case's specimen sits at its designed viewport offset.
+function gotoCase(c) {
+  const vh = vph();
+  if (c.body || c.fixed) { window.scrollTo(0, 0); return; }
+  const slot = slots.get(c.id);
+  if (!slot) return;
+  const slotTop = slot.getBoundingClientRect().top + window.scrollY;
+  const rect = caseRect(c, vpw(), vh);
+  window.scrollTo(0, Math.max(0, slotTop + vh - rect.top));
+}
+
+// ===================================================================
+// Live sweep — drive the real extension with synthetic clicks.
+// The extension resolves targets via elementFromPoint, so a synthetic
+// MouseEvent carrying honest clientX/clientY is enough to select.
+// ===================================================================
+
+const raf = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+
+function boxOf(el) {
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  if (r.width === 0 && r.height === 0) return null;
+  return { top: r.top, left: r.left, w: r.width, h: r.height };
+}
+
+function clickPointFor(el, rect) {
+  const vw = vpw(), vh = vph();
+  const xs = [rect.left + rect.width / 2, rect.left + 6, rect.right - 6, rect.left + rect.width * 0.25];
+  const ys = [rect.top + rect.height / 2, rect.top + 6, rect.bottom - 6, rect.top + rect.height * 0.25];
+  for (const y of ys) {
+    for (const x of xs) {
+      if (x < 2 || y < 2 || x > vw - 2 || y > vh - 2) continue;
+      const hit = document.elementFromPoint(x, y);
+      if (hit && (hit === el || el.contains(hit))) return { x, y };
+    }
+  }
+  return null;
+}
+
+const escape = () =>
+  document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+
+async function runLive() {
+  const results = [];
+
+  for (const c of CASES) {
+    escape();                       // drop whatever the previous case selected
+    await raf();
+    gotoCase(c);
+    await raf();
+
+    const el = c.body ? document.body : document.getElementById("sp-" + c.id);
+    if (!el) { results.push({ id: c.id, name: c.name, verdict: "SKIP", flags: ["NO_SPECIMEN"] }); continue; }
+
+    const r = el.getBoundingClientRect();
+    const rect = { top: r.top, left: r.left, width: r.width, height: r.height, right: r.right, bottom: r.bottom };
+
+    // For <body>, aim at the left gutter — the one strip nothing else covers
+    const pt = c.body ? { x: 20, y: Math.round(vph() / 2) } : clickPointFor(el, rect);
+    if (!pt) { results.push({ id: c.id, name: c.name, rect, verdict: "SKIP", flags: ["NO_HITTABLE_POINT"] }); continue; }
+
+    el.dispatchEvent(new MouseEvent("click", {
+      bubbles: true, cancelable: true, view: window, clientX: pt.x, clientY: pt.y,
+    }));
+    await wait(240);                // let the toolbar's minWidth rAF and the 150ms glide settle
+
+    const label = boxOf(document.getElementById("ccp-label"));
+    const toolbar = boxOf(document.getElementById("ccp-toolbar"));
+
+    if (!label || !toolbar) {
+      results.push({
+        id: c.id, name: c.name, rect, label, toolbar, verdict: "FAIL",
+        flags: [!label && "NO_LABEL", !toolbar && "NO_TOOLBAR"].filter(Boolean),
+      });
+      continue;
+    }
+
+    results.push({ id: c.id, name: c.name, rect, label, toolbar, ...evaluate(label, toolbar, vpw(), vph()) });
+  }
+
+  escape();
+  return results;
+}
+
+// ===================================================================
+// HUD
+// ===================================================================
+
+const hud = document.getElementById("hud");
+const rowsEl = document.getElementById("rows");
+const summaryEl = document.getElementById("summary");
+let cursor = 0;
+
+// A scaled-down picture of the viewport with the three boxes drawn in it,
+// so a failure mode is legible without scrolling to it.
+function diagram(res) {
+  const vw = vpw(), vh = vph();
+  const W = 96, scale = W / vw, H = Math.round(vh * scale);
+  const box = (cls, b) => {
+    if (!b) return "";
+    const t = (b.top ?? 0) * scale;
+    const l = (b.left ?? 0) * scale;
+    const w = Math.max(1, (b.w ?? b.width) * scale);
+    const h = Math.max(1, (b.h ?? b.height) * scale);
+    return `<i class="${cls}" style="top:${t.toFixed(1)}px;left:${l.toFixed(1)}px;width:${w.toFixed(1)}px;height:${h.toFixed(1)}px"></i>`;
+  };
+  return `<div class="diagram" style="height:${H}px">
+    ${box("el", res.rect)}${box("tb", res.toolbar)}${box("lb", res.label)}
+  </div>`;
+}
+
+function render(results, mode) {
+  const fails = results.filter((r) => r.verdict === "FAIL").length;
+  const skips = results.filter((r) => r.verdict === "SKIP").length;
+  summaryEl.className = fails ? "fail" : "pass";
+  summaryEl.innerHTML =
+    `<b>${mode}</b> · ${results.length - fails - skips}/${results.length} pass` +
+    (fails ? ` · <span style="color:#e0785a">${fails} fail</span>` : "") +
+    (skips ? ` · ${skips} skipped` : "") +
+    `<br><span style="color:#6f6c64">viewport ${vpw()}×${vph()}</span>`;
+
+  rowsEl.innerHTML = results.map((r, i) => {
+    const px = (n) => Math.round(n);
+    const nums = r.label && r.toolbar
+      ? `label ${px(r.label.top)},${px(r.label.left)} ${px(r.label.w ?? r.label.width)}×${px(r.label.h ?? r.label.height)} · vis ${Math.round((r.labelVisible ?? 0) * 100)}%<br>` +
+        `bar ${px(r.toolbar.top)},${px(r.toolbar.left)} · vis ${Math.round((r.toolbarVisible ?? 0) * 100)}%` +
+        (r.overlapPx ? ` · overlap ${r.overlapPx}px²` : "")
+      : "";
+    return `<div class="row ${i === cursor ? "active" : ""}">
+      <div>
+        <div class="name">${i + 1}. ${r.name}</div>
+        ${r.flags?.length ? `<div class="flags">${r.flags.join(" · ")}</div>` : ""}
+        <div class="nums">${nums}</div>
+      </div>
+      <div>
+        <div class="verdict ${r.verdict}">${r.verdict}</div>
+        ${r.rect ? diagram(r) : ""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+// ===================================================================
+// Wiring
+// ===================================================================
+
+const state = { sim: null, live: null };
+
+function dump() {
+  console.log("=== PROBE HARNESS ===");
+  for (const [mode, res] of Object.entries(state)) {
+    if (!res) continue;
+    console.log(`--- ${mode} (viewport ${vpw()}x${vph()}) ---`);
+    console.table(res.map((r) => ({
+      case: r.id, verdict: r.verdict, flags: (r.flags || []).join(","),
+      labelVis: r.labelVisible, barVis: r.toolbarVisible, overlap: r.overlapPx,
+    })));
+  }
+}
+
+// Compare a live sweep against the simulation — this is what proves the
+// transcribed algorithms in placement.mjs still match the shipped code.
+function reconcile() {
+  if (!state.sim || !state.live) return null;
+  const byId = Object.fromEntries(state.sim.map((r) => [r.id, r]));
+  const drift = state.live
+    .filter((l) => byId[l.id] && l.verdict !== "SKIP")
+    .map((l) => {
+      const s = byId[l.id];
+      const same = JSON.stringify(l.flags.slice().sort()) === JSON.stringify(s.flags.slice().sort());
+      return same ? null : { id: l.id, sim: s.flags, live: l.flags };
+    })
+    .filter(Boolean);
+  console.log(drift.length ? "SIM/LIVE DRIFT:" : "sim matches live on every case", drift);
+  return drift;
+}
+
+window.addEventListener("keydown", (e) => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  switch (e.key.toLowerCase()) {
+    case "s":
+      state.sim = simulate(vpw(), vph());
+      render(state.sim, "SIMULATED");
+      dump();
+      break;
+    case "r":
+      summaryEl.textContent = "Running live sweep…";
+      runLive().then((res) => {
+        state.live = res;
+        render(res, "LIVE");
+        dump();
+        reconcile();
+      });
+      break;
+    case "n":
+    case "p":
+      cursor = (cursor + (e.key.toLowerCase() === "n" ? 1 : CASES.length - 1)) % CASES.length;
+      gotoCase(CASES[cursor]);
+      if (state.live || state.sim) render(state.live || state.sim, state.live ? "LIVE" : "SIMULATED");
+      break;
+    case "g": gotoCase(CASES[cursor]); break;
+    case "h": hud.classList.toggle("hidden"); break;
+    case "d": dump(); break;
+  }
+});
+
+let resizeTimer;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    buildStage();
+    state.sim = simulate(vpw(), vph());
+    render(state.sim, "SIMULATED");
+  }, 200);
+});
+
+buildStage();
+state.sim = simulate(vpw(), vph());
+render(state.sim, "SIMULATED");
+
+// Entry points for automation
+window.__probe = state;
+window.__probeRun = {
+  sim: () => (state.sim = simulate(vpw(), vph())),
+  live: runLive,
+  goto: (id) => gotoCase(CASES.find((c) => c.id === id)),
+  reconcile,
+  cases: CASES,
+};
+</script>
+</body>
+</html>

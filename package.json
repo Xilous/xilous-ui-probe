@@ -1,0 +1,17 @@
+{
+  "name": "claude-code-probe",
+  "version": "1.4.0",
+  "description": "Inspect, highlight, and copy any element on any webpage.",
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js",
+    "build": "./build.sh",
+    "test": "node test/all.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jingquank/Claude-Code-Probe.git"
+  },
+  "keywords": ["browser-extension", "devtools", "inspector", "claude", "chrome-extension"],
+  "author": "Jingquank",
+  "license": "MIT"
+}

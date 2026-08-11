@@ -1,0 +1,20 @@
+/* Tokens the stylesheet walk cannot reach.
+
+   An @import'ed sheet is not a member of document.styleSheets, and the rule
+   that pulls it in is a CSSImportRule — which exposes `.styleSheet`, not
+   `.cssRules`, so the walk's recursion never descends into it. Every name here
+   is therefore invisible to a collector that discovers tokens by reading
+   stylesheets, while resolving perfectly well on any element that asks for it.
+
+   That gap is what collectElementTokens closes, and this file is how the suite
+   proves it: one design system's worth of tokens, reachable only by asking the
+   element. The same argument covers cross-origin sheets and shadow roots,
+   neither of which a test fixture can stage as cleanly. */
+:root {
+  --imported-ink: #2b1d4a;
+  --imported-accent: oklch(0.62 0.19 305);
+
+  --imported-step-1: 5px;
+  --imported-step-2: 13px;
+  --imported-step-3: 21px;
+}

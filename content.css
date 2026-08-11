@@ -1,0 +1,2208 @@
+/* Every design value here comes from tokens.css, which the manifest loads first
+   (order is cascade order). No literal colour should appear below this line —
+   test/tokens.mjs fails the build if one does. */
+
+/* ===== Overlay Container ===== */
+#ccp-overlay-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: var(--ccp-z-overlay);
+  pointer-events: none;
+}
+
+/* Every box carries the inspected element's own corner radii, written per corner
+   from JS — see applyRadii() in content.js for why a single calc() won't do. */
+#ccp-overlay-container > div,
+#ccp-overlay-container > svg {
+  position: fixed;
+  box-sizing: border-box;
+  transition: top var(--ccp-duration) var(--ccp-ease),
+              left var(--ccp-duration) var(--ccp-ease),
+              width var(--ccp-duration) var(--ccp-ease),
+              height var(--ccp-duration) var(--ccp-ease),
+              opacity var(--ccp-duration) ease;
+}
+
+/* Hover — box-model hints, with the outline itself drawn as marching dashes.
+   The padding band borrows the id colour so the two bands stay distinguishable
+   in every theme without needing tokens of their own. */
+#ccp-margin-box  { border: 1px dashed rgb(from var(--ccp-accent) r g b / 0.3); }
+#ccp-padding-box { border: 1px dashed rgb(from var(--ccp-syntax-id) r g b / 0.3); }
+#ccp-content-box { border: none; }
+
+/* An SVG path rather than a border, so the dashes travel around the corner arc
+   instead of breaking at it — and so per-corner radii come out right. */
+#ccp-ants { overflow: visible; }
+#ccp-ants path {
+  fill: none;
+  stroke: rgb(from var(--ccp-accent) r g b / 0.85);
+  stroke-width: var(--ccp-ring);
+  stroke-dasharray: 7 5;
+  animation: ccp-march 0.55s linear infinite;
+}
+@keyframes ccp-march { to { stroke-dashoffset: -12; } }
+
+/* Selected — a gradient sweeping the stroke, and the same gradient blurred inward.
+   Both are one oversized square spun by transform: composited, so the cost doesn't
+   grow with the element. */
+#ccp-border-box,
+#ccp-bloom { display: none; }
+
+#ccp-overlay-container.ccp-selected #ccp-ants { display: none; }
+#ccp-overlay-container.ccp-selected #ccp-border-box,
+#ccp-overlay-container.ccp-selected #ccp-bloom { display: block; }
+#ccp-overlay-container.ccp-selected #ccp-margin-box,
+#ccp-overlay-container.ccp-selected #ccp-padding-box {
+  border-color: transparent;
+}
+
+#ccp-border-box {
+  padding: var(--ccp-ring);
+  overflow: hidden;
+  -webkit-mask: linear-gradient(var(--ccp-mask) 0 0) content-box, linear-gradient(var(--ccp-mask) 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(var(--ccp-mask) 0 0) content-box, linear-gradient(var(--ccp-mask) 0 0);
+  mask-composite: exclude;
+}
+
+#ccp-bloom {
+  overflow: hidden;
+  -webkit-mask: radial-gradient(closest-side, transparent 25%, var(--ccp-mask) 95%);
+  mask: radial-gradient(closest-side, transparent 25%, var(--ccp-mask) 95%);
+}
+
+.ccp-spin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  animation: ccp-spin 10s linear infinite;
+  will-change: transform;
+}
+
+@keyframes ccp-spin {
+  from { transform: translate(-50%, -50%) rotate(0deg); }
+  to   { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+#ccp-sweep-spin {
+  background: conic-gradient(
+    transparent 0deg,
+    var(--ccp-accent) 90deg,
+    var(--ccp-accent-light) 180deg,
+    var(--ccp-accent) 270deg,
+    transparent 360deg
+  );
+}
+
+#ccp-bloom-spin {
+  background: conic-gradient(
+    transparent 0deg,
+    rgb(from var(--ccp-accent) r g b / 0.75) 90deg,
+    rgb(from var(--ccp-accent-light) r g b / 0.6) 180deg,
+    rgb(from var(--ccp-accent) r g b / 0.75) 270deg,
+    transparent 360deg
+  );
+  filter: blur(16px);
+}
+
+/* Elements too big for the effect to read (a whole page, say) get a plain stroke
+   rather than a spun square the size of the document */
+#ccp-overlay-container.ccp-plain #ccp-sweep-spin { display: none; }
+#ccp-overlay-container.ccp-plain #ccp-border-box { background: var(--ccp-accent); }
+#ccp-overlay-container.ccp-plain #ccp-bloom { display: none; }
+
+/* Everything that moves on its own has to stop here. Clawd's walk and bob were
+   missing from this list — the mascot kept pacing for anyone who had asked the
+   OS for stillness. The marquee is included for the same reason. */
+@media (prefers-reduced-motion: reduce) {
+  #ccp-ants path,
+  .ccp-spin,
+  #ccp-label .ccp-clawd,
+  #ccp-label .ccp-clawd svg,
+  #ccp-label .ccp-marquee-inner,
+  #ccp-edit-flash.ccp-edit-flashing {
+    animation: none;
+  }
+
+  /* The flash is the only way an undo on an off-screen element announces
+     itself, so zeroing the animation would remove information rather than
+     motion. It stays put and visible instead — the toast still says what
+     happened, and the ring says where. */
+  #ccp-edit-flash.ccp-edit-flashing {
+    opacity: 1;
+  }
+
+  /* The tether never animates on its own; it only glides. Stillness means the
+     glide goes, not the tether — it is the only thing left saying which
+     element the panel is editing, so removing it would remove information
+     rather than motion, the same call made for the flash just above.
+
+     Scoped through the container on purpose. Everything else in this block
+     quiets a rule declared ABOVE it and so wins on source order; the tether's
+     transitions are declared below, in its own section, and a matching
+     `#ccp-tether .ccp-tether-tick` at (1,1,0) would silently lose to them.
+     Adding the container makes it (2,1,0) — the same specificity-over-order
+     argument the Edit Mode section makes, and for the same reason: a section
+     reorder must not be able to break it. */
+  #ccp-overlay-container #ccp-tether .ccp-tether-tick,
+  #ccp-overlay-container #ccp-tether .ccp-tether-seg {
+    transition: none;
+  }
+}
+
+/* ===== Redline =====
+   Held-Option spacing measurements. The nodes glide between hover targets on
+   the overlay's own curve; renderRedline() lifts them out of the glide with
+   .ccp-no-transition when tracking scroll, when a node fades back in, and
+   when a guide changes orientation. Nothing here self-animates — the dashed
+   guides deliberately don't march — so, like the overlay glide itself, this
+   section adds nothing to the reduced-motion block above (which quiets
+   animations, not positional transitions).
+
+   The wrapper is a direct child of #ccp-overlay-container and never moves;
+   the measurement nodes are its children, which keeps them out of reach of
+   the blanket `> div` glide at the top of this file — their transitions are
+   declared here, where the per-frame snap logic can reason about them. */
+#ccp-redline {
+  position: fixed;
+  inset: 0;
+  display: none;
+}
+
+.ccp-redlining #ccp-redline {
+  display: block;
+}
+
+/* border-radius is in the list for the hover box's corner morph; it is inert
+   on the square nodes. Pills size to their text — width/height never tween. */
+#ccp-redline .ccp-redline-hover,
+#ccp-redline .ccp-redline-line,
+#ccp-redline .ccp-redline-guide-h,
+#ccp-redline .ccp-redline-guide-v,
+#ccp-redline .ccp-redline-pill {
+  transition: top var(--ccp-duration) var(--ccp-ease),
+              left var(--ccp-duration) var(--ccp-ease),
+              width var(--ccp-duration) var(--ccp-ease),
+              height var(--ccp-duration) var(--ccp-ease),
+              border-radius var(--ccp-duration) var(--ccp-ease),
+              opacity var(--ccp-duration) ease;
+}
+
+#ccp-redline .ccp-redline-hover {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid var(--ccp-accent);
+}
+
+#ccp-redline .ccp-redline-line {
+  position: absolute;
+  background: var(--ccp-accent);
+}
+
+#ccp-redline .ccp-redline-guide-h {
+  position: absolute;
+  height: 0;
+  border-top: 1px dashed rgb(from var(--ccp-accent) r g b / 0.6);
+}
+
+#ccp-redline .ccp-redline-guide-v {
+  position: absolute;
+  width: 0;
+  border-left: 1px dashed rgb(from var(--ccp-accent) r g b / 0.6);
+}
+
+#ccp-redline .ccp-redline-pill {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: var(--ccp-accent);
+  color: var(--ccp-on-accent);
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1 var(--ccp-font);
+  letter-spacing: var(--ccp-tracking-num);
+  font-variant-numeric: tabular-nums;
+  padding: var(--ccp-gap-tight) var(--ccp-xs);
+  border-radius: var(--ccp-radius-sm);
+  white-space: nowrap;
+}
+
+/* Quiet overlay — an opt-in preference (redlineQuietOverlay). While measuring,
+   the box-model tints, bloom, and sweep accents stand down so nothing painted
+   sits under the measurement lines; the marching-ants outline stays, because
+   you must still see what you're measuring from. Opacity, so the container's
+   own transition fades them out and back. */
+.ccp-redline-quiet.ccp-redlining #ccp-margin-box,
+.ccp-redline-quiet.ccp-redlining #ccp-padding-box,
+.ccp-redline-quiet.ccp-redlining #ccp-content-box,
+.ccp-redline-quiet.ccp-redlining #ccp-bloom,
+.ccp-redline-quiet.ccp-redlining .ccp-spin {
+  opacity: 0;
+}
+
+/* The hush: visibility, not display or opacity. display would fight
+   layoutChrome's measurement pass (it forces display:block to read offset
+   sizes); opacity would leave the toolbar hit-testable and the label in
+   elementFromPoint's way. visibility keeps both laid out — so they reappear
+   exactly where layoutChrome kept them — while the page underneath becomes
+   a measurable redline target. Same precedent as #ccp-settings-btn.ccp-yielded
+   below, for the same reason. */
+.ccp-redlining #ccp-label,
+.ccp-redlining #ccp-toolbar {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+/* visibility normally inherits, but every node inside the toolbar declares
+   `all: initial` (see the Action Toolbar section), which resets visibility to
+   `visible` and severs the inheritance — hiding the rail alone leaves its
+   buttons showing. So the hide has to reach each descendant itself, and with
+   !important: those `all` declarations sit on higher-specificity selectors.
+   pointer-events gets the same treatment, or the invisible buttons would still
+   swallow the clicks that redline's re-anchoring depends on. The label needs
+   none of this — its children never reset, so they inherit the hide. */
+.ccp-redlining #ccp-toolbar * {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ===== Tether =====
+   What says "this panel edits that element" now that Edit Mode has taken the
+   selection box away. Four solid ticks at the edge midpoints, sitting outside
+   the element, and one dashed run from the panel to the tick on the facing
+   edge. Everything lives in the ring of space outside the element's box — the
+   ticks lie flat along their edge rather than pointing at it, so they can only
+   ever be tangent to that clearance, never inside it.
+
+   Solid ticks against a dashed run is the whole grammar: dashed is Redline's
+   guide vocabulary and means reference, solid means subject. The weights say
+   which end is the thing being edited.
+
+   Same structure as the redline layer above, for the same reason — a wrapper
+   that never moves, holding nodes kept out of reach of the blanket `> div`
+   glide so renderTether() can decide per frame which snap and which glide.
+   Nothing here self-animates, so like the redline nodes this section adds no
+   animations to the reduced-motion block; its transitions are listed there
+   only so a stated preference for stillness also stops the glide. */
+#ccp-tether {
+  position: fixed;
+  inset: 0;
+  display: none;
+}
+
+.ccp-editing #ccp-tether {
+  display: block;
+}
+
+#ccp-tether .ccp-tether-tick,
+#ccp-tether .ccp-tether-seg {
+  position: fixed;
+  transition: top var(--ccp-duration) var(--ccp-ease),
+              left var(--ccp-duration) var(--ccp-ease),
+              width var(--ccp-duration) var(--ccp-ease),
+              height var(--ccp-duration) var(--ccp-ease),
+              opacity var(--ccp-duration) var(--ccp-ease);
+}
+
+#ccp-tether .ccp-tether-tick {
+  background: var(--ccp-accent);
+  border-radius: 1px;
+}
+
+/* Dashed via a border, not a background image: horizontal runs dash through
+   border-top and vertical through border-left, which is exactly how the
+   redline guides do it and keeps the dash phase consistent between them.
+
+   The weight is where the two part company. A redline guide is an aside — it
+   extends an edge so a measurement has something to measure against, and it
+   should stay quieter than the number it serves. The run is the only thing
+   saying which element this panel edits, and at 1px against 55% alpha it was
+   the faintest mark on screen while being the one carrying the meaning. At 2px
+   it matches the ticks it lands on, so the tether reads as one object at one
+   weight rather than as two solid stubs joined by a hairline.
+
+   2px is GEOMETRY.tetherThick, which the solver uses for the ticks. It cannot
+   be read from here — the tether geometry is pure and swept in
+   test/tether.mjs, with no DOM to ask — so this is a transcription. Change one,
+   change both, and the negative margin below with it.
+
+   The margin keeps the promise the geometry makes. A border grows inward from
+   the element's edge, so a run placed exactly on the tick's centre would paint
+   entirely to one side of it and land half its own weight low — the thicker the
+   stroke, the further off. Pulling back half the weight puts the stroke's
+   centreline back on the geometric path, which is what "the run lands on the
+   middle of the tick" has always meant. */
+#ccp-tether .ccp-tether-seg-h {
+  border-top: 2px dashed rgb(from var(--ccp-accent) r g b / 0.55);
+  margin-top: -1px;
+}
+
+#ccp-tether .ccp-tether-seg-v {
+  border-left: 2px dashed rgb(from var(--ccp-accent) r g b / 0.55);
+  margin-left: -1px;
+}
+
+/* Loud: a row is under the pointer, a gesture is open, or a value just landed.
+   The ticks lengthen and the run comes up to full strength. Nothing moves
+   closer to the element — the clearance is fixed, and amplifying it would be
+   the one change that could break the constraint. */
+.ccp-tether-loud #ccp-tether .ccp-tether-seg-h {
+  border-top-color: var(--ccp-accent);
+}
+
+.ccp-tether-loud #ccp-tether .ccp-tether-seg-v {
+  border-left-color: var(--ccp-accent);
+}
+
+/* ===== Edit Mode =====
+   The same hush, for the same reasons, plus one of its own: the beam. The
+   sweep is a "look here" animation, and while you are tuning an element the
+   answer to "which one" is settled — a rotating gradient behind live controls
+   is just motion competing with the thing you are judging.
+
+   The box used to stay, flattened to a solid stroke. It no longer does. The
+   panel writes border-width, border-color, border-radius and box-shadow, and a
+   ring drawn 2px outside the element sits on top of all four — you cannot
+   judge a 2px stroke through an accent stroke, or watch a corner round under
+   one. The whole box goes, and the tether takes over the job of saying which
+   element this panel belongs to, working only in the space outside it. */
+.ccp-editing #ccp-label,
+.ccp-editing #ccp-toolbar {
+  visibility: hidden;
+  pointer-events: none;
+}
+.ccp-editing #ccp-toolbar * {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+/* Scoped through the container *and* .ccp-selected on purpose: the rule that
+   turns these on for a selection is `#ccp-overlay-container.ccp-selected
+   #ccp-bloom` at (2,1,0), so a plain `.ccp-editing #ccp-bloom` at (1,1,0)
+   loses and the bloom keeps rotating behind the panel. Matching the shape and
+   adding the mode class makes it (2,2,0) — a win on specificity rather than on
+   source order, which would break the first time these sections were reordered. */
+.ccp-editing #ccp-overlay-container.ccp-selected #ccp-sweep-spin,
+.ccp-editing #ccp-overlay-container.ccp-selected #ccp-bloom,
+.ccp-editing #ccp-overlay-container.ccp-selected #ccp-border-box {
+  display: none;
+}
+/* The box-model tints go with it. They are drawn on the element's own padding
+   and content areas, which is the interior the tether exists to keep clear. */
+.ccp-editing #ccp-overlay-container.ccp-selected #ccp-margin-box,
+.ccp-editing #ccp-overlay-container.ccp-selected #ccp-padding-box,
+.ccp-editing #ccp-overlay-container.ccp-selected #ccp-content-box {
+  display: none;
+}
+
+/* Measuring while editing hushes the panel exactly as it hushes the toolbar,
+   so the measurement has the page to itself. The panel's roots declare
+   `all: initial` too, so the descendant rule is as load-bearing here as it is
+   above. Releasing Option brings it back where it was. */
+.ccp-redlining #ccp-edit-panel {
+  visibility: hidden;
+  pointer-events: none;
+}
+.ccp-redlining #ccp-edit-panel * {
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* ===== Element Label ===== */
+#ccp-label {
+  position: fixed;
+  background: var(--ccp-surface);
+  color: var(--ccp-text);
+  font: var(--ccp-text-base)/var(--ccp-leading-base) var(--ccp-font);
+  padding: var(--ccp-sm) var(--ccp-md);
+  border-radius: var(--ccp-radius-md);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: var(--ccp-z-chrome);
+  border: 1px solid rgb(from var(--ccp-accent) r g b / 0.25);
+  box-shadow: var(--ccp-shadow-card);
+  /* box-sizing so the max-height the layout pass sets means the whole box */
+  box-sizing: border-box;
+  max-width: min(460px, calc(100vw - 8px));
+  /* visible so Clawd can walk along the top edge; layoutChrome switches this to
+     hidden only when the label has to be capped to fit a very short viewport */
+  overflow: visible;
+  display: block;
+  transition: top var(--ccp-duration) var(--ccp-ease),
+              left var(--ccp-duration) var(--ccp-ease),
+              opacity var(--ccp-duration-fast) ease;
+}
+
+/* Clawd mascot — escapes the popup and walks along the top edge */
+#ccp-label .ccp-clawd {
+  position: absolute;
+  top: -17px;
+  left: var(--ccp-xs);
+  width: 26px;
+  height: 20px;
+  pointer-events: none;
+  animation: ccp-clawd-walk 24s linear infinite;
+  transform-origin: 50% 100%;
+}
+
+@keyframes ccp-clawd-walk {
+  0%   { left: 4px;                    transform: scaleX(1); }
+  47%  { left: calc(100% - 30px);      transform: scaleX(1); }
+  50%  { left: calc(100% - 30px);      transform: scaleX(-1); }
+  97%  { left: 4px;                    transform: scaleX(-1); }
+  100% { left: 4px;                    transform: scaleX(1); }
+}
+
+#ccp-label .ccp-clawd svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  animation: ccp-clawd-bob 1.1s ease-in-out infinite;
+}
+
+@keyframes ccp-clawd-bob {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-5px); }
+  60% { transform: translateY(-5px); }
+  75% { transform: translateY(1px); }
+  85% { transform: translateY(-1px); }
+}
+
+/* Clawd's sparkle and blink are <animate> elements inside CLAWD_SVG itself, not
+   CSS — the ccp-sparkle and ccp-blink keyframes that used to sit here were
+   referenced by no rule and have been removed. */
+
+/* Clawd's palette. These are rules rather than fill="" attributes on the SVG
+   because var() is not resolved inside an SVG presentation attribute. Not scoped
+   under #ccp-label: CLAWD_MINI also appears inside a toolbar button and the
+   toast, both of which are outside the label. */
+.ccp-clawd-body   { fill: var(--ccp-clawd-body); }
+.ccp-clawd-leg    { fill: var(--ccp-clawd-leg); }
+.ccp-clawd-eye    { fill: var(--ccp-clawd-eye); }
+.ccp-clawd-spark  { fill: var(--ccp-accent); }
+.ccp-clawd-shadow { fill: var(--ccp-clawd-shadow); }
+
+#ccp-label .ccp-label-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+}
+
+#ccp-label .ccp-label-line {
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-sm);
+}
+
+/* Identity line — primary, slightly heavier */
+#ccp-label .ccp-line-identity {
+  font-size: var(--ccp-text-lg);
+}
+
+/* Vertical rhythm — tight within a category, generous between categories */
+#ccp-label .ccp-label-line + .ccp-label-line {
+  margin-top: var(--ccp-gap-base);
+}
+#ccp-label .ccp-line-identity + .ccp-line-text {
+  margin-top: var(--ccp-gap-tight);
+}
+#ccp-label .ccp-line-meta + .ccp-line-visual {
+  margin-top: var(--ccp-gap-pair);
+}
+#ccp-label .ccp-label-line + .ccp-line-breadcrumb {
+  margin-top: var(--ccp-gap-section);
+}
+
+#ccp-label .ccp-label-tag {
+  color: var(--ccp-accent);
+  font-weight: var(--ccp-weight-bold);
+}
+
+#ccp-label .ccp-label-id {
+  color: var(--ccp-syntax-id);
+  font-weight: var(--ccp-weight-medium);
+}
+
+#ccp-label .ccp-label-class {
+  color: var(--ccp-syntax-class);
+}
+
+#ccp-label .ccp-label-size {
+  color: var(--ccp-text-faint);
+  margin-left: auto;
+  padding-left: var(--ccp-md);
+  font-size: var(--ccp-text-sm);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--ccp-tracking-num);
+}
+
+#ccp-label .ccp-label-prop {
+  color: var(--ccp-text-muted);
+  font-size: var(--ccp-text-sm);
+}
+
+#ccp-label .ccp-label-text {
+  color: var(--ccp-text-dim);
+  font-size: var(--ccp-text-sm);
+  font-style: italic;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The swatch's fill is the inspected page's own colour, written inline from JS.
+   It is never themed — see --ccp-checker in tokens.css. Only its border is
+   chrome, so only the border follows the theme. */
+#ccp-label .ccp-color-swatch {
+  display: inline-block;
+  width: var(--ccp-swatch);
+  height: var(--ccp-swatch);
+  border-radius: var(--ccp-radius-xs);
+  margin: 0 var(--ccp-gap-pair) -1px 0;
+  vertical-align: baseline;
+  border: 1px solid var(--ccp-swatch-border);
+  box-sizing: border-box;
+}
+
+#ccp-label .ccp-color-swatch.ccp-color-swatch-alpha {
+  background-image:
+    linear-gradient(45deg, var(--ccp-checker) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--ccp-checker) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--ccp-checker) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--ccp-checker) 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 0 3px, 3px -3px, -3px 0px;
+}
+
+#ccp-label .ccp-label-sep {
+  color: var(--ccp-sep);
+  margin: 0 var(--ccp-xs);
+}
+
+#ccp-label .ccp-label-marquee {
+  overflow: hidden;
+  max-width: 380px;
+  mask-image: linear-gradient(to right, transparent, var(--ccp-mask) 8px, var(--ccp-mask) calc(100% - 16px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, var(--ccp-mask) 8px, var(--ccp-mask) calc(100% - 16px), transparent);
+}
+
+#ccp-label .ccp-marquee-inner {
+  display: inline-block;
+  white-space: nowrap;
+  animation: ccp-marquee 12s linear infinite;
+}
+
+@keyframes ccp-marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+#ccp-label .ccp-label-breadcrumb {
+  color: var(--ccp-text-faint);
+  font-size: var(--ccp-text-sm);
+}
+
+#ccp-label .ccp-label-breadcrumb .ccp-label-tag {
+  color: var(--ccp-accent-dark);
+  font-weight: var(--ccp-weight-medium);
+}
+
+#ccp-label .ccp-label-breadcrumb .ccp-label-sep {
+  color: var(--ccp-sep);
+}
+
+/* ===== Action Toolbar =====
+   #ccp-toolbar is a transparent rail holding two siblings: the action bar and
+   the Select Parent button. align-items:stretch keeps them exactly the same
+   height, and the rail glides on the same curve as the selection outline.
+
+   `all: initial` on this and its descendants resets every regular property, so
+   font-family and box-sizing have to be re-declared below. Custom properties are
+   the one thing `all` does not reset (CSS Cascade 4 §3.2), which is why the
+   --ccp-* tokens still reach in here from :root. */
+#ccp-toolbar {
+  all: initial;
+  position: fixed;
+  z-index: var(--ccp-z-chrome);
+  display: flex;
+  align-items: stretch;
+  gap: var(--ccp-gap-section);
+  font-family: var(--ccp-font);
+  box-sizing: border-box;
+  transition: top var(--ccp-duration) var(--ccp-ease),
+              left var(--ccp-duration) var(--ccp-ease);
+}
+
+#ccp-toolbar .ccp-bar {
+  all: initial;
+  background: var(--ccp-surface);
+  border: 1px solid rgb(from var(--ccp-accent) r g b / 0.5);
+  border-radius: var(--ccp-radius-lg);
+  padding: var(--ccp-xs);
+  display: flex;
+  gap: var(--ccp-xs);
+  box-shadow: var(--ccp-shadow-bar);
+  font-family: var(--ccp-font);
+  box-sizing: border-box;
+}
+
+#ccp-toolbar .ccp-bar button {
+  all: initial;
+  background: transparent;
+  color: var(--ccp-text);
+  border: 1px solid transparent;
+  border-radius: var(--ccp-radius-sm);
+  padding: var(--ccp-btn-y) var(--ccp-btn-x);
+  font: var(--ccp-weight-medium) var(--ccp-text-base)/var(--ccp-leading-tight) var(--ccp-font);
+  text-transform: uppercase;
+  letter-spacing: var(--ccp-tracking-wide);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-sm);
+  white-space: nowrap;
+  justify-content: center;
+  transition: background var(--ccp-duration), border-color var(--ccp-duration);
+  box-sizing: border-box;
+}
+
+#ccp-toolbar .ccp-bar button:hover {
+  background: rgb(from var(--ccp-accent) r g b / 0.15);
+  border-color: rgb(from var(--ccp-accent) r g b / 0.5);
+}
+
+#ccp-toolbar .ccp-bar button:active {
+  background: rgb(from var(--ccp-accent) r g b / 0.25);
+}
+
+#ccp-toolbar button svg,
+#ccp-settings-btn svg {
+  width: var(--ccp-icon);
+  height: var(--ccp-icon);
+  flex-shrink: 0;
+}
+
+/* Select Parent — navigation, not a copy action, so it reads as the accent on
+   the same chrome. No vertical padding: the height comes from stretch. */
+#ccp-toolbar .ccp-parent-btn {
+  all: initial;
+  background: var(--ccp-surface);
+  color: var(--ccp-accent);
+  border: 1px solid var(--ccp-accent);
+  border-radius: var(--ccp-radius-lg);
+  padding: 0 var(--ccp-lg);
+  font: var(--ccp-weight-medium) var(--ccp-text-base)/var(--ccp-leading-tight) var(--ccp-font);
+  text-transform: uppercase;
+  letter-spacing: var(--ccp-tracking-wide);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-sm);
+  white-space: nowrap;
+  box-shadow: var(--ccp-shadow-bar);
+  box-sizing: border-box;
+  transition: background var(--ccp-duration), border-color var(--ccp-duration),
+              color var(--ccp-duration), opacity var(--ccp-duration);
+}
+
+/* Solid invert — the fill floods to the accent and the label flips to the
+   on-accent ink. Both states must stay fully opaque: unlike the bar's buttons,
+   this one sits on the page, so a translucent fill lets the page show through. */
+#ccp-toolbar .ccp-parent-btn:hover {
+  background: var(--ccp-accent);
+  color: var(--ccp-on-accent);
+}
+
+#ccp-toolbar .ccp-parent-btn:active {
+  background: var(--ccp-accent-dark);
+  color: var(--ccp-on-accent);
+}
+
+#ccp-toolbar .ccp-parent-btn.ccp-button-disabled {
+  opacity: var(--ccp-opacity-disabled);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Narrow viewports: drop to icons so the rail stops overflowing the screen.
+   Driven by a class rather than a media query because the JS has to re-measure
+   the buttons' locked widths whenever the density flips. */
+#ccp-toolbar.ccp-compact .ccp-bar button span,
+#ccp-toolbar.ccp-compact .ccp-parent-btn span {
+  display: none;
+}
+
+#ccp-toolbar.ccp-compact .ccp-bar button,
+#ccp-toolbar.ccp-compact .ccp-parent-btn {
+  padding-left: var(--ccp-md);
+  padding-right: var(--ccp-md);
+}
+
+/* Placement that tracks the viewport has to be instantaneous — gliding to each
+   new scroll position smears the chrome across the page. !important because
+   #ccp-label and #ccp-toolbar both set transition at ID specificity. */
+.ccp-no-transition {
+  transition: none !important;
+}
+
+/* Edit opens a mode rather than performing an action, so it stays an icon at
+   every density — the two labelled buttons beside it are what the bar is for,
+   and a third word would make the rail the widest thing on the page. */
+#ccp-toolbar .ccp-bar button.ccp-icon-btn {
+  padding-left: var(--ccp-md);
+  padding-right: var(--ccp-md);
+  color: var(--ccp-accent);
+}
+
+/* An undo can land on an element other than the one being edited. It gets a
+   single pulse where it stands, so the change is never invisible — and it
+   lives in the overlay container, which is already pointer-events:none, so it
+   cannot get in the way of the page underneath. */
+#ccp-edit-flash {
+  position: fixed;
+  border: var(--ccp-ring) solid var(--ccp-accent);
+  border-radius: var(--ccp-radius-sm);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#ccp-edit-flash.ccp-edit-flashing {
+  animation: ccp-edit-flash var(--ccp-duration-slow) var(--ccp-ease) 2 alternate;
+}
+
+@keyframes ccp-edit-flash {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ===== Edit Panel =====
+   The one piece of chrome the user positions. It takes the toolbar's solved
+   spot on entry (see placeEditPanel) and then stays wherever it is dragged,
+   which is why it has no positional transition at all: every other box in this
+   file is placed by the solver and glides between solutions, but a panel that
+   eased toward the pointer would smear behind the drag. */
+#ccp-edit-panel {
+  all: initial;
+  position: fixed;
+  z-index: var(--ccp-z-chrome);
+  box-sizing: border-box;
+  font-family: var(--ccp-font);
+  color: var(--ccp-text);
+  background: var(--ccp-surface);
+  border: 1px solid rgb(from var(--ccp-accent) r g b / 0.5);
+  border-radius: var(--ccp-radius-lg);
+  box-shadow: var(--ccp-shadow-card);
+  width: 248px;
+  /* Taller than the viewport is a real case on a short window; the panel
+     scrolls inside itself rather than growing past the screen, which is what
+     lets the placement solver always find room for it. */
+  max-height: calc(100vh - 2 * var(--ccp-xs));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* The panel is dragged by its header, and a drag that selects text as it
+     goes feels broken. */
+  user-select: none;
+}
+
+#ccp-edit-panel .ccp-edit-head {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-gap-base);
+  padding: var(--ccp-gap-base) var(--ccp-sm);
+  border-bottom: 1px solid var(--ccp-sep);
+  font-family: var(--ccp-font);
+  cursor: grab;
+  /* Without this the browser claims the gesture for scrolling and the panel
+     stutters or stops following the pointer on trackpads and touch. */
+  touch-action: none;
+}
+
+#ccp-edit-panel .ccp-edit-head.ccp-edit-dragging {
+  cursor: grabbing;
+}
+
+#ccp-edit-panel .ccp-edit-back {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: transparent;
+  color: var(--ccp-text-dim);
+  cursor: pointer;
+  transition: border-color var(--ccp-duration), color var(--ccp-duration),
+              background var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-back:hover {
+  border-color: var(--ccp-accent);
+  color: var(--ccp-accent);
+  background: rgb(from var(--ccp-accent) r g b / 0.15);
+}
+
+#ccp-edit-panel .ccp-edit-back svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* The same tag / #id / .class colouring the info label uses, so the panel
+   reads as the same tool looking at the same element. */
+#ccp-edit-panel .ccp-edit-id {
+  all: initial;
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/var(--ccp-leading-tight) var(--ccp-font);
+  color: var(--ccp-text-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1;
+}
+
+#ccp-edit-panel .ccp-edit-id-tag { color: var(--ccp-accent); font-weight: var(--ccp-weight-bold); }
+#ccp-edit-panel .ccp-edit-id-id { color: var(--ccp-syntax-id); font-weight: var(--ccp-weight-medium); }
+#ccp-edit-panel .ccp-edit-id-class { color: var(--ccp-syntax-class); font-weight: var(--ccp-weight-medium); }
+
+/* The header's two actions. Copy carries a count of what it would write, so
+   the panel always says how much is pending without opening anything. */
+#ccp-edit-panel .ccp-edit-act {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ccp-gap-pair);
+  flex: none;
+  height: 20px;
+  min-width: 20px;
+  padding: 0 var(--ccp-xs);
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: transparent;
+  color: var(--ccp-text-dim);
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1 var(--ccp-font);
+  cursor: pointer;
+  transition: border-color var(--ccp-duration), color var(--ccp-duration),
+              background var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-act:hover {
+  border-color: var(--ccp-accent);
+  color: var(--ccp-accent);
+  background: rgb(from var(--ccp-accent) r g b / 0.15);
+}
+
+#ccp-edit-panel .ccp-edit-act svg { width: 11px; height: 11px; }
+
+#ccp-edit-panel .ccp-edit-act.ccp-edit-on { color: var(--ccp-accent); }
+
+#ccp-edit-panel .ccp-edit-count {
+  all: initial;
+  font: var(--ccp-weight-bold) 8px/1 var(--ccp-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ccp-on-accent);
+  background: var(--ccp-accent);
+  border-radius: var(--ccp-radius-xs);
+  padding: 1px 3px;
+}
+
+#ccp-edit-panel .ccp-edit-count:empty { display: none; }
+
+/* Something about this page kept the token layer from reading it — usually a
+   cross-origin stylesheet. Deliberately not a warning: nothing is broken and
+   the user has done nothing wrong, so this is the same quiet dashed outline
+   the panel already uses for "off the scale", meaning "a thing that would
+   normally be here isn't". Hovering says why. */
+#ccp-edit-panel .ccp-edit-degraded {
+  all: initial;
+  box-sizing: border-box;
+  display: none;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border: 1px dashed var(--ccp-text-faint);
+  border-radius: 50%;
+}
+
+#ccp-edit-panel .ccp-edit-degraded.ccp-edit-on { display: block; }
+
+#ccp-edit-panel .ccp-edit-body {
+  all: initial;
+  box-sizing: border-box;
+  display: block;
+  font-family: var(--ccp-font);
+  color: var(--ccp-text);
+  padding: var(--ccp-sm) var(--ccp-md);
+  overflow-y: auto;
+  min-height: 0;
+}
+
+/* ===== Edit Panel — control rows =====
+   One row per property: dot, label, control. The label column is elastic and
+   the control column is not, so every value chip in the panel lines up down a
+   single edge no matter how long the labels get. */
+#ccp-edit-panel .ccp-edit-group + .ccp-edit-group {
+  margin-top: var(--ccp-md);
+  padding-top: var(--ccp-gap-section);
+  border-top: 1px solid var(--ccp-sep);
+}
+
+#ccp-edit-panel .ccp-edit-legend {
+  all: initial;
+  display: block;
+  font: var(--ccp-weight-medium) 9px/1 var(--ccp-font);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ccp-text-muted);
+  margin-bottom: var(--ccp-gap-base);
+}
+
+#ccp-edit-panel .ccp-edit-row {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-gap-base);
+  padding: 2px 0;
+  font-family: var(--ccp-font);
+}
+
+#ccp-edit-panel .ccp-edit-label {
+  all: initial;
+  font: var(--ccp-text-sm)/1.4 var(--ccp-font);
+  color: var(--ccp-text-muted);
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The dirty dot is the edit's only permanent mark in the panel, and the way to
+   take one property back. Hollow when the property is untouched so the column
+   still reads as a column; filled and clickable once it has something to
+   revert. */
+#ccp-edit-panel .ccp-edit-dot {
+  all: initial;
+  box-sizing: border-box;
+  flex: none;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid var(--ccp-sep);
+  background: transparent;
+  cursor: default;
+  transition: background var(--ccp-duration), border-color var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-dot.ccp-edit-on {
+  background: var(--ccp-accent);
+  border-color: var(--ccp-accent);
+  cursor: pointer;
+}
+
+#ccp-edit-panel .ccp-edit-dot.ccp-edit-on:hover {
+  background: var(--ccp-text);
+  border-color: var(--ccp-text);
+}
+
+#ccp-edit-panel .ccp-edit-numwrap {
+  all: initial;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-gap-pair);
+  flex: none;
+}
+
+/* The value chip is the drag surface as well as the field, which is why the
+   whole thing carries the resize cursor and why the input inside it is
+   transparent rather than looking like a text box. */
+#ccp-edit-panel .ccp-edit-num {
+  all: initial;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 1px;
+  flex: none;
+  width: 58px;
+  padding: 2px var(--ccp-xs);
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: rgb(from var(--ccp-text) r g b / 0.06);
+  font-family: var(--ccp-font);
+  transition: border-color var(--ccp-duration), background var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-num:hover,
+#ccp-edit-panel .ccp-edit-num.ccp-edit-scrubbing {
+  border-color: var(--ccp-accent);
+}
+
+#ccp-edit-panel .ccp-edit-num:focus-within {
+  border-color: var(--ccp-accent);
+  background: rgb(from var(--ccp-accent) r g b / 0.12);
+}
+
+#ccp-edit-panel .ccp-edit-input {
+  all: initial;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  text-align: right;
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1.4 var(--ccp-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ccp-text);
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+#ccp-edit-panel .ccp-edit-input::selection {
+  background: rgb(from var(--ccp-accent) r g b / 0.35);
+}
+
+#ccp-edit-panel .ccp-edit-unit {
+  all: initial;
+  font: 9px/1.4 var(--ccp-font);
+  color: var(--ccp-text-faint);
+  flex: none;
+}
+
+/* A value nothing has set yet — line-height reporting "normal", a width that
+   is still auto. The number shown is real, it just isn't a decision anyone
+   made, so it reads quieter than one that was. */
+#ccp-edit-panel .ccp-edit-num.ccp-edit-untouched .ccp-edit-input {
+  color: var(--ccp-text-faint);
+}
+
+/* Token-only mode. The number stays in the layout rather than being removed,
+   so the panel does not reflow as you move between elements that happen to sit
+   on a scale and ones that do not. */
+#ccp-edit-panel .ccp-edit-num.ccp-edit-quiet {
+  width: 34px;
+  border-color: transparent;
+  background: transparent;
+}
+
+#ccp-edit-panel .ccp-edit-num.ccp-edit-quiet .ccp-edit-input { color: var(--ccp-text-faint); }
+#ccp-edit-panel .ccp-edit-num.ccp-edit-quiet .ccp-edit-unit { display: none; }
+
+#ccp-edit-panel .ccp-edit-auto {
+  all: initial;
+  box-sizing: border-box;
+  flex: none;
+  padding: 2px var(--ccp-xs);
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: transparent;
+  color: var(--ccp-text-muted);
+  font: var(--ccp-weight-medium) 8px/1.4 var(--ccp-font);
+  letter-spacing: var(--ccp-tracking-wide);
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background var(--ccp-duration), color var(--ccp-duration),
+              border-color var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-auto[aria-checked="true"] {
+  background: var(--ccp-accent);
+  border-color: var(--ccp-accent);
+  color: var(--ccp-on-accent);
+}
+
+/* The token stepper sits beside the raw value rather than replacing it: the
+   number is what you are judging, the token is what the source will say. Both
+   are true at once, so the panel shows both. */
+#ccp-edit-panel .ccp-edit-tok {
+  all: initial;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  border: 1px solid rgb(from var(--ccp-accent) r g b / 0.4);
+  border-radius: var(--ccp-radius-xs);
+  overflow: hidden;
+}
+
+#ccp-edit-panel .ccp-edit-tok button {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 18px;
+  background: transparent;
+  color: var(--ccp-text-muted);
+  font: var(--ccp-weight-bold) var(--ccp-text-sm)/1 var(--ccp-font);
+  cursor: pointer;
+  transition: background var(--ccp-duration), color var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-tok button:hover {
+  background: rgb(from var(--ccp-accent) r g b / 0.2);
+  color: var(--ccp-accent);
+}
+
+#ccp-edit-panel .ccp-edit-tok b {
+  all: initial;
+  min-width: 26px;
+  text-align: center;
+  font: var(--ccp-weight-medium) 9px/1 var(--ccp-font);
+  color: var(--ccp-accent);
+  padding: 0 1px;
+}
+
+/* A raw scrub can land between rungs. The stepper stays — stepping from there
+   is well defined — but it stops claiming a token it is not on. */
+#ccp-edit-panel .ccp-edit-tok.ccp-edit-offscale {
+  border-style: dashed;
+  border-color: var(--ccp-sep);
+}
+
+#ccp-edit-panel .ccp-edit-tok.ccp-edit-offscale b { color: var(--ccp-text-faint); }
+
+#ccp-edit-panel .ccp-edit-seg {
+  all: initial;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  overflow: hidden;
+}
+
+#ccp-edit-panel .ccp-edit-seg button {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 18px;
+  background: transparent;
+  color: var(--ccp-text-muted);
+  cursor: pointer;
+  font: var(--ccp-text-sm)/1 var(--ccp-font);
+  transition: background var(--ccp-duration), color var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-seg button + button {
+  border-left: 1px solid var(--ccp-sep);
+}
+
+#ccp-edit-panel .ccp-edit-seg button[aria-checked="true"] {
+  background: var(--ccp-accent);
+  color: var(--ccp-on-accent);
+}
+
+/* The three alignment glyphs are one character shifted three ways, so they
+   read as the same mark moving rather than three different symbols. */
+#ccp-edit-panel .ccp-edit-align-left { justify-content: flex-start; padding-left: 3px; }
+#ccp-edit-panel .ccp-edit-align-right { justify-content: flex-end; padding-right: 3px; }
+
+/* The link toggle turns one value into four. Sides are indented under the row
+   they came from, so the column still reads as a hierarchy rather than as
+   twelve equal rows once everything is open. */
+#ccp-edit-panel .ccp-edit-link {
+  all: initial;
+  box-sizing: border-box;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: transparent;
+  color: var(--ccp-text-muted);
+  font: var(--ccp-text-sm)/1 var(--ccp-font);
+  cursor: pointer;
+  transition: border-color var(--ccp-duration), color var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-link:hover,
+#ccp-edit-panel .ccp-edit-link[aria-pressed="true"] {
+  border-color: var(--ccp-accent);
+  color: var(--ccp-accent);
+}
+
+#ccp-edit-panel .ccp-edit-side .ccp-edit-label {
+  padding-left: var(--ccp-md);
+  color: var(--ccp-text-faint);
+}
+
+#ccp-edit-panel .ccp-edit-parent .ccp-edit-label { color: var(--ccp-text-dim); }
+
+#ccp-edit-panel .ccp-edit-add {
+  all: initial;
+  box-sizing: border-box;
+  width: 100%;
+  padding: var(--ccp-xs) var(--ccp-sm);
+  border: 1px dashed var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: transparent;
+  color: var(--ccp-text-muted);
+  font: var(--ccp-text-sm)/1.4 var(--ccp-font);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color var(--ccp-duration), color var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-add:hover {
+  border-color: var(--ccp-accent);
+  color: var(--ccp-accent);
+}
+
+/* ===== Edit Panel — colour =====
+   The swatch sits on a chequerboard so a translucent colour reads as
+   translucent rather than as a lighter opaque one. Same reasoning as the info
+   label's colour chips, and the same never-themed backdrop. */
+#ccp-edit-panel .ccp-edit-color {
+  all: initial;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ccp-gap-base);
+  flex: none;
+  width: 82px;
+}
+
+#ccp-edit-panel .ccp-edit-swatch {
+  all: initial;
+  box-sizing: border-box;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  padding: 2px;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background-color: var(--ccp-checker);
+  background-image:
+    linear-gradient(45deg, var(--ccp-mask) 25%, transparent 25% 75%, var(--ccp-mask) 75%),
+    linear-gradient(45deg, var(--ccp-mask) 25%, transparent 25% 75%, var(--ccp-mask) 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 3px 3px;
+  cursor: pointer;
+  transition: border-color var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-swatch:hover { border-color: var(--ccp-accent); }
+
+#ccp-edit-panel .ccp-edit-swatch i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 1px;
+}
+
+#ccp-edit-panel .ccp-edit-hex {
+  all: initial;
+  font: var(--ccp-text-sm)/1.4 var(--ccp-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ccp-text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* A colour that landed on one of the page's own tokens says so instead of
+   showing a hex — the token is what the source contains. */
+#ccp-edit-panel .ccp-edit-hex.ccp-edit-token { color: var(--ccp-accent); }
+
+/* ===== Colour picker =====
+   Its own root, not a child of the panel. Inside it, it was clipped by the
+   panel's overflow, locked to the panel's width, and painted over the very rows
+   it was tuning. Viewport-fixed and placed beside the panel by
+   positionColorPicker(); it stacks above the panel by being appended after it,
+   since --ccp-z-chrome is already the highest z-index there is. */
+#ccp-color-picker {
+  all: initial;
+  box-sizing: border-box;
+  position: fixed;
+  z-index: var(--ccp-z-chrome);
+  width: 216px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ccp-gap-base);
+  padding: var(--ccp-sm);
+  background: var(--ccp-surface);
+  border: 1px solid rgb(from var(--ccp-accent) r g b / 0.5);
+  border-radius: var(--ccp-radius-md);
+  box-shadow: var(--ccp-shadow-card);
+  font-family: var(--ccp-font);
+}
+
+/* The picker no longer sits under the row it edits, so it names its property
+   and carries the close affordance the nested version never had. */
+#ccp-color-picker .ccp-edit-pophead {
+  all: initial;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ccp-gap-base);
+}
+
+#ccp-color-picker .ccp-edit-poptitle {
+  all: initial;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ccp-text-dim);
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1.4 var(--ccp-font);
+}
+
+#ccp-color-picker .ccp-edit-popclose {
+  all: initial;
+  box-sizing: border-box;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--ccp-radius-xs);
+  background: transparent;
+  color: var(--ccp-text-dim);
+  font: var(--ccp-text-base)/1 var(--ccp-font);
+  cursor: pointer;
+}
+
+#ccp-color-picker .ccp-edit-popclose:hover {
+  background: rgb(from var(--ccp-text) r g b / 0.08);
+  color: var(--ccp-text);
+}
+
+#ccp-color-picker .ccp-edit-palette {
+  all: initial;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ccp-gap-pair);
+}
+
+#ccp-color-picker .ccp-edit-pal {
+  all: initial;
+  box-sizing: border-box;
+  width: 14px;
+  height: 14px;
+  border-radius: var(--ccp-radius-xs);
+  border: 1px solid var(--ccp-sep);
+  /* background-color comes from the token being offered, written by paint() */
+  cursor: pointer;
+}
+
+#ccp-color-picker .ccp-edit-pal:hover { border-color: var(--ccp-accent); }
+
+#ccp-color-picker .ccp-edit-pal:focus-visible {
+  outline: 1px solid var(--ccp-accent);
+  outline-offset: 1px;
+}
+
+/* Says what the swatch row is, and what the swatch under the pointer is called.
+   One line, always occupied — an empty-until-hovered caption would resize the
+   picker on approach and move the target away from the pointer. */
+#ccp-color-picker .ccp-edit-palcap {
+  all: initial;
+  display: flex;
+  align-items: baseline;
+  gap: var(--ccp-gap-pair);
+  min-width: 0;
+  /* The name is the part worth truncating; the value is short and fixed. */
+  overflow: hidden;
+  white-space: nowrap;
+  font: var(--ccp-text-sm)/1.4 var(--ccp-font);
+}
+
+#ccp-color-picker .ccp-edit-palcap b {
+  all: initial;
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ccp-accent);
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1.4 var(--ccp-font);
+}
+
+#ccp-color-picker .ccp-edit-palcap span {
+  all: initial;
+  flex: none;
+  color: var(--ccp-text-dim);
+  font: var(--ccp-text-sm)/1.4 var(--ccp-font);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Saturation to the right, value downward, over the pure hue. The white and
+   black stops are the colour space, not a theme choice — see tokens.css. */
+#ccp-color-picker .ccp-edit-sat {
+  all: initial;
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  height: 96px;
+  border-radius: var(--ccp-radius-xs);
+  /* The two gradients are the colour space and live here; the pure hue beneath
+     them is background-color, written by the picker as it moves. */
+  background-image:
+    linear-gradient(to top, var(--ccp-picker-black), transparent),
+    linear-gradient(to right, var(--ccp-picker-white), transparent);
+  touch-action: none;
+}
+
+#ccp-color-picker .ccp-edit-rails {
+  all: initial;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ccp-gap-base);
+}
+
+#ccp-color-picker .ccp-edit-hue,
+#ccp-color-picker .ccp-edit-alpha {
+  all: initial;
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  height: 10px;
+  border-radius: 5px;
+  touch-action: none;
+}
+
+#ccp-color-picker .ccp-edit-hue { background: var(--ccp-hue-ramp); }
+
+#ccp-color-picker .ccp-edit-alpha {
+  background-color: var(--ccp-checker);
+  background-image:
+    linear-gradient(45deg, var(--ccp-mask) 25%, transparent 25% 75%, var(--ccp-mask) 75%),
+    linear-gradient(45deg, var(--ccp-mask) 25%, transparent 25% 75%, var(--ccp-mask) 75%);
+  background-size: 6px 6px;
+  background-position: 0 0, 3px 3px;
+  overflow: hidden;
+}
+
+#ccp-color-picker .ccp-edit-alpha span {
+  all: initial;
+  display: block;
+  position: absolute;
+  inset: 0;
+  border-radius: 5px;
+  /* background-image is the ramp to the picked colour, written by paint() */
+}
+
+#ccp-color-picker .ccp-edit-sat-dot,
+#ccp-color-picker .ccp-edit-rail-dot {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid var(--ccp-picker-white);
+  box-shadow: 0 0 0 1px rgb(from var(--ccp-mask) r g b / 0.4);
+  pointer-events: none;
+  translate: -50% -50%;
+}
+
+/* The square's dot is filled with the colour under it; the rail dots are rings
+   over a ramp that already shows the value, so they stay hollow. */
+#ccp-color-picker .ccp-edit-rail-dot { top: 50%; background: transparent; }
+
+#ccp-color-picker .ccp-edit-popfoot {
+  all: initial;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-gap-base);
+}
+
+#ccp-color-picker .ccp-edit-hexin {
+  all: initial;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  padding: 2px var(--ccp-xs);
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: rgb(from var(--ccp-text) r g b / 0.06);
+  color: var(--ccp-text);
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1.4 var(--ccp-font);
+  font-variant-numeric: tabular-nums;
+}
+
+#ccp-color-picker .ccp-edit-hexin:focus { border-color: var(--ccp-accent); }
+
+#ccp-color-picker .ccp-edit-drop {
+  all: initial;
+  box-sizing: border-box;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: transparent;
+  color: var(--ccp-text-dim);
+  font: var(--ccp-text-base)/1 var(--ccp-font);
+  cursor: pointer;
+}
+
+#ccp-color-picker .ccp-edit-drop:hover { border-color: var(--ccp-accent); color: var(--ccp-accent); }
+
+/* ===== Settings Button =====
+   Viewport chrome, not selection chrome: mounted by activate() and pinned to the
+   top-right corner for as long as probe mode is on, whether or not anything is
+   selected. Same opaque treatment as .ccp-parent-btn and for the same reason —
+   it sits directly on the page, so a translucent fill would let the page through.
+
+   Square and icon-only, which keeps its footprint small against the label. It
+   still collides: three of the placement strategies dock the label to the
+   visible top edge. layoutChrome() fades the button out when they overlap —
+   the interactive selection chrome wins, this yields. */
+#ccp-settings-btn {
+  all: initial;
+  position: fixed;
+  top: var(--ccp-btn-x);
+  right: var(--ccp-btn-x);
+  z-index: var(--ccp-z-chrome);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  background: var(--ccp-surface);
+  color: var(--ccp-accent);
+  border: 1px solid var(--ccp-accent);
+  border-radius: var(--ccp-radius-lg);
+  box-shadow: var(--ccp-shadow-bar);
+  cursor: pointer;
+  box-sizing: border-box;
+  transition: background var(--ccp-duration), color var(--ccp-duration),
+              opacity var(--ccp-duration);
+}
+
+#ccp-settings-btn:hover {
+  background: var(--ccp-accent);
+  color: var(--ccp-on-accent);
+}
+
+#ccp-settings-btn:active {
+  background: var(--ccp-accent-dark);
+  color: var(--ccp-on-accent);
+}
+
+/* Yielded to the selection chrome. Not display:none — the layout pass has to
+   keep measuring its rect to know when the collision ends. */
+#ccp-settings-btn.ccp-yielded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ===== Toast Notification ===== */
+#ccp-toast {
+  all: initial;
+  background: var(--ccp-accent);
+  color: var(--ccp-on-accent);
+  padding: var(--ccp-xs) var(--ccp-btn-x);
+  border-radius: var(--ccp-radius-lg);
+  font: var(--ccp-weight-medium) var(--ccp-text-base)/var(--ccp-leading-tight) var(--ccp-font);
+  text-transform: uppercase;
+  letter-spacing: var(--ccp-tracking-wide);
+  opacity: 0;
+  transition: opacity var(--ccp-duration-slow);
+  pointer-events: none;
+  white-space: nowrap;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-sm);
+}
+
+/* Toast is always positioned via JS */
+
+#ccp-toast.ccp-toast-visible {
+  opacity: 1;
+}
+
+#ccp-toast.ccp-toast-error {
+  background: var(--ccp-error);
+  color: var(--ccp-on-error);
+}
+
+/* ===== Probe Mode Cursor ===== */
+/* Flatten every page cursor to the plain arrow while probing — an I-beam or
+   link pointer would suggest the page's own interactions are live when clicks
+   are being intercepted. The probe's controls stay `pointer` via the
+   re-assertions below: everything here is !important, so the ID-prefixed
+   selectors win on specificity. Descendants (button SVGs) need their own
+   match — the universal rule hits them directly, not by inheritance. */
+.ccp-probe-active,
+.ccp-probe-active * {
+  cursor: default !important;
+}
+
+#ccp-toolbar .ccp-bar button,
+#ccp-toolbar .ccp-bar button *,
+#ccp-toolbar .ccp-parent-btn,
+#ccp-toolbar .ccp-parent-btn *,
+#ccp-settings-btn,
+#ccp-settings-btn * {
+  cursor: pointer !important;
+}
+
+#ccp-toolbar .ccp-parent-btn.ccp-button-disabled,
+#ccp-toolbar .ccp-parent-btn.ccp-button-disabled * {
+  cursor: not-allowed !important;
+}
+
+/* The edit panel is the one surface where the page's flattened arrow is wrong
+   throughout: everything in it is grabbable, clickable or scrubbable, and the
+   cursor is how each of those announces itself. */
+#ccp-edit-panel .ccp-edit-back,
+#ccp-edit-panel .ccp-edit-back * {
+  cursor: pointer !important;
+}
+
+#ccp-edit-panel .ccp-edit-head,
+#ccp-edit-panel .ccp-edit-head * {
+  cursor: grab !important;
+}
+
+#ccp-edit-panel .ccp-edit-head.ccp-edit-dragging,
+#ccp-edit-panel .ccp-edit-head.ccp-edit-dragging * {
+  cursor: grabbing !important;
+}
+
+/* The picker is chrome, so its inert parts — the title, the padding — read as
+   chrome rather than inheriting the page's crosshair. Everything below that is
+   actually operable overrides this on specificity. */
+#ccp-color-picker,
+#ccp-color-picker * {
+  cursor: default !important;
+}
+
+#ccp-edit-panel .ccp-edit-act,
+#ccp-edit-panel .ccp-edit-act *,
+#ccp-edit-panel .ccp-edit-auto,
+#ccp-edit-panel .ccp-edit-seg button,
+#ccp-edit-panel .ccp-edit-dot.ccp-edit-on,
+#ccp-edit-panel .ccp-edit-link,
+#ccp-edit-panel .ccp-edit-tok button,
+#ccp-edit-panel .ccp-edit-add,
+#ccp-edit-panel .ccp-edit-swatch,
+#ccp-edit-panel .ccp-edit-swatch *,
+#ccp-color-picker .ccp-edit-pal,
+#ccp-color-picker .ccp-edit-drop,
+#ccp-color-picker .ccp-edit-popclose {
+  cursor: pointer !important;
+}
+
+/* The picker's surfaces are crosshair-and-drag, not click targets. */
+#ccp-color-picker .ccp-edit-sat,
+#ccp-color-picker .ccp-edit-sat * {
+  cursor: crosshair !important;
+}
+
+#ccp-color-picker .ccp-edit-hue,
+#ccp-color-picker .ccp-edit-hue *,
+#ccp-color-picker .ccp-edit-alpha,
+#ccp-color-picker .ccp-edit-alpha * {
+  cursor: ew-resize !important;
+}
+
+#ccp-color-picker .ccp-edit-hexin { cursor: text !important; }
+
+/* The value chip announces that it can be dragged; the field inside it stays
+   a text cursor, because clicking it is how you type instead. */
+#ccp-edit-panel .ccp-edit-num,
+#ccp-edit-panel .ccp-edit-unit {
+  cursor: ew-resize !important;
+}
+
+#ccp-edit-panel .ccp-edit-input {
+  cursor: text !important;
+}
+
+#ccp-edit-panel .ccp-edit-num.ccp-edit-scrubbing,
+#ccp-edit-panel .ccp-edit-num.ccp-edit-scrubbing * {
+  cursor: ew-resize !important;
+}
+
+/* ===== Edit Panel — Advanced =====
+   The collapsible section at the panel's foot: shader uniforms and the custom
+   properties driving this element's visual mechanism. A native <details>, the
+   same pattern the settings page ships — free keyboard support, free
+   semantics, no JS — adapted to the panel's all:initial fencing, which resets
+   display and list-style and would otherwise leave the summary an inert
+   block. */
+
+/* The height glide needs interpolate-size, which inherits — so it is granted
+   to the panel's own subtree and never to the page's root, which is not ours
+   to change. */
+#ccp-edit-panel { interpolate-size: allow-keywords; }
+
+#ccp-edit-panel .ccp-adv {
+  all: initial;
+  box-sizing: border-box;
+  display: block;
+  font-family: var(--ccp-font);
+}
+
+#ccp-edit-panel .ccp-adv-summary {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-gap-base);
+  font-family: var(--ccp-font);
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+#ccp-edit-panel .ccp-adv-summary::-webkit-details-marker { display: none; }
+
+#ccp-edit-panel .ccp-adv-summary:focus-visible {
+  outline: 2px solid var(--ccp-accent);
+  outline-offset: 2px;
+  border-radius: var(--ccp-radius-xs);
+}
+
+#ccp-edit-panel .ccp-adv-summary:hover .ccp-adv-legend { color: var(--ccp-text-dim); }
+
+/* Drawn caret, not a glyph — the settings page's, at panel scale. Points
+   right closed, down open. */
+#ccp-edit-panel .ccp-adv-caret {
+  all: initial;
+  box-sizing: border-box;
+  flex: none;
+  width: 5px;
+  height: 5px;
+  margin-top: -3px;
+  border-right: 1.5px solid var(--ccp-text-muted);
+  border-bottom: 1.5px solid var(--ccp-text-muted);
+  transform: rotate(45deg);
+  transition: transform var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-adv:not([open]) .ccp-adv-caret {
+  transform: rotate(-45deg);
+  margin-top: 0;
+}
+
+/* The legend class carries the register; inside a flex summary its block
+   margin has no work to do. */
+#ccp-edit-panel .ccp-adv-legend { margin-bottom: 0; }
+
+/* What the section holds, said before it is opened — the same courtesy as
+   the copy button's count. */
+#ccp-edit-panel .ccp-adv-count {
+  all: initial;
+  font: var(--ccp-text-sm)/1.4 var(--ccp-font);
+  font-variant-numeric: tabular-nums;
+  color: var(--ccp-text-faint);
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The collapse glides where the browser can interpolate to auto; older
+   Chrome ignores ::details-content and snaps, which is the settings page's
+   accepted fallback too. */
+#ccp-edit-panel .ccp-adv::details-content {
+  height: 0;
+  overflow: clip;
+  transition: height var(--ccp-duration-slow) var(--ccp-ease),
+              content-visibility var(--ccp-duration-slow) allow-discrete;
+}
+
+#ccp-edit-panel .ccp-adv[open]::details-content { height: auto; }
+
+#ccp-edit-panel .ccp-adv-body {
+  all: initial;
+  box-sizing: border-box;
+  display: block;
+  font-family: var(--ccp-font);
+  padding-top: var(--ccp-gap-base);
+}
+
+/* Which canvas got probed, or why the rows are inert — quiet, because none
+   of it is a fault. */
+#ccp-edit-panel .ccp-adv-note {
+  all: initial;
+  display: block;
+  font: var(--ccp-text-sm)/1.5 var(--ccp-font);
+  color: var(--ccp-text-faint);
+  margin: 2px 0 var(--ccp-gap-base);
+}
+
+#ccp-edit-panel .ccp-adv-note .ccp-edit-id-tag { color: var(--ccp-accent); }
+#ccp-edit-panel .ccp-adv-note .ccp-edit-id-id { color: var(--ccp-syntax-id); }
+#ccp-edit-panel .ccp-adv-note .ccp-edit-id-class { color: var(--ccp-syntax-class); }
+
+/* Values the page rewrites every frame. A shade apart from the parameters
+   above them: these read out the page's own loop until a row is touched, and
+   the dimming lifts with the dirty state — an overridden value is yours. */
+#ccp-edit-panel .ccp-adv-driven {
+  all: initial;
+  box-sizing: border-box;
+  display: block;
+  font-family: var(--ccp-font);
+  margin-top: var(--ccp-gap-base);
+}
+
+#ccp-edit-panel .ccp-adv-driven-legend {
+  all: initial;
+  display: block;
+  font: var(--ccp-weight-medium) 9px/1 var(--ccp-font);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ccp-text-faint);
+  margin: var(--ccp-gap-base) 0;
+}
+
+#ccp-edit-panel .ccp-adv-driven .ccp-edit-row:not(.ccp-edit-dirty) .ccp-edit-input {
+  color: var(--ccp-text-dim);
+}
+
+/* A shader that drew once and stopped, or one the page rebuilt out from
+   under us: the rows stay to say what the values are, and nothing pretends
+   they can be moved. The inputs are disabled from script; this is the face. */
+#ccp-edit-panel .ccp-adv-readonly { opacity: 0.65; }
+#ccp-edit-panel .ccp-adv-readonly .ccp-edit-num,
+#ccp-edit-panel .ccp-adv-readonly .ccp-edit-num *,
+#ccp-edit-panel .ccp-adv-readonly .ccp-edit-dot,
+#ccp-edit-panel .ccp-adv-readonly .ccp-edit-swatch {
+  cursor: default !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #ccp-edit-panel .ccp-adv-caret { transition: none; }
+  #ccp-edit-panel .ccp-adv::details-content { transition: none; }
+}
+
+/* ===== Edit Panel — text field =====
+   The words themselves, in the register of the value chips: a quiet field
+   that looks like the numbers beside it, wide because words are wider. */
+#ccp-edit-panel .ccp-edit-textwrap {
+  all: initial;
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: none;
+  width: 132px;
+  padding: 2px var(--ccp-xs);
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: rgb(from var(--ccp-text) r g b / 0.06);
+  font-family: var(--ccp-font);
+  transition: border-color var(--ccp-duration), background var(--ccp-duration);
+}
+
+#ccp-edit-panel .ccp-edit-textwrap:focus-within {
+  border-color: var(--ccp-accent);
+  background: rgb(from var(--ccp-accent) r g b / 0.12);
+}
+
+#ccp-edit-panel .ccp-edit-textin {
+  all: initial;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1.4 var(--ccp-font);
+  color: var(--ccp-text);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: text !important;
+}
+
+#ccp-edit-panel .ccp-edit-textin::selection {
+  background: rgb(from var(--ccp-accent) r g b / 0.35);
+}
+
+/* ===== Edit Panel — typography grid =====
+   The round-three design: micro-labelled cells three-up, the style row for
+   the composite, ticks saying who owns each value, a caption that narrates.
+   Only the typography group wears this; the other groups keep their rows. */
+#ccp-edit-panel .ccp-type-grid {
+  all: initial;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 5px 6px;
+  margin-top: 4px;
+  font-family: var(--ccp-font);
+}
+
+#ccp-edit-panel .ccp-type-cell {
+  all: initial;
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  font-family: var(--ccp-font);
+  min-width: 0;
+}
+
+/* The micro-label doubles as the reset: quiet caps at rest, accent and
+   clickable once its property carries an edit. */
+#ccp-edit-panel .ccp-type-k {
+  all: initial;
+  box-sizing: border-box;
+  display: block;
+  font: var(--ccp-weight-medium) 7.5px/1 var(--ccp-font);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ccp-text-faint);
+  margin-bottom: 2px;
+  cursor: default;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+
+#ccp-edit-panel .ccp-type-cell.ccp-edit-dirty .ccp-type-k {
+  color: var(--ccp-accent);
+  cursor: pointer;
+}
+
+#ccp-edit-panel .ccp-type-cell .ccp-edit-num { width: 100%; }
+#ccp-edit-panel .ccp-type-cell .ccp-edit-seg { width: 100%; display: flex; }
+#ccp-edit-panel .ccp-type-cell .ccp-edit-seg button { flex: 1; }
+#ccp-edit-panel .ccp-type-cell .ccp-edit-color {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: rgb(from var(--ccp-text) r g b / 0.06);
+  padding: 2px 4px;
+  min-width: 0;
+}
+#ccp-edit-panel .ccp-type-cell .ccp-edit-swatch { width: 11px; height: 11px; }
+#ccp-edit-panel .ccp-type-cell .ccp-edit-hex {
+  font-size: 9px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* The tick vocabulary. Filled: the style owns this value. Hollow: the cell
+   sits on its own single-prop token. Dashed border: covered but drifted. */
+#ccp-edit-panel .ccp-type-fromstyle .ccp-edit-num::after,
+#ccp-edit-panel .ccp-type-fromstyle .ccp-edit-color::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: -1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 0 3px 0 3px;
+  background: var(--ccp-accent);
+}
+
+#ccp-edit-panel .ccp-type-owntok .ccp-edit-num::after {
+  content: "";
+  position: absolute;
+  top: 8px;
+  right: -1px;
+  width: 5px;
+  height: 5px;
+  border-radius: 0 3px 0 3px;
+  border: 1px solid var(--ccp-accent);
+  background: var(--ccp-surface);
+}
+
+#ccp-edit-panel .ccp-type-drift .ccp-edit-num {
+  border-style: dashed;
+  border-color: rgb(from var(--ccp-accent) r g b / 0.6);
+}
+
+/* The style row: the composite's seat, above the grid. */
+#ccp-edit-panel .ccp-type-stylerow {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: var(--ccp-gap-base);
+  padding: 3px 0 4px;
+  font-family: var(--ccp-font);
+}
+
+#ccp-edit-panel .ccp-type-chip {
+  all: initial;
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  border: 1px solid rgb(from var(--ccp-accent) r g b / 0.55);
+  border-radius: var(--ccp-radius-xs);
+  padding: 2px 6px;
+  background: rgb(from var(--ccp-accent) r g b / 0.10);
+  font-family: var(--ccp-font);
+}
+
+#ccp-edit-panel .ccp-type-name {
+  all: initial;
+  font: var(--ccp-weight-medium) var(--ccp-text-sm)/1.4 var(--ccp-font);
+  color: var(--ccp-accent);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+#ccp-edit-panel .ccp-type-mod {
+  all: initial;
+  font: 8px/1.4 var(--ccp-font);
+  font-style: normal;
+  color: var(--ccp-text-dim);
+  white-space: nowrap;
+}
+
+#ccp-edit-panel .ccp-type-st {
+  all: initial;
+  box-sizing: border-box;
+  font: var(--ccp-text-sm)/1 var(--ccp-font);
+  color: var(--ccp-text-faint);
+  cursor: pointer;
+  padding: 2px 3px;
+}
+
+#ccp-edit-panel .ccp-type-st:hover { color: var(--ccp-accent); }
+
+/* Drift makes the chip itself the way home. */
+#ccp-edit-panel .ccp-type-chip.ccp-type-drifted {
+  border-style: dashed;
+  cursor: pointer;
+}
+
+#ccp-edit-panel .ccp-type-chip.ccp-type-drifted:hover {
+  background: rgb(from var(--ccp-accent) r g b / 0.2);
+}
+
+/* The caption: one quiet line that names whatever the pointer touches. */
+#ccp-edit-panel .ccp-type-cap {
+  all: initial;
+  display: block;
+  font: 8px/1.5 var(--ccp-font);
+  color: var(--ccp-text-faint);
+  padding: 3px 0 0 1px;
+  min-height: 13px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#ccp-edit-panel .ccp-type-cap b {
+  all: initial;
+  font: inherit;
+  font-weight: var(--ccp-weight-medium);
+  color: var(--ccp-accent);
+}
+
+/* The ⤢ beside the text field. */
+#ccp-edit-panel .ccp-edit-expand {
+  all: initial;
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  color: var(--ccp-text-dim);
+  font: 9px/1 var(--ccp-font);
+  cursor: pointer;
+  background: transparent;
+}
+
+#ccp-edit-panel .ccp-edit-expand:hover {
+  border-color: var(--ccp-accent);
+  color: var(--ccp-accent);
+}
+
+/* ===== The long-text editor =====
+   A sibling root beside the panel — the picker's arrangement, for words. */
+#ccp-text-editor {
+  all: initial;
+  position: fixed;
+  z-index: var(--ccp-z-chrome);
+  box-sizing: border-box;
+  width: 220px;
+  font-family: var(--ccp-font);
+  color: var(--ccp-text);
+  background: var(--ccp-surface);
+  border: 1px solid rgb(from var(--ccp-accent) r g b / 0.5);
+  border-radius: var(--ccp-radius-lg);
+  box-shadow: var(--ccp-shadow-card);
+  padding: var(--ccp-gap-base) var(--ccp-sm) var(--ccp-sm);
+}
+
+#ccp-text-editor .ccp-txted-head {
+  all: initial;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: var(--ccp-weight-medium) 9px/1 var(--ccp-font);
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--ccp-text-muted);
+  margin-bottom: var(--ccp-gap-base);
+}
+
+#ccp-text-editor .ccp-txted-head button {
+  all: initial;
+  font: 11px/1 var(--ccp-font);
+  color: var(--ccp-text-dim);
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+#ccp-text-editor .ccp-txted-head button:hover { color: var(--ccp-accent); }
+
+#ccp-text-editor textarea {
+  all: initial;
+  box-sizing: border-box;
+  display: block;
+  width: 100%;
+  height: 72px;
+  resize: none;
+  border: 1px solid var(--ccp-sep);
+  border-radius: var(--ccp-radius-xs);
+  background: rgb(from var(--ccp-text) r g b / 0.06);
+  color: var(--ccp-text);
+  font: var(--ccp-text-sm)/1.5 var(--ccp-font);
+  padding: 4px 5px;
+  cursor: text !important;
+}
+
+#ccp-text-editor textarea:focus { border-color: var(--ccp-accent); }
+
+#ccp-text-editor textarea::selection {
+  background: rgb(from var(--ccp-accent) r g b / 0.35);
+}
+
+#ccp-text-editor .ccp-txted-count {
+  all: initial;
+  display: block;
+  font: 8px/1.4 var(--ccp-font);
+  color: var(--ccp-text-faint);
+  text-align: right;
+  margin-top: 3px;
+}

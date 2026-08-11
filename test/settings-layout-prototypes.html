@@ -1,0 +1,1136 @@
+<title>Claude Code Probe — Settings layout prototypes</title>
+
+<style>
+/* ============================================================
+   GALLERY SHELL
+   Deliberately quiet: the eight prototypes carry every bit of
+   colour on this page, so the frame around them stays neutral.
+   Warm-biased neutrals (toward the extension's terracotta)
+   rather than a pure grey.
+   ============================================================ */
+:root {
+  --g-ground:  #f7f6f2;
+  --g-raised:  #ffffff;
+  --g-ink:     #17160f;
+  --g-dim:     #56534a;
+  --g-muted:   #8d8a80;
+  --g-rule:    #e0ddd3;
+  --g-rule-hi: #cbc7ba;
+  --g-accent:  #b8542f;
+  --g-frame:   #6b6860;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.25rem;
+  --step-3: 1.75rem;
+  --step-4: 2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-ground:  #131210;
+    --g-raised:  #1b1a17;
+    --g-ink:     #ece9e1;
+    --g-dim:     #a5a196;
+    --g-muted:   #7d7a71;
+    --g-rule:    #2a2824;
+    --g-rule-hi: #3d3a34;
+    --g-accent:  #e08b68;
+    --g-frame:   #6b6860;
+  }
+}
+:root[data-theme="light"] {
+  --g-ground:  #f7f6f2; --g-raised: #ffffff; --g-ink: #17160f;
+  --g-dim: #56534a; --g-muted: #8d8a80; --g-rule: #e0ddd3;
+  --g-rule-hi: #cbc7ba; --g-accent: #b8542f;
+}
+:root[data-theme="dark"] {
+  --g-ground:  #131210; --g-raised: #1b1a17; --g-ink: #ece9e1;
+  --g-dim: #a5a196; --g-muted: #7d7a71; --g-rule: #2a2824;
+  --g-rule-hi: #3d3a34; --g-accent: #e08b68;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--g-ground);
+  color: var(--g-ink);
+  font-family: var(--sans);
+  font-size: var(--step-1);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+
+/* ---------- top bar ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--g-ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--g-rule);
+}
+.topbar-in {
+  display: flex; align-items: center; gap: 1.5rem;
+  padding: 0.75rem 0; flex-wrap: wrap;
+}
+.topbar-title {
+  font-family: var(--mono); font-size: var(--step-0);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--g-dim); margin: 0; white-space: nowrap;
+}
+.jump { display: flex; gap: 0.25rem; margin-left: auto; flex-wrap: wrap; }
+.jump a {
+  font-family: var(--mono); font-size: 0.75rem;
+  text-decoration: none; color: var(--g-dim);
+  border: 1px solid var(--g-rule); border-radius: 6px;
+  width: 2rem; height: 2rem; display: grid; place-items: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.jump a:hover, .jump a:focus-visible {
+  background: var(--g-accent); border-color: var(--g-accent); color: var(--g-ground);
+  outline: none;
+}
+
+/* ---------- masthead ---------- */
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 2rem; border-bottom: 1px solid var(--g-rule); }
+.eyebrow {
+  font-family: var(--mono); font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--g-accent); margin: 0 0 1rem;
+}
+h1 {
+  font-family: var(--mono); font-weight: 500;
+  font-size: clamp(1.75rem, 4.5vw, var(--step-4));
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin: 0 0 1.25rem; text-wrap: balance;
+}
+.lede { font-size: var(--step-2); line-height: 1.5; color: var(--g-dim); max-width: 62ch; margin: 0 0 2rem; }
+.howto {
+  display: grid; gap: 0.75rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  font-size: var(--step-0); color: var(--g-dim);
+  border-top: 1px solid var(--g-rule); padding-top: 1.5rem;
+}
+.howto p { margin: 0; }
+.howto strong { color: var(--g-ink); font-weight: 600; }
+kbd {
+  font-family: var(--mono); font-size: 0.85em;
+  background: var(--g-raised); border: 1px solid var(--g-rule-hi);
+  border-radius: 4px; padding: 0.1em 0.4em;
+}
+
+/* ---------- prototype block ---------- */
+.proto { padding: clamp(2.5rem, 6vw, 4.5rem) 0; border-bottom: 1px solid var(--g-rule); scroll-margin-top: 4.5rem; }
+.proto-head { display: grid; grid-template-columns: auto 1fr; gap: 0 1.25rem; align-items: baseline; margin-bottom: 1.75rem; }
+.proto-num {
+  font-family: var(--mono); font-size: var(--step-3); font-weight: 500;
+  color: var(--g-rule-hi); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.proto-head h2 {
+  font-family: var(--mono); font-weight: 500; font-size: var(--step-2);
+  margin: 0; letter-spacing: -0.01em; line-height: 1.25;
+}
+.thesis { grid-column: 2; margin: 0.5rem 0 0; color: var(--g-dim); max-width: 68ch; }
+
+/* the fake browser viewport every prototype sits inside */
+.viewport {
+  position: relative;
+  background: var(--page);
+  border: 1px solid var(--g-rule-hi);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 380px;
+  container-type: inline-size;
+}
+.viewport-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+  border-bottom: 1px solid var(--sep);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); opacity: 0.6; }
+.viewport-url {
+  font-family: var(--mono); font-size: 10px; color: var(--muted);
+  margin-left: 0.5rem; letter-spacing: 0.02em;
+}
+.stage { padding: 1.25rem; }
+
+.tradeoff {
+  display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem;
+  margin: 1.5rem 0 0; font-size: var(--step-0);
+}
+.tradeoff dt {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--g-muted); padding-top: 0.2em;
+}
+.tradeoff dd { margin: 0; color: var(--g-dim); }
+.tradeoff .win { color: var(--g-ink); }
+
+/* ============================================================
+   THEME TOKENS
+   This is a live test of the plan's §1/§2: sixteen semantic
+   variables per theme, every alpha variant derived rather than
+   declared. If a theme reads wrong here, the contract is wrong.
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] {
+  --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64;
+  --sep:#3a3a35; --accent:#d97757; --accent-dark:#b06848; --accent-light:#ffd9c7;
+  --on-accent:#1a0d07; --id:#6a9bcc; --class:#788c5d; --error:#dc2626;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(20,20,19,.4);
+  --shadow-bar: 0 4px 16px rgba(20,20,19,.6);
+  --page:#1e1e1c; --page-ink:#c8c5bc; --page-rule:#2e2e2a;
+}
+[data-ccp-theme="terracotta-light"] {
+  --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780;
+  --sep:#ddd9cf; --accent:#c2603f; --accent-dark:#9c4a2e; --accent-light:#e8c4b2;
+  --on-accent:#fff8f4; --id:#2f6291; --class:#4d6a36; --error:#b91c1c;
+  --shadow-card: 0 8px 24px -10px rgba(60,45,35,.28), 0 1px 3px rgba(60,45,35,.14);
+  --shadow-bar: 0 4px 14px rgba(60,45,35,.18);
+  --page:#ffffff; --page-ink:#3a3a35; --page-rule:#eae7de;
+}
+[data-ccp-theme="dracula"] {
+  --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4;
+  --sep:#44475a; --accent:#bd93f9; --accent-dark:#9a6ee0; --accent-light:#e0d0ff;
+  --on-accent:#1a1626; --id:#8be9fd; --class:#50fa7b; --error:#ff5555;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,30,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,30,.65);
+  --page:#21222c; --page-ink:#cfd0e0; --page-rule:#343746;
+}
+[data-ccp-theme="monokai"] {
+  --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e;
+  --sep:#3e3d32; --accent:#f92672; --accent-dark:#cc1f5d; --accent-light:#ffb3ce;
+  --on-accent:#2a0512; --id:#66d9ef; --class:#a6e22e; --error:#ff6188;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,15,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,15,.65);
+  --page:#1e1f1a; --page-ink:#d9d8cd; --page-rule:#32332b;
+}
+[data-ccp-theme="nord"] {
+  --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1;
+  --sep:#3b4252; --accent:#88c0d0; --accent-dark:#5e81ac; --accent-light:#d3e6ec;
+  --on-accent:#16202b; --id:#81a1c1; --class:#a3be8c; --error:#bf616a;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.5), 0 2px 6px rgba(20,25,35,.4);
+  --shadow-bar: 0 4px 16px rgba(20,25,35,.6);
+  --page:#272c36; --page-ink:#d8dee9; --page-rule:#343b48;
+}
+[data-ccp-theme="solarized-dark"] {
+  --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75;
+  --sep:#073642; --accent:#cb4b16; --accent-dark:#a53c11; --accent-light:#f5c6ac;
+  --on-accent:#1a0700; --id:#268bd2; --class:#859900; --error:#dc322f;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,20,25,.45);
+  --shadow-bar: 0 4px 16px rgba(0,20,25,.65);
+  --page:#01212b; --page-ink:#93a1a1; --page-rule:#062b35;
+}
+[data-ccp-theme="tokyo-night"] {
+  --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89;
+  --sep:#292e42; --accent:#bb9af7; --accent-dark:#9a78d8; --accent-light:#e2d4ff;
+  --on-accent:#16111f; --id:#7aa2f7; --class:#9ece6a; --error:#f7768e;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(15,15,25,.45);
+  --shadow-bar: 0 4px 16px rgba(15,15,25,.65);
+  --page:#16161e; --page-ink:#a9b1d6; --page-rule:#232430;
+}
+
+/* ============================================================
+   MOCK PROBE CHROME — real 11px scale, not a scaled-down sketch
+   ============================================================ */
+.mock { position: relative; font-family: var(--mono); }
+
+.mock-el {
+  position: relative;
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  background: color-mix(in srgb, var(--accent) 6%, transparent);
+  min-height: 74px;
+  display: flex; flex-direction: column; gap: 0.4rem; justify-content: center;
+}
+.mock-el::after {
+  content: ""; position: absolute; inset: -6px;
+  border: 1px dashed var(--accent);
+  border-color: rgba(217,119,87,.3);
+  border-color: rgb(from var(--accent) r g b / 0.3);
+  border-radius: 12px; pointer-events: none;
+}
+.mock-el-title { font-size: 12px; font-weight: 600; color: var(--page-ink); }
+.mock-el-body  { font-size: 11px; color: var(--muted); }
+
+/* the info panel */
+.ccp-label {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid rgba(217,119,87,.25);
+  border: 1px solid rgb(from var(--accent) r g b / 0.25);
+  border-radius: 8px;
+  box-shadow: var(--shadow-card);
+  padding: 6px 10px;
+  font: 11px/1.5 var(--mono);
+  display: flex; flex-direction: column; gap: 3px;
+  width: max-content; max-width: 100%;
+}
+.l-row { display: flex; align-items: baseline; gap: 5px; flex-wrap: wrap; }
+.l-identity { font-size: 12px; }
+.t-tag   { color: var(--accent); font-weight: 600; }
+.t-id    { color: var(--id); font-weight: 500; }
+.t-class { color: var(--class); }
+.t-size  { color: var(--faint); font-size: 10px; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+.t-prop  { color: var(--muted); font-size: 10px; }
+.t-text  { color: var(--dim); font-size: 10px; font-style: italic; }
+.t-crumb { color: var(--faint); font-size: 10px; }
+.t-sep   { color: var(--sep); }
+.t-swatch {
+  display: inline-block; width: 9px; height: 9px; border-radius: 2px;
+  border: 1px solid rgba(255,255,255,.2); margin: 0 3px -1px 0;
+}
+
+/* the toolbar */
+.ccp-toolbar { display: flex; align-items: stretch; gap: 8px; font-family: var(--mono); }
+.ccp-bar {
+  display: flex; gap: 4px; padding: 4px;
+  background: var(--surface);
+  border: 1px solid rgba(217,119,87,.5);
+  border: 1px solid rgb(from var(--accent) r g b / 0.5);
+  border-radius: 10px; box-shadow: var(--shadow-bar);
+}
+.ccp-bar button {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: 7px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--text);
+  font: 500 11px/1.4 var(--mono);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.ccp-bar button:hover {
+  background: rgb(from var(--accent) r g b / 0.15);
+  border-color: rgb(from var(--accent) r g b / 0.5);
+}
+.ccp-parent {
+  display: flex; align-items: center; gap: 6px; padding: 0 14px;
+  background: var(--surface); color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 10px;
+  box-shadow: var(--shadow-bar);
+  font: 500 11px/1.4 var(--mono);
+  text-transform: uppercase; letter-spacing: 0.05em;
+  cursor: pointer; transition: background .15s, color .15s;
+}
+.ccp-parent:hover { background: var(--accent); color: var(--on-accent); }
+.ccp-toolbar svg, .ccp-gear svg { width: 14px; height: 14px; flex: none; }
+
+/* the gear — square, icon only, opaque because it sits on the page */
+.ccp-gear {
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  background: var(--surface); color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 10px;
+  box-shadow: var(--shadow-bar); cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.ccp-gear:hover { background: var(--accent); color: var(--on-accent); }
+.gear-float { position: absolute; top: 12px; right: 12px; z-index: 5; }
+
+/* ============================================================
+   SETTINGS-PAGE CHROME (shared by the prototypes)
+   ============================================================ */
+.sp { font-family: var(--mono); color: var(--text); background: var(--surface); }
+.sp-title {
+  font-size: 12px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.08em; color: var(--text); margin: 0;
+}
+.sp-sub { font-size: 10px; color: var(--muted); margin: 2px 0 0; line-height: 1.5; }
+.sp-legend {
+  font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--faint); margin: 0 0 8px;
+}
+.sp-hr { border: 0; border-top: 1px solid var(--sep); margin: 0; }
+
+/* theme option — list form */
+.opt-list { display: flex; flex-direction: column; gap: 2px; margin: 0; padding: 0; list-style: none; }
+.opt {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px; border-radius: 7px; cursor: pointer;
+  border: 1px solid transparent; background: transparent;
+  font: 500 11px/1.4 var(--mono); color: var(--text);
+  width: 100%; text-align: left; transition: background .15s, border-color .15s;
+}
+.opt:hover { background: rgb(from var(--accent) r g b / 0.12); }
+.opt[aria-checked="true"] {
+  background: rgb(from var(--accent) r g b / 0.16);
+  border-color: rgb(from var(--accent) r g b / 0.5);
+}
+.opt-name { flex: 1; }
+.opt-check { color: var(--accent); opacity: 0; font-size: 12px; }
+.opt[aria-checked="true"] .opt-check { opacity: 1; }
+
+/* the swatch that stands in for a palette */
+.sw { display: flex; flex: none; border-radius: 4px; overflow: hidden; width: 34px; height: 14px; box-shadow: inset 0 0 0 1px rgb(from var(--text) r g b / 0.14); }
+.sw i { flex: 1; }
+.sw-lg { width: 100%; height: 26px; border-radius: 6px; }
+
+/* pill form */
+.opt-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.pill {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px 5px 6px; border-radius: 20px; cursor: pointer;
+  background: transparent; border: 1px solid var(--sep);
+  font: 500 10px/1.4 var(--mono); color: var(--dim);
+  text-transform: uppercase; letter-spacing: 0.06em;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.pill:hover { border-color: rgb(from var(--accent) r g b / 0.6); color: var(--text); }
+.pill[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.pill .sw { width: 20px; height: 10px; }
+
+/* card form (self-previewing grid) */
+.opt-cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.card {
+  background: var(--surface); border: 1px solid var(--sep);
+  border-radius: 10px; padding: 10px; cursor: pointer; text-align: left;
+  display: flex; flex-direction: column; gap: 8px;
+  transition: border-color .15s, transform .15s;
+  font-family: var(--mono);
+}
+.card:hover { transform: translateY(-2px); border-color: rgb(from var(--accent) r g b / 0.6); }
+.card[aria-checked="true"] { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.card-name { font: 600 10px/1.3 var(--mono); text-transform: uppercase; letter-spacing: 0.07em; color: var(--text); }
+.card-mini {
+  border-radius: 6px; padding: 7px 8px; background: var(--surface);
+  border: 1px solid rgb(from var(--accent) r g b / 0.25);
+  display: flex; flex-direction: column; gap: 3px;
+}
+.card-mini .l-row { gap: 4px; }
+.card-bar { display: flex; gap: 3px; }
+.card-bar span {
+  height: 6px; border-radius: 3px; flex: 1;
+  background: rgb(from var(--accent) r g b / 0.35);
+}
+.card-bar span:first-child { background: var(--accent); flex: 0 0 22px; }
+
+.sp-actions { display: flex; align-items: center; gap: 8px; }
+.btn {
+  font: 500 10px/1.4 var(--mono); text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 7px 12px; border-radius: 7px; cursor: pointer;
+  background: var(--accent); border: 1px solid var(--accent); color: var(--on-accent);
+}
+.btn-ghost { background: transparent; color: var(--dim); border-color: var(--sep); }
+.saved { font-size: 10px; color: var(--class); margin-left: auto; }
+
+/* ============================================================
+   PER-PROTOTYPE LAYOUTS
+   ============================================================ */
+
+/* 01 — sidebar + large preview */
+.L1 { display: grid; grid-template-columns: 218px 1fr; min-height: 340px; }
+.L1 .side { padding: 14px; border-right: 1px solid var(--sep); display: flex; flex-direction: column; gap: 10px; }
+.L1 .main { padding: 18px; display: flex; flex-direction: column; gap: 14px; }
+.L1 .canvas {
+  flex: 1; border-radius: 10px; background: var(--page);
+  border: 1px solid var(--page-rule); padding: 20px;
+  display: flex; flex-direction: column; gap: 12px; justify-content: center;
+}
+@container (max-width: 560px) { .L1 { grid-template-columns: 1fr; } .L1 .side { border-right: 0; border-bottom: 1px solid var(--sep); } }
+
+/* 02 — self-previewing grid */
+.L2 { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+/* 03 — top pills + centred hero preview */
+.L3 { display: flex; flex-direction: column; min-height: 340px; }
+.L3 .head { padding: 14px 18px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--sep); }
+.L3 .hero {
+  flex: 1; background: var(--page); padding: 28px;
+  display: flex; flex-direction: column; gap: 14px; align-items: center; justify-content: center;
+}
+
+/* 04 — sticky preview + scrolling settings */
+.L4 { display: grid; grid-template-columns: 1fr 300px; min-height: 340px; }
+.L4 .scroller { padding: 16px; display: flex; flex-direction: column; gap: 16px; max-height: 340px; overflow-y: auto; }
+.L4 .rail { border-left: 1px solid var(--sep); padding: 16px; background: var(--page); display: flex; flex-direction: column; gap: 12px; }
+.L4 .row { display: flex; flex-direction: column; gap: 8px; }
+.L4 .future { opacity: 0.45; pointer-events: none; }
+.toggle { width: 30px; height: 17px; border-radius: 9px; background: var(--sep); position: relative; flex: none; }
+.toggle::after { content: ""; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: var(--dim); }
+.toggle.on { background: var(--accent); }
+.toggle.on::after { left: 15px; background: var(--on-accent); }
+.setting-row { display: flex; align-items: center; gap: 10px; }
+.setting-row .lbl { flex: 1; font-size: 11px; color: var(--text); }
+@container (max-width: 620px) { .L4 { grid-template-columns: 1fr; } .L4 .rail { border-left: 0; border-top: 1px solid var(--sep); } }
+
+/* 05 — single stacked column */
+.L5 { padding: 18px; display: flex; flex-direction: column; gap: 14px; max-width: 520px; margin: 0 auto; }
+.L5 .canvas { border-radius: 10px; background: var(--page); border: 1px solid var(--page-rule); padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+
+/* 06 — full-bleed simulated page + floating panel */
+.L6 { position: relative; min-height: 400px; background: var(--page); overflow: hidden; }
+.L6 .fake-page { padding: 22px; display: flex; flex-direction: column; gap: 14px; }
+.L6 .fake-nav { display: flex; gap: 14px; align-items: center; padding-bottom: 12px; border-bottom: 1px solid var(--page-rule); }
+.L6 .fake-logo { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); flex: none; }
+.L6 .fake-link { height: 7px; width: 46px; border-radius: 4px; background: var(--page-rule); }
+.L6 .fake-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.L6 .fake-card { border: 1px solid var(--page-rule); border-radius: 10px; padding: 12px; display: flex; flex-direction: column; gap: 7px; min-height: 96px; }
+.L6 .fake-line { height: 6px; border-radius: 3px; background: var(--page-rule); }
+.L6 .panel {
+  position: absolute; top: 16px; right: 16px; width: 250px;
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  backdrop-filter: blur(14px);
+  border: 1px solid rgb(from var(--accent) r g b / 0.4);
+  border-radius: 12px; box-shadow: var(--shadow-card);
+  padding: 12px; display: flex; flex-direction: column; gap: 10px;
+  max-height: calc(100% - 32px); overflow-y: auto;
+}
+@container (max-width: 620px) { .L6 .panel { position: static; width: auto; margin: 16px; } }
+
+/* 07 — carousel */
+.L7 { display: flex; flex-direction: column; min-height: 360px; }
+.L7 .stagerow { flex: 1; display: grid; grid-template-columns: 34px 1fr 34px; align-items: center; gap: 12px; padding: 18px; background: var(--page); }
+.L7 .arrow {
+  width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface); color: var(--accent); cursor: pointer;
+  border: 1px solid rgb(from var(--accent) r g b / 0.5);
+}
+.L7 .arrow:hover { background: var(--accent); color: var(--on-accent); }
+.L7 .slide { display: flex; flex-direction: column; gap: 14px; align-items: center; }
+.L7 .foot { padding: 12px 18px; border-top: 1px solid var(--sep); display: flex; align-items: center; gap: 12px; }
+.L7 .name { font: 600 12px/1 var(--mono); text-transform: uppercase; letter-spacing: 0.09em; }
+.L7 .counter { font: 10px/1 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+.dots { display: flex; gap: 5px; margin-left: auto; }
+.dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--sep); cursor: pointer; }
+.dots i.on { background: var(--accent); }
+
+/* 08 — A/B compare */
+.L8 { display: flex; flex-direction: column; }
+.L8 .panes { display: grid; grid-template-columns: 1fr 1px 1fr; }
+.L8 .divider { background: var(--g-rule-hi); }
+.L8 .pane { padding: 14px; display: flex; flex-direction: column; gap: 12px; background: var(--page); }
+.L8 .pane-head { display: flex; align-items: center; gap: 8px; }
+.L8 .tag {
+  font: 600 10px/1 var(--mono); letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 4px 7px; border-radius: 5px; background: var(--accent); color: var(--on-accent);
+}
+.L8 select {
+  font: 500 10px/1.4 var(--mono); text-transform: uppercase; letter-spacing: 0.05em;
+  background: var(--surface); color: var(--text); border: 1px solid var(--sep);
+  border-radius: 6px; padding: 5px 7px; flex: 1; cursor: pointer;
+}
+.L8 .foot { padding: 12px 14px; border-top: 1px solid var(--sep); display: flex; align-items: center; gap: 10px; background: var(--surface); }
+@container (max-width: 620px) { .L8 .panes { grid-template-columns: 1fr; } .L8 .divider { height: 1px; } }
+
+/* ---------- closing ---------- */
+.closing { padding: clamp(2.5rem, 6vw, 4rem) 0 5rem; }
+.closing h2 { font-family: var(--mono); font-weight: 500; font-size: var(--step-2); margin: 0 0 1rem; }
+.closing p { color: var(--g-dim); max-width: 66ch; }
+.matrix { width: 100%; border-collapse: collapse; font-size: var(--step-0); margin: 1.5rem 0 0; }
+.matrix th, .matrix td { text-align: left; padding: 0.6rem 0.9rem 0.6rem 0; border-bottom: 1px solid var(--g-rule); vertical-align: top; }
+.matrix th {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--g-muted); font-weight: 500;
+}
+.matrix td:first-child { font-family: var(--mono); color: var(--g-accent); white-space: nowrap; }
+.matrix td { color: var(--g-dim); }
+.scroll-x { overflow-x: auto; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+  .card:hover { transform: none; }
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <p class="topbar-title">Probe · Settings layout · 8 prototypes</p>
+    <nav class="jump" aria-label="Jump to prototype">
+      <a href="#p1">1</a><a href="#p2">2</a><a href="#p3">3</a><a href="#p4">4</a>
+      <a href="#p5">5</a><a href="#p6">6</a><a href="#p7">7</a><a href="#p8">8</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="masthead">
+    <p class="eyebrow">Phase 0 · pick one before implementation</p>
+    <h1>Eight ways to lay out the Settings page</h1>
+    <p class="lede">
+      Same content in every one — a theme picker and a live preview of the probe chrome.
+      What differs is what gets the space, and what the layout is betting on.
+    </p>
+    <div class="howto">
+      <p><strong>These are live.</strong> Click any theme inside a prototype and that
+        prototype re-themes. The palettes are the real eight from the plan.</p>
+      <p><strong>True scale.</strong> The mock label and toolbar render at the
+        extension's actual 11px, so nothing here is flattering itself.</p>
+      <p><strong>Pick by the tradeoff line,</strong> not the prettiest render — every
+        one of these can be made pretty. Tell me a number and I'll build it.</p>
+    </div>
+  </div>
+
+  <!-- ============ 01 ============ -->
+  <section class="proto" id="p1">
+    <div class="proto-head">
+      <span class="proto-num">01</span>
+      <h2>Sidebar list, large preview</h2>
+      <p class="thesis">The pattern people already know from editor preferences. Themes
+        as a scannable vertical list on the left; everything else is preview.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="1">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L1">
+        <aside class="side">
+          <div>
+            <p class="sp-title">Theme</p>
+            <p class="sp-sub">Applies to the probe UI only.</p>
+          </div>
+          <div data-slot="list"></div>
+        </aside>
+        <div class="main">
+          <p class="sp-legend">Preview</p>
+          <div class="canvas" data-slot="preview"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Preview gets the most room of any layout here — the one where you can actually judge a palette. Instantly legible to anyone who has used VS Code's theme picker.</dd>
+      <dt>Costs</dt><dd>The sidebar is 218px of chrome dedicated to one setting. Looks under-furnished until a second setting exists.</dd>
+      <dt>Scales to</dt><dd>Many settings, if the sidebar becomes section nav rather than theme options — which is a rebuild, not a growth.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section class="proto" id="p2">
+    <div class="proto-head">
+      <span class="proto-num">02</span>
+      <h2>Self-previewing grid</h2>
+      <p class="thesis">No separate preview canvas at all — each card renders the chrome
+        in its own theme, so the swatch <em>is</em> the preview and all eight are
+        comparable in one glance.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="2">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L2">
+        <div>
+          <p class="sp-title">Theme</p>
+          <p class="sp-sub">Every card is a live render. Click to apply.</p>
+        </div>
+        <div data-slot="cards"></div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only layout that answers "how do these compare?" rather than "what does this one look like?" — and comparison is the actual task. No dead space, no setting-of-one awkwardness.</dd>
+      <dt>Costs</dt><dd>Each render is small, so fine detail (shadow quality, border alpha, the muted greys) is hard to judge. Eight live chrome mocks is the heaviest DOM of the eight.</dd>
+      <dt>Scales to</dt><dd>More themes, gracefully. Other <em>kinds</em> of setting, awkwardly — a toggle has no card to render.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section class="proto" id="p3">
+    <div class="proto-head">
+      <span class="proto-num">03</span>
+      <h2>Pill bar, hero preview</h2>
+      <p class="thesis">Themes compress into one horizontal row so the preview can be
+        centred and given the whole stage beneath it.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula" data-proto="3">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L3">
+        <div class="head">
+          <div>
+            <p class="sp-title">Theme</p>
+            <p class="sp-sub">Applies to the probe UI on every site.</p>
+          </div>
+          <div data-slot="pills"></div>
+        </div>
+        <div class="hero" data-slot="preview"></div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Cleanest hierarchy of the eight: one control, one result, nothing competing. Reads as a product page rather than a preferences dialog.</dd>
+      <dt>Costs</dt><dd>Nine pills in a row wrap unpredictably at narrow widths, and a pill can only carry a name plus a 20px swatch — less palette information than a list row.</dd>
+      <dt>Scales to</dt><dd>Poorly. A second setting has nowhere to go but under the pills, where it fights the preview for the same attention.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section class="proto" id="p4">
+    <div class="proto-head">
+      <span class="proto-num">04</span>
+      <h2>Scrolling settings, sticky preview</h2>
+      <p class="thesis">Built for the version of this page that has five settings. The
+        settings column scrolls; the preview rail stays put so you never lose sight of
+        what you're changing.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord" data-proto="4">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L4">
+        <div class="scroller">
+          <div class="row">
+            <p class="sp-legend">Appearance</p>
+            <div data-slot="list"></div>
+          </div>
+          <hr class="sp-hr">
+          <div class="row future">
+            <p class="sp-legend">Behaviour · not in this release</p>
+            <div class="setting-row"><span class="lbl">Copy screenshot to clipboard</span><i class="toggle on"></i></div>
+            <div class="setting-row"><span class="lbl">Include source pointer</span><i class="toggle on"></i></div>
+            <div class="setting-row"><span class="lbl">Collapse toolbar on narrow pages</span><i class="toggle"></i></div>
+          </div>
+          <hr class="sp-hr">
+          <div class="row future">
+            <p class="sp-legend">Motion · not in this release</p>
+            <div class="setting-row"><span class="lbl">Marching-ants outline</span><i class="toggle on"></i></div>
+            <div class="setting-row"><span class="lbl">Clawd</span><i class="toggle on"></i></div>
+          </div>
+        </div>
+        <aside class="rail">
+          <p class="sp-legend">Preview</p>
+          <div data-slot="preview"></div>
+        </aside>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only layout that doesn't need rethinking when setting #2 lands — the greyed rows above are real candidates. Sticky preview means the theme stays visible while you change something unrelated.</dd>
+      <dt>Costs</dt><dd>Designs for a page that doesn't exist yet. Right now the scroll column holds one setting and looks it. The 300px rail is too narrow to show the toolbar at full width.</dd>
+      <dt>Scales to</dt><dd>Everything. This is the long-run shape.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section class="proto" id="p5">
+    <div class="proto-head">
+      <span class="proto-num">05</span>
+      <h2>Single stacked column</h2>
+      <p class="thesis">One narrow column, centred. Header, picker, preview, done — the
+        least chrome that still does the job.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night" data-proto="5">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L5">
+        <div>
+          <p class="sp-title">Claude Code Probe · Settings</p>
+          <p class="sp-sub">Preferences are stored on this device and never leave it.</p>
+        </div>
+        <hr class="sp-hr">
+        <div>
+          <p class="sp-legend">Theme</p>
+          <div data-slot="list"></div>
+        </div>
+        <div>
+          <p class="sp-legend">Preview</p>
+          <div class="canvas" data-slot="preview"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Honest about being a one-setting page. Nothing to lay out wrong, nothing empty, works at any window width without a single container query.</dd>
+      <dt>Costs</dt><dd>Wastes a full tab — the whole argument for <code>open_in_tab: true</code> was room for a real preview, and this uses about a third of it. Would arguably be better as the embedded dialog we rejected.</dd>
+      <dt>Scales to</dt><dd>A few more settings by growing downward, then becomes a long scroll with no navigation.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section class="proto" id="p6">
+    <div class="proto-head">
+      <span class="proto-num">06</span>
+      <h2>Simulated page, floating panel</h2>
+      <p class="thesis">The preview stops being a preview. The whole tab becomes a fake
+        webpage with real probe chrome sitting on it — gear in the top-right and
+        everything — and the picker floats over it like the tool does.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="monokai" data-proto="6">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="L6">
+        <div class="fake-page">
+          <div class="fake-nav">
+            <i class="fake-logo"></i>
+            <i class="fake-link"></i><i class="fake-link"></i><i class="fake-link"></i>
+          </div>
+          <div data-slot="preview"></div>
+          <div class="fake-grid">
+            <div class="fake-card"><i class="fake-line" style="width:60%"></i><i class="fake-line"></i><i class="fake-line" style="width:80%"></i></div>
+            <div class="fake-card"><i class="fake-line" style="width:45%"></i><i class="fake-line"></i><i class="fake-line" style="width:70%"></i></div>
+            <div class="fake-card"><i class="fake-line" style="width:55%"></i><i class="fake-line"></i><i class="fake-line" style="width:65%"></i></div>
+          </div>
+        </div>
+        <div class="sp panel">
+          <div>
+            <p class="sp-title">Theme</p>
+            <p class="sp-sub">Chrome on the left is live. Gear is where it really sits.</p>
+          </div>
+          <div data-slot="list"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The only one that shows the chrome in context — on a page, over content, at real scale, with the gear in its actual corner. It also previews the gear's top-right placement, which no other layout does.</dd>
+      <dt>Costs</dt><dd>Most work to build and the most to get wrong: a fake page convincing enough to judge against is its own design problem, and it dates. The floating panel overlaps the thing it's controlling — the exact collision §6 of the plan is about.</dd>
+      <dt>Scales to</dt><dd>Badly. A floating glass panel is not where anyone wants to manage five settings.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section class="proto" id="p7">
+    <div class="proto-head">
+      <span class="proto-num">07</span>
+      <h2>One at a time</h2>
+      <p class="thesis">A single theme fills the stage; arrows step through. Trades
+        breadth of comparison for depth of attention on each palette.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="solarized-dark" data-proto="7">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="sp L7">
+        <div class="stagerow">
+          <button class="arrow" data-nav="-1" aria-label="Previous theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="15 18 9 12 15 6"/></svg>
+          </button>
+          <div class="slide" data-slot="preview"></div>
+          <button class="arrow" data-nav="1" aria-label="Next theme">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><polyline points="9 18 15 12 9 6"/></svg>
+          </button>
+        </div>
+        <div class="foot">
+          <span class="name" data-slot="name"></span>
+          <span class="counter" data-slot="counter"></span>
+          <div class="dots" data-slot="dots"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Biggest single render, so subtle palette work — shadow tuning, border alpha, the muted grey ramp — is actually visible. Good keyboard story: arrows, and it's one clear focus target.</dd>
+      <dt>Costs</dt><dd>Nine themes behind a next button means most users see two of them. Choosing requires holding palettes in memory, which is the one thing a picker should spare you.</dd>
+      <dt>Scales to</dt><dd>Nothing else. It's a theme browser, not a settings page.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section class="proto" id="p8">
+    <div class="proto-head">
+      <span class="proto-num">08</span>
+      <h2>A/B compare</h2>
+      <p class="thesis">Optimised for the last step rather than the first: you've
+        narrowed it to two and need to see them together to decide.</p>
+    </div>
+    <div class="viewport" data-proto="8">
+      <div class="viewport-bar" data-ccp-theme="terracotta-dark">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">chrome-extension://…/settings/index.html</span>
+      </div>
+      <div class="L8">
+        <div class="panes">
+          <div class="sp pane" data-ccp-theme="terracotta-dark" data-pane="a">
+            <div class="pane-head">
+              <span class="tag">A</span>
+              <select data-pane-select="a" aria-label="Theme A"></select>
+            </div>
+            <div data-slot="preview"></div>
+          </div>
+          <div class="divider"></div>
+          <div class="sp pane" data-ccp-theme="dracula" data-pane="b">
+            <div class="pane-head">
+              <span class="tag">B</span>
+              <select data-pane-select="b" aria-label="Theme B"></select>
+            </div>
+            <div data-slot="preview"></div>
+          </div>
+        </div>
+        <div class="sp foot" data-ccp-theme="terracotta-dark">
+          <button class="btn" data-pick="a">Use A</button>
+          <button class="btn btn-ghost" data-pick="b">Use B</button>
+          <span class="saved" data-slot="saved"></span>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Side-by-side at full size is the only way to judge two close palettes — Dracula against Tokyo Night is genuinely hard otherwise. Explicit commit step, so nothing changes by accident.</dd>
+      <dt>Costs</dt><dd>Assumes you already have two finalists; there's no way to browse nine. Two dropdowns plus two commit buttons is the most interaction of any layout, for one preference.</dd>
+      <dt>Scales to</dt><dd>Nothing — but it composes. It's a good <em>second</em> screen behind layout 01 or 02.</dd>
+    </dl>
+  </section>
+
+  <div class="closing">
+    <h2>Reading the eight together</h2>
+    <p>
+      Three of these are answering different questions. 02 is for comparing, 07 is for
+      appreciating, 08 is for deciding between two. 01, 03 and 05 are the same
+      layout at three levels of ambition. 04 is the only one designed for the page this
+      becomes rather than the page it is, and 06 is the only one that shows the chrome
+      where it actually lives.
+    </p>
+    <div class="scroll-x">
+      <table class="matrix">
+        <thead>
+          <tr><th>#</th><th>Layout</th><th>Best at</th><th>Breaks down when</th><th>Build cost</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>01</td><td>Sidebar + preview</td><td>Judging one palette in detail</td><td>Still one setting</td><td>Low</td></tr>
+          <tr><td>02</td><td>Self-previewing grid</td><td>Comparing all nine at once</td><td>A non-visual setting arrives</td><td>Medium</td></tr>
+          <tr><td>03</td><td>Pill bar + hero</td><td>Looking like a product, not a dialog</td><td>Pills wrap; setting #2 arrives</td><td>Low</td></tr>
+          <tr><td>04</td><td>Scroll + sticky rail</td><td>Growing to five settings</td><td>Today, with one</td><td>Medium</td></tr>
+          <tr><td>05</td><td>Stacked column</td><td>Shipping this week</td><td>You wanted the tab for a reason</td><td>Lowest</td></tr>
+          <tr><td>06</td><td>Simulated page</td><td>Showing chrome in real context</td><td>Anyone needs to manage settings</td><td>Highest</td></tr>
+          <tr><td>07</td><td>One at a time</td><td>Seeing subtle palette detail</td><td>You need to compare</td><td>Medium</td></tr>
+          <tr><td>08</td><td>A/B compare</td><td>Choosing between two finalists</td><td>You haven't picked finalists</td><td>Medium</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:2rem">
+      If you want a recommendation: <strong style="color:var(--g-ink)">02 for the picker,
+      01's proportions for the shell</strong> — the grid answers the real question, and a
+      sidebar-shaped shell is what survives contact with setting #2. But the tradeoff
+      lines are the argument; pick the one whose costs you're happy to pay.
+    </p>
+  </div>
+
+</main>
+
+<script>
+"use strict";
+
+/* The nine options. `system` carries no palette of its own — it resolves,
+   which is exactly the behaviour §3 of the plan describes. */
+const THEMES = [
+  { id: "terracotta-dark",  name: "Terracotta Dark",  swatch: ["#141413","#d97757","#6a9bcc","#788c5d"], note: "default" },
+  { id: "terracotta-light", name: "Terracotta Light", swatch: ["#faf9f5","#c2603f","#2f6291","#4d6a36"] },
+  { id: "system",           name: "System",           swatch: null, note: "follows OS" },
+  { id: "dracula",          name: "Dracula",          swatch: ["#282a36","#bd93f9","#8be9fd","#50fa7b"] },
+  { id: "monokai",          name: "Monokai",          swatch: ["#272822","#f92672","#66d9ef","#a6e22e"] },
+  { id: "nord",             name: "Nord",             swatch: ["#2e3440","#88c0d0","#81a1c1","#a3be8c"] },
+  { id: "solarized-dark",   name: "Solarized Dark",   swatch: ["#002b36","#cb4b16","#268bd2","#859900"] },
+  { id: "tokyo-night",      name: "Tokyo Night",      swatch: ["#1a1b26","#bb9af7","#7aa2f7","#9ece6a"] },
+];
+
+const prefersDark = window.matchMedia("(prefers-color-scheme: dark)");
+const resolve = (id) =>
+  id === "system" ? (prefersDark.matches ? "terracotta-dark" : "terracotta-light") : id;
+
+const ICON = {
+  code:   '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>',
+  camera: '<path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/>',
+  parent: '<polyline points="14 9 9 4 4 9"/><path d="M20 20h-7a4 4 0 0 1-4-4V4"/>',
+  gear:   '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+};
+const svg = (d) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ` +
+  `stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+
+/* A palette swatch. `system` gets a split fill rather than a fake palette. */
+function swatchHTML(t, cls) {
+  const c = cls ? ` ${cls}` : "";
+  if (!t.swatch) {
+    return `<span class="sw${c}" aria-hidden="true">` +
+      `<i style="background:#141413"></i><i style="background:#d97757"></i>` +
+      `<i style="background:#c2603f"></i><i style="background:#faf9f5"></i></span>`;
+  }
+  return `<span class="sw${c}" aria-hidden="true">` +
+    t.swatch.map((h) => `<i style="background:${h}"></i>`).join("") + `</span>`;
+}
+
+/* The probe chrome, at true 11px scale. Content is the README's own worked
+   example, so nothing here is placeholder text. */
+function mockChrome({ gear = false, element = true } = {}) {
+  return `
+    ${gear ? `<button class="ccp-gear gear-float" title="Probe settings">${svg(ICON.gear)}</button>` : ""}
+    <div class="mock">
+      ${element ? `
+      <div class="mock-el">
+        <div class="mock-el-title">Pro Plan</div>
+        <div class="mock-el-body">For teams that need more.</div>
+      </div>` : ""}
+      <div class="ccp-label" style="margin-top:${element ? "14px" : "0"}">
+        <div class="l-row l-identity">
+          <span class="t-tag">div</span><span class="t-class">.card</span>
+          <span class="t-id">#plan-pro</span><span class="t-size">320 × 208</span>
+        </div>
+        <div class="l-row"><span class="t-text">"Pro Plan For teams that need more."</span></div>
+        <div class="l-row">
+          <span class="t-prop">flex</span><span class="t-sep">·</span>
+          <span class="t-prop">column</span><span class="t-sep">·</span>
+          <span class="t-prop">gap 12px</span><span class="t-sep">·</span>
+          <span class="t-prop">3 children</span>
+        </div>
+        <div class="l-row">
+          <span class="t-prop"><i class="t-swatch" style="background:#ffffff"></i>bg #fff</span>
+          <span class="t-sep">·</span>
+          <span class="t-prop"><i class="t-swatch" style="background:#e5e7eb"></i>border</span>
+          <span class="t-sep">·</span><span class="t-prop">radius 12px</span>
+        </div>
+        <div class="l-row t-crumb">
+          body <span class="t-sep">›</span> main <span class="t-sep">›</span>
+          div.grid <span class="t-sep">›</span> <span class="t-tag">div</span>
+        </div>
+      </div>
+      <div class="ccp-toolbar" style="margin-top:12px">
+        <div class="ccp-bar">
+          <button type="button">${svg(ICON.code)}<span>Copy Code</span></button>
+          <button type="button">${svg(ICON.camera)}<span>Screenshot</span></button>
+        </div>
+        <button type="button" class="ccp-parent">${svg(ICON.parent)}<span>Select Parent</span></button>
+      </div>
+    </div>`;
+}
+
+/* A compact render for the grid cards — chrome only, no page element. */
+function miniChrome() {
+  return `
+    <div class="card-mini">
+      <div class="l-row l-identity" style="font-size:11px">
+        <span class="t-tag">div</span><span class="t-class">.card</span>
+        <span class="t-size">320×208</span>
+      </div>
+      <div class="l-row"><span class="t-prop">flex · column · gap 12px</span></div>
+      <div class="l-row t-crumb">body › main › div.grid</div>
+    </div>
+    <div class="card-bar"><span></span><span></span><span></span></div>`;
+}
+
+/* ---- pickers ---- */
+function renderList(host, current) {
+  host.innerHTML =
+    `<div class="opt-list" role="radiogroup" aria-label="Theme">` +
+    THEMES.map((t) => `
+      <button type="button" class="opt" role="radio" data-theme="${t.id}"
+              aria-checked="${t.id === current}">
+        ${swatchHTML(t)}
+        <span class="opt-name">${t.name}</span>
+        ${t.note ? `<span class="t-size">${t.note}</span>` : ""}
+        <span class="opt-check" aria-hidden="true">✓</span>
+      </button>`).join("") + `</div>`;
+}
+
+function renderPills(host, current) {
+  host.innerHTML =
+    `<div class="opt-pills" role="radiogroup" aria-label="Theme">` +
+    THEMES.map((t) => `
+      <button type="button" class="pill" role="radio" data-theme="${t.id}"
+              aria-checked="${t.id === current}">
+        ${swatchHTML(t)}<span>${t.name}</span>
+      </button>`).join("") + `</div>`;
+}
+
+function renderCards(host, current) {
+  host.innerHTML =
+    `<div class="opt-cards" role="radiogroup" aria-label="Theme">` +
+    THEMES.map((t) => `
+      <button type="button" class="card" role="radio" data-theme="${t.id}"
+              data-ccp-theme="${resolve(t.id)}" aria-checked="${t.id === current}">
+        <div class="card-head">
+          <span class="card-name">${t.name}</span>
+          <span class="opt-check" aria-hidden="true">✓</span>
+        </div>
+        ${miniChrome()}
+        ${t.note ? `<span class="t-size">${t.note}</span>` : ""}
+      </button>`).join("") + `</div>`;
+}
+
+function renderSelect(el, current) {
+  el.innerHTML = THEMES.map((t) =>
+    `<option value="${t.id}"${t.id === current ? " selected" : ""}>${t.name}</option>`
+  ).join("");
+}
+
+/* ---- wire every prototype ---- */
+document.querySelectorAll("[data-proto]").forEach((root) => {
+  const n = root.dataset.proto;
+  let current = root.dataset.ccpTheme || "terracotta-dark";
+  if (n === "8") current = "terracotta-dark";
+
+  const preview = root.querySelector('[data-slot="preview"]');
+  if (preview && n !== "8") preview.innerHTML = mockChrome({ gear: n === "6" });
+
+  const paint = () => {
+    const resolved = resolve(current);
+    if (n !== "8") root.dataset.ccpTheme = resolved;
+    root.querySelectorAll("[data-theme]").forEach((b) => {
+      const on = b.dataset.theme === current;
+      b.setAttribute("aria-checked", String(on));
+      if (b.classList.contains("card")) b.dataset.ccpTheme = resolve(b.dataset.theme);
+    });
+    const name = root.querySelector('[data-slot="name"]');
+    if (name) name.textContent = THEMES.find((t) => t.id === current).name;
+    const counter = root.querySelector('[data-slot="counter"]');
+    if (counter) {
+      counter.textContent =
+        String(THEMES.findIndex((t) => t.id === current) + 1).padStart(2, "0") +
+        " / " + String(THEMES.length).padStart(2, "0");
+    }
+    root.querySelectorAll("[data-dot]").forEach((d) =>
+      d.classList.toggle("on", d.dataset.dot === current));
+  };
+
+  const list  = root.querySelector('[data-slot="list"]');
+  const pills = root.querySelector('[data-slot="pills"]');
+  const cards = root.querySelector('[data-slot="cards"]');
+  if (list)  renderList(list, current);
+  if (pills) renderPills(pills, current);
+  if (cards) renderCards(cards, current);
+
+  const dots = root.querySelector('[data-slot="dots"]');
+  if (dots) {
+    dots.innerHTML = THEMES.map((t) =>
+      `<i data-dot="${t.id}" data-theme="${t.id}" role="button" tabindex="0"
+          aria-label="${t.name}"></i>`).join("");
+  }
+
+  root.addEventListener("click", (e) => {
+    const opt = e.target.closest("[data-theme]");
+    if (opt && root.contains(opt)) { current = opt.dataset.theme; paint(); return; }
+    const nav = e.target.closest("[data-nav]");
+    if (nav) {
+      const i = THEMES.findIndex((t) => t.id === current);
+      current = THEMES[(i + Number(nav.dataset.nav) + THEMES.length) % THEMES.length].id;
+      paint();
+    }
+  });
+
+  /* prototype 8 keeps two independent panes */
+  if (n === "8") {
+    root.querySelectorAll("[data-pane]").forEach((pane) => {
+      pane.querySelector('[data-slot="preview"]').innerHTML =
+        mockChrome({ element: false });
+    });
+    root.querySelectorAll("[data-pane-select]").forEach((sel) => {
+      const key = sel.dataset.paneSelect;
+      const pane = root.querySelector(`[data-pane="${key}"]`);
+      renderSelect(sel, pane.dataset.ccpTheme);
+      sel.addEventListener("change", () => {
+        pane.dataset.ccpTheme = resolve(sel.value);
+      });
+    });
+    const saved = root.querySelector('[data-slot="saved"]');
+    root.querySelectorAll("[data-pick]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const pane = root.querySelector(`[data-pane="${btn.dataset.pick}"]`);
+        const sel = root.querySelector(`[data-pane-select="${btn.dataset.pick}"]`);
+        const label = THEMES.find((t) => t.id === sel.value).name;
+        root.querySelectorAll('.viewport-bar, .L8 .foot').forEach((el) => {
+          el.dataset.ccpTheme = pane.dataset.ccpTheme;
+        });
+        saved.textContent = "Saved · " + label;
+      });
+    });
+  }
+
+  paint();
+  prefersDark.addEventListener("change", () => { if (current === "system") paint(); });
+});
+</script>

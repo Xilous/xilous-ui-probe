@@ -1,0 +1,1092 @@
+<!doctype html>
+<html lang="en" data-theme="">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Claude Code Probe — Typography section prototypes</title>
+<!--
+  The typography group grew to seven rows — text, size, weight, leading,
+  tracking, align, colour — and the panel got tall. Twelve layouts for the
+  same seven controls, each a real 248px panel fragment, so the choice can be
+  made by looking rather than by arguing.
+
+  Every prototype renders the same state: an <h2> holding "emil-design-eng",
+  17px Inter 600, 24px leading, 0 tracking, left-aligned, #d97757. The other
+  groups are stubbed faint below each fragment, because the question is how
+  much room typography leaves them.
+
+  Interactive where the idea is interactive: 02's chip segments, 05's
+  overflow, 09's popover, 10's tabs, 11's specimen all respond to clicks.
+  Theme dots on each viewport repaint that prototype in place.
+-->
+<style>
+/* ============================================================
+   GALLERY SHELL — same quiet frame as the earlier galleries.
+   ============================================================ */
+:root {
+  --g-ground:  #f7f6f2;
+  --g-raised:  #ffffff;
+  --g-ink:     #17160f;
+  --g-dim:     #56534a;
+  --g-muted:   #8d8a80;
+  --g-rule:    #e0ddd3;
+  --g-rule-hi: #cbc7ba;
+  --g-accent:  #b8542f;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.25rem;
+  --step-3: 1.75rem;
+  --step-4: 2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-ground:  #131210;
+    --g-raised:  #1b1a17;
+    --g-ink:     #ece9e1;
+    --g-dim:     #a5a196;
+    --g-muted:   #7d7a71;
+    --g-rule:    #2a2824;
+    --g-rule-hi: #3d3a34;
+    --g-accent:  #e08b68;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--g-ground); color: var(--g-ink);
+  font-family: var(--sans); font-size: var(--step-1); line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--g-ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--g-rule);
+}
+.topbar-in { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 0; flex-wrap: wrap; }
+.topbar-title {
+  font-family: var(--mono); font-size: var(--step-0);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--g-dim); margin: 0; white-space: nowrap;
+}
+.jump { display: flex; gap: 0.25rem; margin-left: auto; flex-wrap: wrap; }
+.jump a {
+  font-family: var(--mono); font-size: 0.75rem; text-decoration: none; color: var(--g-dim);
+  border: 1px solid var(--g-rule); border-radius: 6px;
+  width: 2rem; height: 2rem; display: grid; place-items: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.jump a:hover, .jump a:focus-visible {
+  background: var(--g-accent); border-color: var(--g-accent); color: var(--g-ground); outline: none;
+}
+
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 2rem; border-bottom: 1px solid var(--g-rule); }
+.eyebrow {
+  font-family: var(--mono); font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--g-accent); margin: 0 0 1rem;
+}
+h1 {
+  font-family: var(--mono); font-weight: 500;
+  font-size: clamp(1.75rem, 4.5vw, var(--step-4));
+  line-height: 1.1; letter-spacing: -0.02em; margin: 0 0 1.25rem; text-wrap: balance;
+}
+.lede { font-size: var(--step-2); line-height: 1.5; color: var(--g-dim); max-width: 62ch; margin: 0; }
+
+.proto { padding: clamp(2.5rem, 6vw, 4.5rem) 0; border-bottom: 1px solid var(--g-rule); scroll-margin-top: 4.5rem; }
+.proto-head { display: grid; grid-template-columns: auto 1fr; gap: 0 1.25rem; align-items: baseline; margin-bottom: 1.75rem; }
+.proto-num {
+  font-family: var(--mono); font-size: var(--step-3); font-weight: 500;
+  color: var(--g-rule-hi); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.proto-head h2 { font-family: var(--mono); font-weight: 500; font-size: var(--step-2); margin: 0; letter-spacing: -0.01em; line-height: 1.25; }
+.thesis { grid-column: 2; margin: 0.5rem 0 0; color: var(--g-dim); max-width: 68ch; }
+
+.viewport {
+  position: relative; background: var(--page);
+  border: 1px solid var(--g-rule-hi); border-radius: 10px; overflow: hidden;
+}
+.viewport-bar {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+  border-bottom: 1px solid var(--sep);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); opacity: 0.6; }
+.viewport-url { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-left: 0.5rem; letter-spacing: 0.02em; }
+.dots { display: flex; gap: 4px; margin-left: auto; }
+.tdot { width: 13px; height: 13px; border-radius: 4px; padding: 0; cursor: pointer; border: 1px solid rgba(127,127,127,.4); }
+.tdot:hover { transform: scale(1.15); }
+
+.stage { display: flex; gap: 40px; align-items: flex-start; padding: 26px 28px 30px; }
+.stage-note { font: 11px/1.6 var(--mono); color: var(--muted); max-width: 30ch; padding-top: 8px; }
+.stage-note b { color: var(--page-ink); font-weight: 600; }
+.stage-note .h { color: var(--accent); }
+
+.tradeoff { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 1.5rem 0 0; font-size: var(--step-0); }
+.tradeoff dt {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--g-muted); padding-top: 0.2em;
+}
+.tradeoff dd { margin: 0; color: var(--g-dim); }
+.tradeoff .win { color: var(--g-ink); }
+
+/* ============================================================
+   THEME TOKENS — the real seven, page-side derivations included.
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] {
+  --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64;
+  --sep:#3a3a35; --accent:#d97757; --on-accent:#1a0d07;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(20,20,19,.4);
+  --page:#1e1e1c; --page-ink:#c8c5bc;
+}
+[data-ccp-theme="terracotta-light"] {
+  --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780;
+  --sep:#ddd9cf; --accent:#c2603f; --on-accent:#fff8f4;
+  --shadow-card: 0 8px 24px -10px rgba(60,45,35,.28), 0 1px 3px rgba(60,45,35,.14);
+  --page:#ffffff; --page-ink:#3a3a35;
+}
+[data-ccp-theme="dracula"] {
+  --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4;
+  --sep:#44475a; --accent:#bd93f9; --on-accent:#1a1626;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,30,.45);
+  --page:#21222c; --page-ink:#cfd0e0;
+}
+[data-ccp-theme="monokai"] {
+  --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e;
+  --sep:#3e3d32; --accent:#f92672; --on-accent:#2a0512;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,15,.45);
+  --page:#1e1f1a; --page-ink:#d9d8cd;
+}
+[data-ccp-theme="nord"] {
+  --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1;
+  --sep:#3b4252; --accent:#88c0d0; --on-accent:#16202b;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.5), 0 2px 6px rgba(20,25,35,.4);
+  --page:#272c36; --page-ink:#d8dee9;
+}
+[data-ccp-theme="solarized-dark"] {
+  --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75;
+  --sep:#073642; --accent:#cb4b16; --on-accent:#1a0700;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,20,25,.45);
+  --page:#01212b; --page-ink:#93a1a1;
+}
+[data-ccp-theme="tokyo-night"] {
+  --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89;
+  --sep:#292e42; --accent:#bb9af7; --on-accent:#16111f;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(15,15,25,.45);
+  --page:#16161e; --page-ink:#a9b1d6;
+}
+
+/* ============================================================
+   THE PANEL FRAGMENT — shared anatomy, at true size.
+   ============================================================ */
+.ep {
+  width: 248px; flex: none;
+  background: var(--surface); color: var(--text);
+  border: 1px solid rgb(from var(--accent) r g b / 0.5);
+  border-radius: 12px; box-shadow: var(--shadow-card);
+  font-family: var(--mono); font-size: 10px;
+  overflow: hidden; user-select: none;
+}
+.ep-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 8px; border-bottom: 1px solid var(--sep); cursor: grab;
+}
+.ep-back {
+  width: 20px; height: 20px; flex: none; display: grid; place-items: center;
+  border: 1px solid var(--sep); border-radius: 4px; color: var(--dim); font-size: 11px;
+}
+.ep-id { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; font-size: 10px; color: var(--dim); }
+.ep-id b { color: var(--accent); font-weight: 700; }
+.ep-id i { color: #8bd0bd; font-style: normal; font-weight: 500; }
+.ep-act {
+  width: 20px; height: 20px; flex: none; display: grid; place-items: center;
+  border: 1px solid var(--sep); border-radius: 4px; color: var(--dim); font-size: 10px;
+}
+.ep-body { padding: 8px 12px 10px; }
+
+.legend {
+  font-weight: 500; font-size: 9px; letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 6px;
+}
+.row { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+.rdot { width: 9px; height: 9px; flex: none; border-radius: 50%; border: 1px solid var(--sep); }
+.rdot.on { background: var(--accent); border-color: var(--accent); }
+.rlabel { flex: 1; min-width: 0; font-size: 10px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip {
+  display: inline-flex; align-items: baseline; justify-content: center; gap: 1px;
+  flex: none; width: 58px; padding: 2px 4px;
+  border: 1px solid var(--sep); border-radius: 4px;
+  background: rgb(from var(--text) r g b / 0.06);
+  font-weight: 500; font-size: 10px; color: var(--text);
+  font-variant-numeric: tabular-nums; cursor: ew-resize;
+}
+.chip .u { font-size: 8px; color: var(--faint); }
+.chip.wide { width: 132px; cursor: text; justify-content: flex-start; }
+.chip.wide span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.seg { display: inline-flex; flex: none; border: 1px solid var(--sep); border-radius: 4px; overflow: hidden; }
+.seg b { width: 19px; height: 16px; display: grid; place-items: center; font-weight: 400; color: var(--muted); font-size: 9px; }
+.seg b.on { background: rgb(from var(--accent) r g b / 0.2); color: var(--accent); }
+.swatch { width: 14px; height: 14px; flex: none; border-radius: 4px; border: 1px solid var(--sep); background: var(--accent); cursor: pointer; }
+.hex { font-size: 10px; color: var(--text); font-variant-numeric: tabular-nums; }
+
+/* the neighbour stub: how much room typography leaves the rest */
+.stub { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--sep); opacity: 0.38; }
+.stub .row { padding: 1px 0; }
+.mrow { display: flex; align-items: center; gap: 6px; padding: 2px 0; }
+
+/* height tag pinned to each fragment */
+.htag {
+  position: absolute; top: 50px; left: 296px;
+  font: 10px/1.4 var(--mono); color: var(--muted); white-space: nowrap;
+}
+.htag b { color: var(--accent); font-weight: 600; }
+
+/* ============================================================
+   01 · PAIRED COLUMNS
+   ============================================================ */
+.P1 .pair { display: flex; gap: 6px; }
+.P1 .pair .cell { flex: 1; display: flex; align-items: center; gap: 5px; min-width: 0; }
+.P1 .pair .cell .rlabel { flex: none; width: auto; }
+.P1 .pair .chip { width: 46px; }
+
+/* ============================================================
+   02 · THE TYPE CHIP
+   ============================================================ */
+.P2 .spec { display: flex; align-items: center; gap: 6px; padding: 3px 0; }
+.P2 .specchip {
+  flex: 1; display: flex; align-items: center; justify-content: space-between;
+  border: 1px solid var(--sep); border-radius: 4px; padding: 3px 6px;
+  background: rgb(from var(--text) r g b / 0.06);
+}
+.P2 .specchip u {
+  text-decoration: none; font-variant-numeric: tabular-nums; font-weight: 500;
+  color: var(--text); padding: 0 3px; border-radius: 3px; cursor: ew-resize;
+}
+.P2 .specchip u:hover, .P2 .specchip u.hot { background: rgb(from var(--accent) r g b / 0.22); color: var(--accent); }
+.P2 .specchip .sep2 { color: var(--faint); }
+.P2 .caption { font-size: 8px; color: var(--faint); padding: 2px 0 0 15px; height: 12px; }
+.P2 .caption b { color: var(--accent); font-weight: 500; }
+
+/* ============================================================
+   03 · SPECIMEN HEADER
+   ============================================================ */
+.P3 .spec {
+  position: relative; border: 1px solid var(--sep); border-radius: 6px;
+  background: rgb(from var(--text) r g b / 0.05);
+  padding: 12px 10px 10px; margin: 2px 0 6px; text-align: center;
+}
+.P3 .spec .ag { font: 600 24px/1 var(--sans); color: var(--accent); }
+.P3 .spec .meta { font-size: 8px; color: var(--muted); margin-top: 6px; letter-spacing: 0.08em; }
+.P3 .corner { position: absolute; font-size: 9px; color: var(--dim); background: var(--surface); border: 1px solid var(--sep); border-radius: 3px; padding: 0 4px; cursor: ew-resize; font-variant-numeric: tabular-nums; }
+.P3 .c-size { top: -6px; left: 8px; }
+.P3 .c-weight { top: -6px; right: 8px; }
+.P3 .c-lead { bottom: -6px; left: 8px; }
+.P3 .c-track { bottom: -6px; right: 8px; }
+
+/* ============================================================
+   04 · LABELS INSIDE CHIPS
+   ============================================================ */
+.P4 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 6px; margin: 2px 0; }
+.P4 .lchip {
+  display: flex; align-items: baseline; gap: 4px; padding: 2px 6px;
+  border: 1px solid var(--sep); border-radius: 4px;
+  background: rgb(from var(--text) r g b / 0.06); cursor: ew-resize;
+}
+.P4 .lchip k { font-size: 7.5px; letter-spacing: 0.1em; color: var(--faint); text-transform: uppercase; }
+.P4 .lchip b { font-weight: 500; font-variant-numeric: tabular-nums; margin-left: auto; }
+.P4 .lchip .u { font-size: 8px; color: var(--faint); }
+
+/* ============================================================
+   05 · PRIMARY + OVERFLOW
+   ============================================================ */
+.P5 .more {
+  width: 100%; text-align: center; font: inherit; font-size: 9px; color: var(--muted);
+  border: 1px dashed var(--sep); border-radius: 4px; background: transparent;
+  padding: 3px 0; margin-top: 4px; cursor: pointer;
+}
+.P5 .more:hover { color: var(--accent); border-color: var(--accent); }
+.P5 .tail { display: none; }
+.P5 .tail.open { display: block; }
+
+/* ============================================================
+   06 · TWO-LINE STANZA
+   ============================================================ */
+.P6 .stanza {
+  display: flex; align-items: baseline; justify-content: space-between;
+  padding: 3px 2px 1px;
+}
+.P6 .stanza u {
+  text-decoration: none; font-variant-numeric: tabular-nums; font-weight: 500;
+  color: var(--text); cursor: ew-resize; border-bottom: 1px dotted var(--faint); padding-bottom: 1px;
+}
+.P6 .stanza u:hover { color: var(--accent); border-bottom-color: var(--accent); }
+.P6 .stanza .dot6 { color: var(--faint); }
+.P6 .cap { font-size: 8px; color: var(--faint); text-align: center; height: 11px; margin-top: 1px; }
+
+/* ============================================================
+   07 · MINI-GRID 3×2
+   ============================================================ */
+.P7 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px 6px; margin-top: 2px; }
+.P7 .cell k { display: block; font-size: 7.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); margin-bottom: 2px; }
+.P7 .cell .chip { width: 100%; }
+.P7 .cell .seg { width: 100%; }
+.P7 .cell .seg b { flex: 1; }
+.P7 .cwrap { display: flex; align-items: center; gap: 4px; border: 1px solid var(--sep); border-radius: 4px; padding: 2px 4px; background: rgb(from var(--text) r g b / 0.06); }
+.P7 .cwrap .swatch { width: 11px; height: 11px; }
+.P7 .cwrap .hex { font-size: 9px; }
+
+/* ============================================================
+   08 · SPEC LEDGER
+   ============================================================ */
+.P8 .lrow { display: flex; align-items: center; gap: 5px; padding: 1px 0; height: 15px; }
+.P8 .lrow .rdot { width: 7px; height: 7px; }
+.P8 .lrow .rlabel { flex: none; font-size: 9px; }
+.P8 .leader { flex: 1; border-bottom: 1px dotted rgb(from var(--faint) r g b / 0.5); height: 1px; margin: 0 2px; }
+.P8 .lval { font-size: 9.5px; font-weight: 500; font-variant-numeric: tabular-nums; color: var(--text); cursor: ew-resize; }
+.P8 .lval .u { font-size: 8px; color: var(--faint); }
+
+/* ============================================================
+   09 · TYPE POPOVER
+   ============================================================ */
+.P9 .sumrow {
+  display: flex; align-items: center; gap: 6px; padding: 3px 0; cursor: pointer;
+  border-radius: 4px;
+}
+.P9 .sumrow:hover .sumchip { border-color: var(--accent); }
+.P9 .sumchip {
+  flex: 1; display: flex; align-items: center; gap: 6px;
+  border: 1px solid var(--sep); border-radius: 4px; padding: 3px 6px;
+  background: rgb(from var(--text) r g b / 0.06);
+  font-variant-numeric: tabular-nums; font-weight: 500;
+}
+.P9 .sumchip .swatch { width: 11px; height: 11px; margin-left: auto; }
+.P9 .sumchip .arrow { color: var(--faint); font-size: 8px; }
+.P9 .pop {
+  position: absolute; left: 262px; top: 66px; width: 190px;
+  background: var(--surface); border: 1px solid rgb(from var(--accent) r g b / 0.5);
+  border-radius: 10px; box-shadow: var(--shadow-card); padding: 8px 10px 10px;
+  font-family: var(--mono); font-size: 10px; color: var(--text);
+  display: none;
+}
+.P9 .pop.open { display: block; }
+.P9 .pop .legend { margin-bottom: 4px; }
+
+/* ============================================================
+   10 · SEGMENTED DRAWER
+   ============================================================ */
+.P10 .tabs { display: flex; border: 1px solid var(--sep); border-radius: 4px; overflow: hidden; margin: 2px 0 6px; }
+.P10 .tabs button {
+  flex: 1; font: inherit; font-size: 9px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); background: transparent; border: 0; padding: 3px 0; cursor: pointer;
+}
+.P10 .tabs button.on { background: rgb(from var(--accent) r g b / 0.2); color: var(--accent); }
+.P10 [data-pane] { display: none; }
+.P10 [data-pane].on { display: block; }
+
+/* ============================================================
+   11 · THE SPECIMEN IS THE FIELD
+   ============================================================ */
+.P11 .canvasbox {
+  border: 1px solid var(--sep); border-radius: 6px; margin: 2px 0 6px;
+  background: rgb(from var(--text) r g b / 0.05); padding: 10px;
+}
+.P11 .live {
+  display: block; width: 100%; border: 0; background: transparent; outline: none;
+  font: 600 15px/1.45 var(--sans); color: var(--accent);
+  border-bottom: 1px dashed rgb(from var(--faint) r g b / 0.6); padding-bottom: 4px;
+}
+.P11 .ring { display: flex; justify-content: space-between; margin-top: 6px; }
+.P11 .ring .chip { width: 44px; font-size: 9px; }
+.P11 .ringlab { display: flex; justify-content: space-between; margin-top: 2px; }
+.P11 .ringlab k { font-size: 7.5px; width: 44px; text-align: center; letter-spacing: 0.08em; text-transform: uppercase; color: var(--faint); }
+
+/* ============================================================
+   12 · MICRO-TICKER
+   ============================================================ */
+.P12 .trow { display: flex; align-items: center; gap: 5px; height: 14px; }
+.P12 .trow .rdot { width: 6px; height: 6px; }
+.P12 .trow k { width: 44px; flex: none; font-size: 8px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--faint); }
+.P12 .trow .tval { margin-left: auto; font-size: 9.5px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: ew-resize; }
+.P12 .trow .tval .u { font-size: 7.5px; color: var(--faint); }
+.P12 .trow .seg b { width: 15px; height: 12px; font-size: 8px; }
+.P12 .trow .swatch { width: 10px; height: 10px; margin-left: auto; }
+.P12 .trow .hex { font-size: 9px; }
+</style>
+</head>
+<body>
+
+<nav class="topbar"><div class="wrap topbar-in">
+  <p class="topbar-title">CCP · typography prototypes</p>
+  <div class="jump">
+    <a href="#p1">1</a><a href="#p2">2</a><a href="#p3">3</a><a href="#p4">4</a>
+    <a href="#p5">5</a><a href="#p6">6</a><a href="#p7">7</a><a href="#p8">8</a>
+    <a href="#p9">9</a><a href="#p10">10</a><a href="#p11">11</a><a href="#p12">12</a>
+  </div>
+</div></nav>
+
+<header class="masthead wrap">
+  <p class="eyebrow">Twelve layouts, one question</p>
+  <h1>Seven type controls in a 248px panel, without the wall of rows</h1>
+  <p class="lede">The typography group now carries text, size, weight, leading,
+    tracking, align and colour — seven rows, the tallest section in the panel.
+    Each prototype below is the same state at true size; the faded spacing rows
+    underneath show how much room each layout gives back. Click what looks
+    clickable.</p>
+</header>
+
+<main class="wrap">
+
+  <!-- ============ 01 ============ -->
+  <section class="proto" id="p1">
+    <div class="proto-head">
+      <span class="proto-num">01</span>
+      <h2>Paired columns</h2>
+      <p class="thesis">The four metrics come in natural pairs — size with weight,
+        leading with tracking — so each pair shares a row with its own micro-labels.
+        Nothing else changes dialect. Seven rows become five.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P1">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="pair">
+              <span class="cell"><i class="rdot"></i><span class="rlabel">size</span><span class="chip">17<span class="u">px</span></span></span>
+              <span class="cell"><span class="rlabel">weight</span><span class="chip">600</span></span>
+            </div>
+            <div class="pair">
+              <span class="cell"><i class="rdot"></i><span class="rlabel">lead</span><span class="chip">24<span class="u">px</span></span></span>
+              <span class="cell"><span class="rlabel">track</span><span class="chip">0<span class="u">px</span></span></span>
+            </div>
+            <div class="row"><i class="rdot"></i><span class="rlabel">align</span><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></div>
+            <div class="row"><i class="rdot on"></i><span class="rlabel">colour</span><span class="swatch"></span><span class="hex">#d97757</span></div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note"><b>5 rows</b> where there were 7. One dirty dot per
+          pair covers both cells — the dot resets <span class="h">both</span>,
+          which is the honesty cost of sharing a row.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Cheapest possible change — same chips, same scrub, same everything, two rows shorter. Ships in an afternoon.</dd>
+      <dt>Costs</dt><dd>The dot column stops meaning "one property, one dot": a shared dot must reset a pair, or the pair needs two dots and the row gets crowded.</dd>
+      <dt>Scales to</dt><dd>Any group with natural pairs — border width/radius, shadow y/blur — but no further than pairing goes.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section class="proto" id="p2">
+    <div class="proto-head">
+      <span class="proto-num">02</span>
+      <h2>The type chip</h2>
+      <p class="thesis">Set in type's own shorthand: one chip reads
+        <code>17/24 · 600 · 0</code> the way a designer says it. Every number in
+        the chip is its own scrub target; the caption underneath names whichever
+        one is under the pointer. Two rows, total.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P2">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="spec"><i class="rdot on"></i>
+              <span class="specchip" data-spec>
+                <span><u data-cap="size · 17px">17</u><span class="sep2">/</span><u data-cap="leading · 24px">24</u></span>
+                <span class="sep2">·</span><u data-cap="weight · 600">600</u>
+                <span class="sep2">·</span><u data-cap="tracking · 0px">0</u>
+                <span class="sep2">·</span><u data-cap="align · left">⇤</u>
+                <span class="swatch" data-cap="colour · #bb9af7" style="width:11px;height:11px"></span>
+              </span>
+            </div>
+            <p class="caption" data-caption>type spec — point at a number</p>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">gap</span><span class="chip">8<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note"><b>2 rows.</b> The chip speaks the trade's own
+          shorthand — <span class="h">17/24</span> is how type specs have been
+          written since paste-up. Point at a number and the caption names it.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The densest honest layout in the gallery, and it reads as a type spec rather than a form — the panel's most craft-literate moment.</dd>
+      <dt>Costs</dt><dd>Scrub targets shrink to two-digit numbers; the caption is load-bearing for learnability, and per-property dirty dots collapse into one chip-level dot.</dd>
+      <dt>Scales to</dt><dd>Exactly this group. Nothing else in the panel has a folk notation to borrow.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section class="proto" id="p3">
+    <div class="proto-head">
+      <span class="proto-num">03</span>
+      <h2>Specimen with corner tabs</h2>
+      <p class="thesis">A live specimen — the accent-coloured Ag — sits where rows
+        would be, wearing the current colour, weight and size. The four metrics pin
+        to its corners as scrubbable tags. Seeing beats reading numbers.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P3">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="spec">
+              <span class="corner c-size">17px</span><span class="corner c-weight">600</span>
+              <div class="ag">Ag</div>
+              <div class="meta">≡ left · #88c0d0</div>
+              <span class="corner c-lead">/24</span><span class="corner c-track">0</span>
+            </div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">The specimen <b>is</b> the readout: drag the
+          <span class="h">17px</span> tag and watch the Ag itself grow. Align and
+          colour ride the meta line; clicking the Ag opens the picker.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Direct manipulation with feedback where the eye already is — the only layout where the panel shows the type instead of describing it.</dd>
+      <dt>Costs</dt><dd>The specimen shows the panel's mock, not the page's real font stack; corner tags are novel furniture with no precedent anywhere else in the extension.</dd>
+      <dt>Scales to</dt><dd>Shadow (a specimen card) and border (a specimen box) could adopt the same trick — a whole design language, if committed to.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section class="proto" id="p4">
+    <div class="proto-head">
+      <span class="proto-num">04</span>
+      <h2>Labels inside chips</h2>
+      <p class="thesis">The label column is the widest thing in every row, and it
+        mostly repeats what the chip already implies. Fold each label into its chip
+        as a micro-key and the four metrics tile two-up.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P4">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="grid">
+              <span class="lchip"><k>size</k><b>17</b><span class="u">px</span></span>
+              <span class="lchip"><k>wght</k><b>600</b></span>
+              <span class="lchip"><k>lead</k><b>24</b><span class="u">px</span></span>
+              <span class="lchip"><k>trck</k><b>0</b><span class="u">px</span></span>
+            </div>
+            <div class="row"><i class="rdot"></i><span class="rlabel">align</span><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span><span class="swatch" style="margin-left:auto"></span><span class="hex">#bd93f9</span></div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note"><b>4 rows.</b> Align and colour share the last row —
+          the two controls that never need a wide target. Dirty state moves
+          <span class="h">into</span> the chip: an edited chip's key turns accent.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Nearly half the height with zero new interaction ideas — every chip still scrubs, types and arrows exactly as today.</dd>
+      <dt>Costs</dt><dd>Four-letter keys ration clarity ("trck"), and losing the dot column means inventing a second dirty-state language just for this group.</dd>
+      <dt>Scales to</dt><dd>Spacing and border tile just as well; the panel could go two-up everywhere and lose a third of its height.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section class="proto" id="p5">
+    <div class="proto-head">
+      <span class="proto-num">05</span>
+      <h2>Primary three, quiet tail</h2>
+      <p class="thesis">Watch what people actually touch: text, size, colour. Those
+        three stay rows; weight, leading, tracking and align wait behind a dashed
+        "+ 4 more type" — the add-row affordance the panel already speaks.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P5">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="row"><i class="rdot"></i><span class="rlabel">size</span><span class="chip">17<span class="u">px</span></span></div>
+            <div class="row"><i class="rdot on"></i><span class="rlabel">colour</span><span class="swatch"></span><span class="hex">#c2603f</span></div>
+            <div class="tail" data-tail>
+              <div class="row"><i class="rdot"></i><span class="rlabel">weight</span><span class="chip">600</span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">leading</span><span class="chip">24<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">tracking</span><span class="chip">0<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">align</span><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></div>
+            </div>
+            <button class="more" data-more>+ 4 more type</button>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note"><b>4 rows</b> until asked. An edited tail property
+          pins its row open — a dirty dot can never hide behind the
+          <span class="h">+ more</span>.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Height tracks intent: the common case is short, the full set is one click, and the affordance is the dashed row users already know from "+ add border".</dd>
+      <dt>Costs</dt><dd>Someone has to decide what "primary" is and be wrong for somebody; leading-tuners pay a click every session (unless the open state is remembered, which is one more pref).</dd>
+      <dt>Scales to</dt><dd>Every group — it is the accordion idea at the granularity where it works, inside sections instead of on them.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section class="proto" id="p6">
+    <div class="proto-head">
+      <span class="proto-num">06</span>
+      <h2>Two-line stanza</h2>
+      <p class="thesis">Strip the furniture entirely: line one is the text, line two
+        is every value as a bare dotted-underline number, middot-separated. A
+        caption line names what the pointer touches. Labels appear exactly when
+        needed and never before.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="solarized-dark">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P6">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="stanza">
+              <u data-cap="size 17px">17</u><span class="dot6">·</span>
+              <u data-cap="weight 600">600</u><span class="dot6">·</span>
+              <u data-cap="leading 24px">24</u><span class="dot6">·</span>
+              <u data-cap="tracking 0px">0</u><span class="dot6">·</span>
+              <u data-cap="align left">⇤</u><span class="dot6">·</span>
+              <span class="swatch" data-cap="colour #cb4b16" style="width:12px;height:12px;align-self:center"></span>
+            </div>
+            <p class="cap" data-caption>&nbsp;</p>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">gap</span><span class="chip">8<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note"><b>3 lines</b> including the caption. The most
+          radical reduction here — the values <span class="h">are</span> the
+          interface, chrome-free, like scrubbing the page itself.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Absolute minimum height and visual noise; for a returning user the row reads at a glance and scrubs without aiming at a chip.</dd>
+      <dt>Costs</dt><dd>Zero self-evidence for a first-timer — six naked glyphs in a row — and no room for the token steppers, which need chip real estate to exist.</dd>
+      <dt>Scales to</dt><dd>Power users, via a density preference; as the only layout it would cost more onboarding than it saves in pixels.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section class="proto" id="p7">
+    <div class="proto-head">
+      <span class="proto-num">07</span>
+      <h2>Mini-grid, three up</h2>
+      <p class="thesis">Six controls, six labelled cells, three per row — the
+        metrics keep visible names (above the cell, not beside it) and the whole
+        group is exactly as tall as three normal rows.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="monokai">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P7">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="grid">
+              <span class="cell"><k>size</k><span class="chip">17<span class="u">px</span></span></span>
+              <span class="cell"><k>weight</k><span class="chip">600</span></span>
+              <span class="cell"><k>leading</k><span class="chip">24<span class="u">px</span></span></span>
+              <span class="cell"><k>tracking</k><span class="chip">0<span class="u">px</span></span></span>
+              <span class="cell"><k>align</k><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></span>
+              <span class="cell"><k>colour</k><span class="cwrap"><span class="swatch"></span><span class="hex">#f92672</span></span></span>
+            </div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note"><b>3 rows.</b> Labels survive — quiet caps above each
+          cell — so nothing has to be decoded, and every target is still a real
+          chip that scrubs.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Halves the height while keeping full-word labels and full-size chips; the least learnable-cost per pixel saved of any dense option.</dd>
+      <dt>Costs</dt><dd>The label-left dialect breaks for one group only, and 74px cells leave no room for token steppers beside the value.</dd>
+      <dt>Scales to</dt><dd>Any group of small values; border and shadow tile identically. The steppers would need a hover or focus reveal.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section class="proto" id="p8">
+    <div class="proto-head">
+      <span class="proto-num">08</span>
+      <h2>Spec ledger</h2>
+      <p class="thesis">The settings page's dotted-leader dialect, imported: label,
+        leader, value, at fifteen pixels per line instead of twenty-two. Same seven
+        facts, two-thirds the ink, one voice across the whole extension.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P8">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="lrow"><i class="rdot"></i><span class="rlabel">size</span><i class="leader"></i><span class="lval">17<span class="u">px</span></span></div>
+            <div class="lrow"><i class="rdot"></i><span class="rlabel">weight</span><i class="leader"></i><span class="lval">600</span></div>
+            <div class="lrow"><i class="rdot"></i><span class="rlabel">leading</span><i class="leader"></i><span class="lval">24<span class="u">px</span></span></div>
+            <div class="lrow"><i class="rdot"></i><span class="rlabel">tracking</span><i class="leader"></i><span class="lval">0<span class="u">px</span></span></div>
+            <div class="lrow"><i class="rdot"></i><span class="rlabel">align</span><i class="leader"></i><span class="lval">left</span></div>
+            <div class="lrow"><i class="rdot on"></i><span class="rlabel">colour</span><i class="leader"></i><span class="swatch" style="width:10px;height:10px"></span><span class="lval">#d97757</span></div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">Seven rows still — but at <b>15px each</b> the group
+          is 40% shorter than today. The bare value scrubs; focusing it grows a
+          field. The dialect is the <span class="h">settings page's</span>.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Real density without hiding or renaming anything, and the extension ends up speaking one spec-sheet language in both of its surfaces.</dd>
+      <dt>Costs</dt><dd>Bare values are smaller scrub targets than chips, and the leader dots add texture some will read as noise; chips remain for text and spacing, so two value styles coexist.</dd>
+      <dt>Scales to</dt><dd>The entire panel, uniformly — this is the only option that is a panel-wide answer rather than a typography-shaped one.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 09 ============ -->
+  <section class="proto" id="p9">
+    <div class="proto-head">
+      <span class="proto-num">09</span>
+      <h2>Type popover</h2>
+      <p class="thesis">Typography collapses to a single summary row —
+        <code>17/24 · 600</code> and the swatch. Clicking it opens a popover beside
+        the panel with the full seven controls, exactly the way colour already
+        opens its picker. The panel never grows; depth moves sideways.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage" style="position:relative">
+        <div class="ep P9">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="sumrow" data-popbtn>
+              <i class="rdot on"></i>
+              <span class="sumchip">17/24 · 600 · left <span class="swatch"></span><span class="arrow">▸</span></span>
+            </div>
+            <div class="stub" style="opacity:1">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">gap</span><span class="chip">8<span class="u">px</span></span></div>
+            </div>
+            <div class="stub">
+              <p class="legend">Size</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">width</span><span class="chip">250<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <div class="pop P9-pop" data-pop>
+          <p class="legend">Type</p>
+          <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide" style="width:110px"><span>emil-design-eng</span></span></div>
+          <div class="row"><i class="rdot"></i><span class="rlabel">size</span><span class="chip">17<span class="u">px</span></span></div>
+          <div class="row"><i class="rdot"></i><span class="rlabel">weight</span><span class="chip">600</span></div>
+          <div class="row"><i class="rdot"></i><span class="rlabel">leading</span><span class="chip">24<span class="u">px</span></span></div>
+          <div class="row"><i class="rdot"></i><span class="rlabel">tracking</span><span class="chip">0<span class="u">px</span></span></div>
+          <div class="row"><i class="rdot"></i><span class="rlabel">align</span><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></div>
+          <div class="row"><i class="rdot on"></i><span class="rlabel">colour</span><span class="swatch"></span><span class="hex">#bd93f9</span></div>
+        </div>
+        <p class="stage-note" style="margin-left:220px"><b>1 row</b> in the panel,
+          ever. Click the spec chip — the popover is the
+          <span class="h">colour picker's</span> pattern applied to a whole group.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The panel gets radically short and every other group gains the freed room; the popover mechanism, drag rules and Escape rung already exist for the picker.</dd>
+      <dt>Costs</dt><dd>Every type tweak becomes click-then-edit, two surfaces fight for screen edge space on narrow viewports, and scrub-while-watching needs the popover not to cover the element.</dd>
+      <dt>Scales to</dt><dd>Any group — but if everything becomes a popover the panel is a menu, and the one-glance overview dies.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 10 ============ -->
+  <section class="proto" id="p10">
+    <div class="proto-head">
+      <span class="proto-num">10</span>
+      <h2>Metrics / style drawer</h2>
+      <p class="thesis">The seven controls have two moods: numbers you tune
+        (size, weight, leading, tracking) and character you set (text, align,
+        colour). A micro-tab splits them; each pane is three or four rows and the
+        section never shows both at once.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P10">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="tabs">
+              <button class="on" data-tab="m">metrics · 4</button>
+              <button data-tab="s">style · 3</button>
+            </div>
+            <div data-pane="m" class="on">
+              <div class="row"><i class="rdot"></i><span class="rlabel">size</span><span class="chip">17<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">weight</span><span class="chip">600</span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">leading</span><span class="chip">24<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">tracking</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+            <div data-pane="s">
+              <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">align</span><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span></div>
+              <div class="row"><i class="rdot on"></i><span class="rlabel">colour</span><span class="swatch"></span><span class="hex">#88c0d0</span></div>
+            </div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note"><b>5 rows max</b> — tab bar plus the taller pane. The
+          tab labels carry counts, and a dirty dot in a hidden pane tints its
+          <span class="h">tab</span> so edits can't vanish.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Bounded height with nothing renamed or shrunk, and the metrics/style split matches how people actually think about type.</dd>
+      <dt>Costs</dt><dd>Tabs inside a section is new furniture the gallery's accordion verdict warned about; cross-pane workflows (size, then colour) pay a click each way.</dd>
+      <dt>Scales to</dt><dd>Only groups with a natural split. Forced onto spacing it would be arbitrary — this is a typography-shaped answer.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 11 ============ -->
+  <section class="proto" id="p11">
+    <div class="proto-head">
+      <span class="proto-num">11</span>
+      <h2>The field is the specimen</h2>
+      <p class="thesis">Combine 03 and the text field: one editable line rendered in
+        the element's own size-scaled type and colour. Typing edits the words;
+        the four metric chips sit in a ring beneath. Content and character share
+        one surface because on the page they are one thing.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="solarized-dark">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P11">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="canvasbox">
+              <input class="live" value="emil-design-eng" spellcheck="false">
+              <div class="ring">
+                <span class="chip">17<span class="u">px</span></span>
+                <span class="chip">600</span>
+                <span class="chip">24<span class="u">px</span></span>
+                <span class="chip">0<span class="u">px</span></span>
+              </div>
+              <div class="ringlab"><k>size</k><k>wght</k><k>lead</k><k>trck</k></div>
+            </div>
+            <div class="row"><i class="rdot"></i><span class="rlabel">align</span><span class="seg"><b class="on">≡</b><b>≡</b><b>≡</b></span><span class="swatch" style="margin-left:auto"></span><span class="hex">#cb4b16</span></div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">Type in the box — the words are the element's, drawn
+          in its own weight and colour, so an edit is <b>seen as it will land</b>.
+          Scrub <span class="h">size</span> and the specimen line grows.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The text field earns its space by doubling as the preview, and the panel finally shows what the numbers mean while they move.</dd>
+      <dt>Costs</dt><dd>A specimen at 17px is honest, at 64px it breaks the box — the preview needs clamping rules that then make it dishonest; tallest of the compact options.</dd>
+      <dt>Scales to</dt><dd>Elements with short single-line text. For a paragraph the specimen degrades to an ordinary field with mood lighting.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 12 ============ -->
+  <section class="proto" id="p12">
+    <div class="proto-head">
+      <span class="proto-num">12</span>
+      <h2>Micro-ticker</h2>
+      <p class="thesis">Keep the exact current anatomy — dot, label, value, one per
+        line — and shrink the line: 14px tall, 8px labels, values flush right, no
+        chips until focus. Doing today's layout at two-thirds scale is itself an
+        option, and the baseline the other eleven must beat.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night">
+      <div class="viewport-bar"><i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">skills.example.dev/catalog</span><span class="dots"></span></div>
+      <div class="stage">
+        <div class="ep P12">
+          <div class="ep-head"><span class="ep-back">←</span><span class="ep-id"><b>h2</b><i>.sc-name</i></span><span class="ep-act">⌗</span><span class="ep-act">↺</span></div>
+          <div class="ep-body">
+            <p class="legend">Typography</p>
+            <div class="row"><i class="rdot"></i><span class="rlabel">text</span><span class="chip wide"><span>emil-design-eng</span></span></div>
+            <div class="trow"><i class="rdot"></i><k>size</k><span class="tval">17<span class="u">px</span></span></div>
+            <div class="trow"><i class="rdot"></i><k>weight</k><span class="tval">600</span></div>
+            <div class="trow"><i class="rdot"></i><k>leading</k><span class="tval">24<span class="u">px</span></span></div>
+            <div class="trow"><i class="rdot"></i><k>tracking</k><span class="tval">0<span class="u">px</span></span></div>
+            <div class="trow"><i class="rdot"></i><k>align</k><span class="seg" style="margin-left:auto"><b class="on">≡</b><b>≡</b><b>≡</b></span></div>
+            <div class="trow"><i class="rdot on"></i><k>colour</k><span class="swatch"></span><span class="hex">#bb9af7</span></div>
+            <div class="stub">
+              <p class="legend">Spacing</p>
+              <div class="row"><i class="rdot"></i><span class="rlabel">padding</span><span class="chip">16<span class="u">px</span></span></div>
+              <div class="row"><i class="rdot"></i><span class="rlabel">margin</span><span class="chip">0<span class="u">px</span></span></div>
+            </div>
+          </div>
+        </div>
+        <p class="stage-note">Same seven rows at <b>14px each</b> — the group drops
+          from 154px to 104. No idea to learn, no dialect to defend; the question
+          is only whether the smaller targets still <span class="h">scrub well</span>.</p>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">A third of the height back with zero conceptual change — every behaviour, test and doc stays true. The safest possible ship.</dd>
+      <dt>Costs</dt><dd>Smaller hit targets across the board, and 8px labels flirt with the legibility floor on low-DPI screens; it spends the density budget without buying a better structure.</dd>
+      <dt>Scales to</dt><dd>The whole panel at once — and pairs with any of 01–11 later, since it changes sizes rather than shapes.</dd>
+    </dl>
+  </section>
+
+</main>
+
+<footer class="wrap" style="padding: 2.5rem 0 4rem; color: var(--g-muted); font-size: var(--step-0);">
+  <p style="max-width: 70ch">Reading order for a decision: 12 is the do-nothing-clever baseline;
+    01, 04 and 07 are today's dialect densified; 08 borrows the settings page's; 05 and 10 manage
+    height by hiding; 02, 03, 06, 09 and 11 change what a control is. The strongest pairings:
+    <strong>07 for structure + 12's scale</strong>, or <strong>02 as an adaptive-mode variant</strong>
+    over an unchanged standard mode.</p>
+</footer>
+
+<script>
+// Theme dots on every viewport — repaint that prototype in place.
+const THEMES = ["terracotta-dark", "terracotta-light", "dracula", "monokai", "nord", "solarized-dark", "tokyo-night"];
+const SWATCHES = { "terracotta-dark":"#d97757", "terracotta-light":"#c2603f", dracula:"#bd93f9",
+  monokai:"#f92672", nord:"#88c0d0", "solarized-dark":"#cb4b16", "tokyo-night":"#bb9af7" };
+for (const vp of document.querySelectorAll(".viewport")) {
+  const dots = vp.querySelector(".dots");
+  for (const t of THEMES) {
+    const b = document.createElement("button");
+    b.className = "tdot";
+    b.style.background = SWATCHES[t];
+    b.title = t;
+    b.addEventListener("click", () => vp.setAttribute("data-ccp-theme", t));
+    dots.appendChild(b);
+  }
+}
+
+// 02 + 06 — the caption names what the pointer touches.
+for (const scope of document.querySelectorAll(".P2, .P6")) {
+  const cap = scope.querySelector("[data-caption]");
+  const idle = cap.textContent;
+  for (const el of scope.querySelectorAll("[data-cap]")) {
+    el.addEventListener("pointerenter", () => { cap.innerHTML = "<b>" + el.dataset.cap + "</b>"; });
+    el.addEventListener("pointerleave", () => { cap.textContent = idle; });
+  }
+}
+
+// 05 — the quiet tail.
+document.querySelector("[data-more]").addEventListener("click", (e) => {
+  const tail = document.querySelector("[data-tail]");
+  tail.classList.toggle("open");
+  e.currentTarget.textContent = tail.classList.contains("open") ? "− fewer" : "+ 4 more type";
+});
+
+// 09 — the popover.
+document.querySelector("[data-popbtn]").addEventListener("click", () => {
+  document.querySelector("[data-pop]").classList.toggle("open");
+});
+
+// 10 — the drawer tabs.
+for (const btn of document.querySelectorAll(".P10 [data-tab]")) {
+  btn.addEventListener("click", () => {
+    for (const b of document.querySelectorAll(".P10 [data-tab]")) b.classList.toggle("on", b === btn);
+    for (const pane of document.querySelectorAll(".P10 [data-pane]")) {
+      pane.classList.toggle("on", pane.dataset.pane === btn.dataset.tab);
+    }
+  });
+}
+
+// 11 — scrubbing size grows the specimen (the one live wire in the gallery).
+{
+  const box = document.querySelector(".P11 .canvasbox");
+  const live = box.querySelector(".live");
+  const sizeChip = box.querySelector(".ring .chip");
+  let size = 15;
+  sizeChip.addEventListener("pointerdown", (e) => {
+    const startX = e.clientX, start = size;
+    sizeChip.setPointerCapture(e.pointerId);
+    const move = (ev) => {
+      size = Math.max(9, Math.min(28, start + Math.round((ev.clientX - startX) / 4)));
+      live.style.fontSize = size + "px";
+      sizeChip.innerHTML = (size + 2) + '<span class="u">px</span>';
+    };
+    const up = () => {
+      sizeChip.removeEventListener("pointermove", move);
+      sizeChip.removeEventListener("pointerup", up);
+    };
+    sizeChip.addEventListener("pointermove", move);
+    sizeChip.addEventListener("pointerup", up);
+  });
+}
+</script>
+</body>
+</html>

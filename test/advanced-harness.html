@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Probe Advanced — harness</title>
+<!--
+  Runs the real content.js AND the real shader-agent.js against a fake page,
+  so the Advanced section can be exercised without the build-reload-reselect
+  cycle a packed extension needs.
+
+  A plain page has no isolated world, so the two scripts share this window and
+  the postMessage bridge between them works exactly as it does packed — the
+  only thing the harness fakes is chrome.scripting: the agent is loaded by a
+  <script> tag up front, which also means the context registry sees every
+  canvas from the start, the way the deep-capture setting would. The one path
+  this cannot exercise is background.js's injection itself.
+
+  Serve it over HTTP:
+
+      python3 -m http.server 8765     # then open /test/advanced-harness.html
+
+  Press "p" to toggle Probe Mode. Then, per specimen, click it (or its
+  wrapper), click the pencil, and look at the bottom of the panel:
+
+    01 wave        — "Advanced · 6 shader values". u_time sits in the driven
+                     cluster, ticking; scrub amplitude/speed live; u_color is
+                     a colour control; bands steps by 1; invert is a switch.
+                     Take over u_time and the wave freezes at that phase; its
+                     reset dot hands it back.
+    02 ember       — drew once and stopped: values shown, rows inert
+                     ("read-only" in the summary).
+    03 decoy       — a 2D canvas. No shader, no Advanced section (unless the
+                     CSS half of the same element has something to say).
+    04 nested      — the canvas is three wrappers down and pointer-events:
+                     none; selecting the outer card must still find it, and
+                     the section says which element it probed.
+    05 aurora      — no canvas at all: —wave-hue is animated (driven cluster;
+                     tuning it escalates to !important over the animation),
+                     —glow-color is a colour dial, —lift is an element-local
+                     property nothing readable consumes — offered anyway,
+                     that is the fallback working as designed.
+
+  Copy from the panel after tuning: 01's block carries "# shader edits:" lines
+  with page-driven → held-at phrasing; 05's carries ordinary "# edits:" lines,
+  because custom properties are style declarations like any other.
+-->
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../content.css">
+<script>
+  // Fresh URLs per load, so an edited stylesheet can never lie through the
+  // http.server cache — same arrangement as edit-harness.html.
+  for (const link of document.querySelectorAll('link[rel="stylesheet"]')) {
+    link.href = link.getAttribute("href").split("?")[0] + "?t=" + Date.now();
+  }
+</script>
+<style>
+  :root {
+    --ink: #1f1e1b;
+    --ink-dim: #57544c;
+    --paper: #faf9f5;
+    --card: #ffffff;
+    --hairline: #e5e0d4;
+    --terra: #a94f30;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 48px clamp(16px, 6vw, 96px) 120px;
+    background: var(--paper);
+    color: var(--ink);
+    font: 15px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .lede { color: var(--ink-dim); margin: 0 0 32px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 16px;
+  }
+  .card h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-dim); margin: 0 0 10px; }
+  .card p { font-size: 13px; color: var(--ink-dim); margin: 10px 0 0; }
+  canvas.fx { display: block; width: 100%; height: 160px; border-radius: 6px; }
+
+  /* 04 — the canvas is buried and unclickable; the wrapper is what you can
+     select. */
+  .nest-outer { position: relative; }
+  .nest-mid { border-radius: 6px; overflow: hidden; }
+  .nest-inner { position: relative; }
+  .nest-inner canvas { pointer-events: none; }
+  .nest-caption {
+    position: absolute; inset: auto 8px 8px 8px;
+    font-size: 12px; color: #fff; text-shadow: 0 1px 2px rgb(0 0 0 / 0.5);
+    pointer-events: none;
+  }
+
+  /* 05 — a "shader" with no canvas: the gradient recipe reads its numbers
+     from custom properties, one of which the page animates. */
+  @property --wave-hue {
+    syntax: "<number>";
+    inherits: false;
+    initial-value: 200;
+  }
+  .aurora {
+    --wave-hue: 200;
+    --glow-color: #7a9cc8;
+    height: 160px;
+    border-radius: 6px;
+    background: linear-gradient(
+      135deg,
+      hsl(calc(var(--wave-hue)) 70% 62%),
+      hsl(calc(var(--wave-hue) + 70) 75% 48%)
+    );
+    box-shadow: 0 6px 28px var(--glow-color);
+    animation: hue-drift 9s linear infinite alternate;
+  }
+  @keyframes hue-drift {
+    from { --wave-hue: 200; }
+    to { --wave-hue: 320; }
+  }
+
+  .note { margin-top: 40px; font-size: 13px; color: var(--ink-dim); }
+  kbd {
+    border: 1px solid var(--hairline); border-bottom-width: 2px;
+    border-radius: 4px; padding: 0 5px; font-size: 12px; background: var(--card);
+  }
+  #hud {
+    position: fixed; right: 12px; bottom: 12px;
+    font-size: 12px; color: var(--ink-dim);
+    background: var(--card); border: 1px solid var(--hairline);
+    border-radius: 6px; padding: 4px 10px;
+  }
+</style>
+</head>
+<body>
+
+<h1>Advanced-section specimens</h1>
+<p class="lede">Five mechanisms, one panel. <kbd>p</kbd> toggles Probe Mode; select, then the pencil.</p>
+
+<div class="grid">
+  <article class="card">
+    <h2>01 · wave — animated WebGL2</h2>
+    <canvas class="fx" id="wave" width="360" height="180"></canvas>
+    <p>Six uniforms, one page-driven. Freeze <em>time</em>, scrub <em>amplitude</em>, repaint <em>color</em>.</p>
+  </article>
+
+  <article class="card">
+    <h2>02 · ember — one-shot WebGL</h2>
+    <canvas class="fx" id="ember" width="360" height="180"></canvas>
+    <p>Drew a single frame at load and stopped. Detected, valued, not tunable.</p>
+  </article>
+
+  <article class="card">
+    <h2>03 · decoy — 2D canvas</h2>
+    <canvas class="fx" id="decoy" width="360" height="180"></canvas>
+    <p>Not a shader. The section must not pretend otherwise.</p>
+  </article>
+
+  <article class="card nest-outer">
+    <h2>04 · nested — canvas under wrappers</h2>
+    <div class="nest-mid">
+      <div class="nest-inner">
+        <canvas class="fx" id="nested" width="360" height="180"></canvas>
+        <span class="nest-caption">pointer-events: none — you can only select my wrappers</span>
+      </div>
+    </div>
+    <p>Select the card; the section names the canvas it actually probed.</p>
+  </article>
+
+  <article class="card">
+    <h2>05 · aurora — CSS custom properties</h2>
+    <div class="aurora" style="--lift: 6"></div>
+    <p>No canvas: an animated <code>--wave-hue</code>, a consumed <code>--glow-color</code>,
+       and a local <code>--lift</code> nothing readable uses.</p>
+  </article>
+</div>
+
+<p class="note">
+  <kbd>p</kbd> toggles Probe Mode. <kbd>Esc</kbd> steps back out one layer at a
+  time. Reload the extension mid-override on 01 to watch the dead-man switch
+  unfreeze the wave within ten seconds — here, simulate it by leaving Edit
+  Mode instead.
+</p>
+
+<div id="hud">probe <b id="hud-state">off</b> · press <b>p</b></div>
+
+<script>
+// ===== chrome.* stub =====
+// The calls content.js makes, plus INJECT_SHADER_AGENT: the agent is already
+// resident (script tag below), so injection succeeds by having nothing to do —
+// exactly the packed re-injection path.
+(function () {
+  const listeners = [];
+  const changeListeners = [];
+  const read = () => {
+    try { return JSON.parse(localStorage.getItem("ccp-harness-store") || "{}"); }
+    catch { return {}; }
+  };
+  const write = (obj) => localStorage.setItem("ccp-harness-store", JSON.stringify(obj));
+
+  window.chrome = {
+    runtime: {
+      onMessage: { addListener: (fn) => listeners.push(fn) },
+      sendMessage: (msg) => {
+        if (msg && msg.type === "DEACTIVATE") setState(false);
+        if (msg && msg.type === "INJECT_SHADER_AGENT") return Promise.resolve({ ok: true });
+        if (msg && msg.type === "FETCH_STYLESHEETS") {
+          return Promise.all((msg.urls || []).map(async (url) => {
+            try {
+              const res = await fetch(url);
+              if (!res.ok) return { url, error: "HTTP " + res.status };
+              return { url, text: await res.text() };
+            } catch (err) {
+              return { url, error: String((err && err.message) || err) };
+            }
+          })).then((sheets) => ({ sheets }));
+        }
+        return Promise.resolve(undefined);
+      },
+      openOptionsPage: () => window.open("../settings/index.html", "_blank"),
+    },
+    storage: {
+      local: {
+        get: (key, cb) => {
+          const store = read();
+          const keys = Array.isArray(key) ? key : [key];
+          const out = {};
+          for (const k of keys) if (k in store) out[k] = store[k];
+          cb(out);
+        },
+        set: (obj, cb) => {
+          const store = read();
+          const changes = {};
+          for (const [k, v] of Object.entries(obj)) {
+            changes[k] = { oldValue: store[k], newValue: v };
+            store[k] = v;
+          }
+          write(store);
+          for (const fn of changeListeners) fn(changes, "local");
+          if (cb) cb();
+        },
+      },
+      onChanged: { addListener: (fn) => changeListeners.push(fn) },
+    },
+  };
+
+  let active = false;
+  const hud = () => {
+    document.getElementById("hud-state").textContent = active ? "on" : "off";
+  };
+  function setState(next) {
+    active = next;
+    for (const fn of listeners) fn({ type: "TOGGLE_PROBE", active });
+    hud();
+  }
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+      const t = e.target;
+      if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+      setState(!active);
+    }
+  }, true);
+
+  window.__ccpHarness = { setState, isActive: () => active };
+})();
+</script>
+
+<!-- The real agent, resident before any context exists — the deep-capture
+     arrangement. Everything below it goes through wrapped getContext, so the
+     one-shot ember is recoverable from the registry as well as from
+     CURRENT_PROGRAM. Written with a fresh URL for the same cache honesty the
+     stylesheets get — a stale agent debugging as if it were the current one
+     is exactly the lie a dev instrument must not tell. -->
+<script>
+  document.write(`<script src="../shader-agent.js?t=${Date.now()}"><\/script>`);
+</script>
+
+<script>
+// ===== The specimens' own WebGL =====
+(function () {
+  function program(gl, frag) {
+    const vsSrc = gl instanceof (window.WebGL2RenderingContext || Object)
+      ? "#version 300 es\nin vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }"
+      : "attribute vec2 p; void main(){ gl_Position = vec4(p, 0.0, 1.0); }";
+    const make = (kind, src) => {
+      const s = gl.createShader(kind);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(s));
+      }
+      return s;
+    };
+    const prog = gl.createProgram();
+    gl.attachShader(prog, make(gl.VERTEX_SHADER, vsSrc));
+    gl.attachShader(prog, make(gl.FRAGMENT_SHADER, frag));
+    gl.linkProgram(prog);
+    if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) {
+      throw new Error(gl.getProgramInfoLog(prog));
+    }
+    const buf = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    gl.useProgram(prog);
+    const loc = gl.getAttribLocation(prog, "p");
+    gl.enableVertexAttribArray(loc);
+    gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    return prog;
+  }
+
+  const WAVE_FRAG = `#version 300 es
+precision mediump float;
+uniform float u_time;
+uniform float u_amplitude;
+uniform float u_speed;
+uniform vec3 u_color;
+uniform int u_bands;
+uniform bool u_invert;
+out vec4 o;
+void main() {
+  vec2 uv = gl_FragCoord.xy / vec2(360.0, 180.0);
+  float w = sin(uv.x * float(u_bands) * 6.2831 + u_time * u_speed) * u_amplitude;
+  float b = smoothstep(0.03, 0.0, abs(uv.y - 0.5 - w * 0.35) - 0.02);
+  vec3 c = u_color * (0.25 + 0.75 * b) + vec3(uv.y * 0.12);
+  if (u_invert) c = vec3(1.0) - c;
+  o = vec4(c, 1.0);
+}`;
+
+  // 01 + 04 — the same animated shader, two instances. Every uniform is
+  // uploaded every frame: the constant ones must still classify as
+  // parameters, because classification watches values, not call counts.
+  function animate(canvas, color) {
+    const gl = canvas.getContext("webgl2");
+    if (!gl) return;
+    const prog = program(gl, WAVE_FRAG);
+    const at = (n) => gl.getUniformLocation(prog, n);
+    const start = performance.now();
+    (function frame() {
+      gl.uniform1f(at("u_time"), (performance.now() - start) / 1000);
+      gl.uniform1f(at("u_amplitude"), 0.2);
+      gl.uniform1f(at("u_speed"), 2.0);
+      gl.uniform3fv(at("u_color"), color);
+      gl.uniform1i(at("u_bands"), 3);
+      gl.uniform1i(at("u_invert"), 0);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      requestAnimationFrame(frame);
+    })();
+  }
+  animate(document.getElementById("wave"), [0.86, 0.47, 0.34]);
+  animate(document.getElementById("nested"), [0.35, 0.55, 0.86]);
+
+  // 02 — one frame at load, program left bound, no loop. Lazy mode recovers
+  // it through CURRENT_PROGRAM; with the agent resident from the start (as
+  // here, and as with deep capture) the registry knows it too.
+  (function ember() {
+    const canvas = document.getElementById("ember");
+    const gl = canvas.getContext("webgl");
+    if (!gl) return;
+    const prog = program(gl, `precision mediump float;
+uniform float u_glow;
+uniform vec3 u_tint;
+void main() {
+  vec2 uv = gl_FragCoord.xy / vec2(360.0, 180.0);
+  float d = distance(uv, vec2(0.5, 0.45));
+  float g = pow(max(0.0, 1.0 - d * 2.0), 2.0) * u_glow;
+  gl_FragColor = vec4(u_tint * g + vec3(0.06, 0.05, 0.05), 1.0);
+}`);
+    const at = (n) => gl.getUniformLocation(prog, n);
+    gl.uniform1f(at("u_glow"), 1.4);
+    gl.uniform3fv(at("u_tint"), [0.95, 0.45, 0.2]);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  })();
+
+  // 03 — honestly two-dimensional.
+  (function decoy() {
+    const ctx = document.getElementById("decoy").getContext("2d");
+    ctx.fillStyle = "#efe9dc";
+    ctx.fillRect(0, 0, 360, 180);
+    ctx.strokeStyle = "#a94f30";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    for (let x = 0; x <= 360; x += 4) {
+      const y = 90 + Math.sin(x / 28) * 32;
+      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+  })();
+})();
+</script>
+
+<script>
+  document.write(`<script src="../content.js?t=${Date.now()}"><\/script>`);
+</script>
+</body>
+</html>

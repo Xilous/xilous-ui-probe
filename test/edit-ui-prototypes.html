@@ -1,0 +1,1591 @@
+<meta charset="utf-8">
+<title>Claude Code Probe — Edit panel prototypes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<style>
+/* ============================================================
+   GALLERY SHELL
+   Same quiet frame as the two earlier galleries: the twelve
+   prototypes carry every bit of colour on this page.
+   ============================================================ */
+:root {
+  --g-ground:  #f7f6f2;
+  --g-raised:  #ffffff;
+  --g-ink:     #17160f;
+  --g-dim:     #56534a;
+  --g-muted:   #8d8a80;
+  --g-rule:    #e0ddd3;
+  --g-rule-hi: #cbc7ba;
+  --g-accent:  #b8542f;
+
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --step-0: 0.8125rem;
+  --step-1: 0.9375rem;
+  --step-2: 1.25rem;
+  --step-3: 1.75rem;
+  --step-4: 2.5rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --g-ground:  #131210;
+    --g-raised:  #1b1a17;
+    --g-ink:     #ece9e1;
+    --g-dim:     #a5a196;
+    --g-muted:   #7d7a71;
+    --g-rule:    #2a2824;
+    --g-rule-hi: #3d3a34;
+    --g-accent:  #e08b68;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--g-ground);
+  color: var(--g-ink);
+  font-family: var(--sans);
+  font-size: var(--step-1);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+.wrap { max-width: 1180px; margin: 0 auto; padding: 0 clamp(1rem, 4vw, 3rem); }
+
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--g-ground) 88%, transparent);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--g-rule);
+}
+.topbar-in { display: flex; align-items: center; gap: 1.5rem; padding: 0.75rem 0; flex-wrap: wrap; }
+.topbar-title {
+  font-family: var(--mono); font-size: var(--step-0);
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--g-dim); margin: 0; white-space: nowrap;
+}
+.jump { display: flex; gap: 0.25rem; margin-left: auto; flex-wrap: wrap; }
+.jump a {
+  font-family: var(--mono); font-size: 0.75rem;
+  text-decoration: none; color: var(--g-dim);
+  border: 1px solid var(--g-rule); border-radius: 6px;
+  width: 2rem; height: 2rem; display: grid; place-items: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.jump a:hover, .jump a:focus-visible {
+  background: var(--g-accent); border-color: var(--g-accent); color: var(--g-ground);
+  outline: none;
+}
+
+.masthead { padding: clamp(2.5rem, 7vw, 5rem) 0 2rem; border-bottom: 1px solid var(--g-rule); }
+.eyebrow {
+  font-family: var(--mono); font-size: 0.75rem; text-transform: uppercase;
+  letter-spacing: 0.14em; color: var(--g-accent); margin: 0 0 1rem;
+}
+h1 {
+  font-family: var(--mono); font-weight: 500;
+  font-size: clamp(1.75rem, 4.5vw, var(--step-4));
+  line-height: 1.1; letter-spacing: -0.02em;
+  margin: 0 0 1.25rem; text-wrap: balance;
+}
+.lede { font-size: var(--step-2); line-height: 1.5; color: var(--g-dim); max-width: 62ch; margin: 0 0 2rem; }
+.howto {
+  display: grid; gap: 0.75rem 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  font-size: var(--step-0); color: var(--g-dim);
+  border-top: 1px solid var(--g-rule); padding-top: 1.5rem;
+}
+.howto p { margin: 0; }
+.howto strong { color: var(--g-ink); font-weight: 600; }
+
+.proto { padding: clamp(2.5rem, 6vw, 4.5rem) 0; border-bottom: 1px solid var(--g-rule); scroll-margin-top: 4.5rem; }
+.proto-head { display: grid; grid-template-columns: auto 1fr; gap: 0 1.25rem; align-items: baseline; margin-bottom: 1.75rem; }
+.proto-num {
+  font-family: var(--mono); font-size: var(--step-3); font-weight: 500;
+  color: var(--g-rule-hi); line-height: 1; font-variant-numeric: tabular-nums;
+}
+.proto-head h2 { font-family: var(--mono); font-weight: 500; font-size: var(--step-2); margin: 0; letter-spacing: -0.01em; line-height: 1.25; }
+.thesis { grid-column: 2; margin: 0.5rem 0 0; color: var(--g-dim); max-width: 68ch; }
+
+.viewport {
+  position: relative;
+  background: var(--page);
+  border: 1px solid var(--g-rule-hi);
+  border-radius: 10px;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.viewport-bar {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: color-mix(in srgb, var(--surface) 55%, var(--page));
+  border-bottom: 1px solid var(--sep);
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); opacity: 0.6; }
+.viewport-url { font-family: var(--mono); font-size: 10px; color: var(--muted); margin-left: 0.5rem; letter-spacing: 0.02em; }
+.dots { display: flex; gap: 4px; margin-left: auto; }
+.tdot {
+  width: 13px; height: 13px; border-radius: 4px; padding: 0; cursor: pointer;
+  border: 1px solid rgba(127,127,127,.4);
+}
+.tdot:hover { transform: scale(1.15); }
+
+.tradeoff { display: grid; grid-template-columns: max-content 1fr; gap: 0.35rem 1rem; margin: 1.5rem 0 0; font-size: var(--step-0); }
+.tradeoff dt {
+  font-family: var(--mono); font-size: 0.6875rem; text-transform: uppercase;
+  letter-spacing: 0.1em; color: var(--g-muted); padding-top: 0.2em;
+}
+.tradeoff dd { margin: 0; color: var(--g-dim); }
+.tradeoff .win { color: var(--g-ink); }
+
+/* ============================================================
+   THEME TOKENS — the real seven, page-side derivations included
+   ============================================================ */
+[data-ccp-theme="terracotta-dark"] {
+  --surface:#141413; --text:#faf9f5; --dim:#c8c5bc; --muted:#8a8780; --faint:#6a6a64;
+  --sep:#3a3a35; --accent:#d97757; --accent-dark:#b06848; --on-accent:#1a0d07;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(20,20,19,.4);
+  --shadow-bar: 0 4px 16px rgba(20,20,19,.6);
+  --page:#1e1e1c; --page-ink:#c8c5bc; --page-rule:#2e2e2a;
+}
+[data-ccp-theme="terracotta-light"] {
+  --surface:#faf9f5; --text:#141413; --dim:#3a3a35; --muted:#6a6a64; --faint:#8a8780;
+  --sep:#ddd9cf; --accent:#c2603f; --accent-dark:#9c4a2e; --on-accent:#fff8f4;
+  --shadow-card: 0 8px 24px -10px rgba(60,45,35,.28), 0 1px 3px rgba(60,45,35,.14);
+  --shadow-bar: 0 4px 14px rgba(60,45,35,.18);
+  --page:#ffffff; --page-ink:#3a3a35; --page-rule:#eae7de;
+}
+[data-ccp-theme="dracula"] {
+  --surface:#282a36; --text:#f8f8f2; --dim:#cfd0e0; --muted:#8b93bd; --faint:#6272a4;
+  --sep:#44475a; --accent:#bd93f9; --accent-dark:#9a6ee0; --on-accent:#1a1626;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,30,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,30,.65);
+  --page:#21222c; --page-ink:#cfd0e0; --page-rule:#343746;
+}
+[data-ccp-theme="monokai"] {
+  --surface:#272822; --text:#f8f8f2; --dim:#d9d8cd; --muted:#9d9a86; --faint:#75715e;
+  --sep:#3e3d32; --accent:#f92672; --accent-dark:#cc1f5d; --on-accent:#2a0512;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(20,20,15,.45);
+  --shadow-bar: 0 4px 16px rgba(20,20,15,.65);
+  --page:#1e1f1a; --page-ink:#d9d8cd; --page-rule:#32332b;
+}
+[data-ccp-theme="nord"] {
+  --surface:#2e3440; --text:#eceff4; --dim:#d8dee9; --muted:#9aa5bb; --faint:#7b88a1;
+  --sep:#3b4252; --accent:#88c0d0; --accent-dark:#5e81ac; --on-accent:#16202b;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.5), 0 2px 6px rgba(20,25,35,.4);
+  --shadow-bar: 0 4px 16px rgba(20,25,35,.6);
+  --page:#272c36; --page-ink:#d8dee9; --page-rule:#343b48;
+}
+[data-ccp-theme="solarized-dark"] {
+  --surface:#002b36; --text:#eee8d5; --dim:#93a1a1; --muted:#7d9095; --faint:#586e75;
+  --sep:#073642; --accent:#cb4b16; --accent-dark:#a53c11; --on-accent:#1a0700;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.55), 0 2px 6px rgba(0,20,25,.45);
+  --shadow-bar: 0 4px 16px rgba(0,20,25,.65);
+  --page:#01212b; --page-ink:#93a1a1; --page-rule:#062b35;
+}
+[data-ccp-theme="tokyo-night"] {
+  --surface:#1a1b26; --text:#c0caf5; --dim:#a9b1d6; --muted:#7b83a8; --faint:#565f89;
+  --sep:#292e42; --accent:#bb9af7; --accent-dark:#9a78d8; --on-accent:#16111f;
+  --shadow-card: 0 8px 24px -8px rgba(0,0,0,.6), 0 2px 6px rgba(15,15,25,.45);
+  --shadow-bar: 0 4px 16px rgba(15,15,25,.65);
+  --page:#16161e; --page-ink:#a9b1d6; --page-rule:#232430;
+}
+
+/* ============================================================
+   THE VIGNETTE — a fake page with a real element being edited.
+   The selected card's styles are written inline by paint(),
+   exactly the way Edit Mode writes them.
+   ============================================================ */
+.vp { position: relative; min-height: 420px; padding: 22px 24px; font-family: var(--sans); }
+.vp h3 { font: 600 15px/1.3 var(--sans); color: var(--page-ink); margin: 0 0 4px; }
+.vp .pg-sub { font: 11px/1.5 var(--sans); color: color-mix(in srgb, var(--page-ink) 65%, transparent); margin: 0 0 16px; }
+.cards { display: flex; gap: 18px; align-items: flex-start; }
+.skill-card {
+  display: flex; flex-direction: column;
+  font-family: var(--sans); width: 250px;
+  /* everything else arrives inline from paint() */
+}
+.sc-name { font-weight: inherit; font-size: 1em; }
+.sc-desc { font-size: 0.86em; opacity: 0.75; }
+.sc-btn {
+  font-size: 0.78em; font-weight: 600; letter-spacing: 0.04em;
+  padding: 4px 10px; border-radius: 6px;
+  background: rgb(from var(--accent) r g b / 0.14); color: var(--accent);
+}
+.skill-card.ghost {
+  background: #fbfaf7; color: #1f1e1b; border: 1px solid #e5e0d4;
+  border-radius: 12px; padding: 16px; gap: 8px; font-size: 14px;
+  font-weight: 500; line-height: 1.5;
+  box-shadow: 0 2px 8px rgba(0,0,0,.08);
+}
+/* selection ring: selection state glows (the beam's stand-in), edit state is
+   the flat solid ring — .ccp-editing keeps the box, drops the beam */
+.vp [data-card] { outline: 2px solid var(--accent); outline-offset: 2px; }
+.vp[data-state="select"] [data-card] { filter: drop-shadow(0 0 7px rgb(from var(--accent) r g b / 0.55)); }
+
+/* the mock toolbar shown in selection state; the pencil is the way in */
+.mini-bar {
+  position: absolute; left: 24px; top: 262px;
+  display: flex; align-items: stretch; gap: 6px;
+  font-family: var(--mono); z-index: 5;
+}
+.vp[data-state="edit"] .mini-bar { display: none; }
+.mb-bar {
+  display: flex; gap: 3px; padding: 3px;
+  background: var(--surface); border: 1px solid rgb(from var(--accent) r g b / 0.5);
+  border-radius: 9px; box-shadow: var(--shadow-bar);
+}
+.mb-btn, .mb-pencil {
+  font: 500 9.5px var(--mono); letter-spacing: 0.06em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 5px; padding: 5px 9px;
+  background: transparent; border: 1px solid transparent; border-radius: 6px;
+  color: var(--text); cursor: pointer;
+}
+.mb-btn:hover, .mb-pencil:hover { border-color: rgb(from var(--accent) r g b / 0.5); }
+.mb-pencil { color: var(--accent); }
+.mb-pencil svg { display: block; }
+
+/* ============================================================
+   PANEL FURNITURE — shared by every architecture
+   ============================================================ */
+.ep {
+  position: absolute; z-index: 10;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--sep); border-radius: 10px;
+  box-shadow: var(--shadow-card);
+  font-family: var(--mono); font-size: 10px;
+  user-select: none;
+}
+.vp[data-state="select"] .ep { display: none; }
+.ep-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 9px; border-bottom: 1px solid var(--sep);
+  cursor: grab; touch-action: none;
+}
+.ep-head:active { cursor: grabbing; }
+.ep-back {
+  font: 600 12px/1 var(--mono); width: 18px; height: 18px; flex: none;
+  display: grid; place-items: center; padding: 0;
+  background: transparent; border: 1px solid var(--sep); border-radius: 5px;
+  color: var(--dim); cursor: pointer;
+}
+.ep-back:hover { border-color: var(--accent); color: var(--accent); }
+.ep-id { font: 500 10px var(--mono); color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ep-id b { color: var(--accent); font-weight: 500; }
+.ep-sp { flex: 1; }
+.ep-act {
+  font: 500 9px var(--mono); letter-spacing: 0.05em; text-transform: uppercase;
+  display: flex; align-items: center; gap: 4px; padding: 3px 7px; flex: none;
+  background: transparent; border: 1px solid var(--sep); border-radius: 6px;
+  color: var(--dim); cursor: pointer;
+}
+.ep-act:hover { border-color: var(--accent); color: var(--accent); }
+.ep-act i {
+  font-style: normal; font-size: 8px; min-width: 12px; text-align: center;
+  background: var(--accent); color: var(--on-accent); border-radius: 5px; padding: 1px 2px;
+}
+.ep-act i:empty { display: none; }
+.ep-body { padding: 9px 11px 11px; }
+
+/* group legend */
+.g-leg {
+  font: 500 8.5px var(--mono); letter-spacing: 0.13em; text-transform: uppercase;
+  color: var(--muted); margin: 0 0 6px;
+}
+.g-sec + .g-sec { margin-top: 11px; padding-top: 10px; border-top: 1px solid var(--sep); }
+
+/* a control row: dirty dot · label · value chip · token chip */
+.fld { display: flex; align-items: center; gap: 6px; padding: 2.5px 0; }
+.f-lab { font: 10px var(--mono); color: var(--muted); flex: 1; min-width: 0; }
+.dd {
+  width: 9px; height: 9px; flex: none; border-radius: 50%; padding: 0;
+  border: 0; background: transparent; position: relative; cursor: default;
+}
+.dd::after {
+  content: ""; position: absolute; inset: 2.5px; border-radius: 50%;
+  background: var(--sep); opacity: 0.5; transition: all 0.15s;
+}
+.dd.on { cursor: pointer; }
+.dd.on::after { inset: 1px; background: var(--accent); opacity: 1; }
+.dd.on:hover::after { background: var(--text); }
+.val {
+  display: inline-flex; align-items: baseline; gap: 2px; flex: none;
+  font: 500 10px var(--mono); font-variant-numeric: tabular-nums;
+  color: var(--text); background: color-mix(in srgb, var(--surface) 60%, var(--sep));
+  border: 1px solid var(--sep); border-radius: 5px; padding: 2.5px 6px;
+  cursor: ew-resize; min-width: 40px; justify-content: center;
+}
+.val:hover, .val:focus-visible { border-color: var(--accent); outline: none; }
+.val i { font-style: normal; color: var(--faint); font-size: 8.5px; }
+.val.auto b { color: var(--faint); }
+.tok {
+  display: inline-flex; align-items: center; flex: none;
+  border: 1px solid rgb(from var(--accent) r g b / 0.4); border-radius: 5px;
+  overflow: hidden;
+}
+.tok button {
+  font: 600 9px/1 var(--mono); padding: 3px 4px; border: 0;
+  background: transparent; color: var(--muted); cursor: pointer;
+}
+.tok button:hover { color: var(--accent); background: rgb(from var(--accent) r g b / 0.12); }
+.tok b {
+  font: 500 9px var(--mono); color: var(--accent); min-width: 44px; text-align: center;
+  padding: 0 2px;
+}
+.tok.off { border-color: var(--sep); border-style: dashed; }
+.tok.off b { color: var(--faint); }
+
+/* color control */
+.swz {
+  width: 20px; height: 16px; flex: none; padding: 2px; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--sep); border-radius: 5px;
+}
+.swz:hover { border-color: var(--accent); }
+.swz i { display: block; width: 100%; height: 100%; border-radius: 2px; border: 1px solid rgba(127,127,127,.25); }
+.hex { font: 10px var(--mono); color: var(--dim); font-variant-numeric: tabular-nums; flex: none; }
+.pname { font: 9px var(--mono); color: var(--accent); flex: none; }
+
+/* segmented (align) */
+.segz { display: inline-flex; border: 1px solid var(--sep); border-radius: 5px; overflow: hidden; flex: none; }
+.segz button {
+  padding: 3px 6px; border: 0; background: transparent; color: var(--muted);
+  cursor: pointer; display: grid; place-items: center;
+}
+.segz button + button { border-left: 1px solid var(--sep); }
+.segz button[aria-checked="true"] { background: var(--accent); color: var(--on-accent); }
+.segz svg { display: block; }
+
+/* auto toggle (width/height) */
+.at {
+  font: 500 8px var(--mono); letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 3px 5px; flex: none; border: 1px solid var(--sep); border-radius: 5px;
+  background: transparent; color: var(--muted); cursor: pointer;
+}
+.at[aria-checked="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+
+/* panes (tabs, popovers, blooms share the mechanism) */
+.pane { display: none; }
+.pane.on { display: block; }
+
+/* ============================================================
+   PER-PROTOTYPE ARCHITECTURES
+   ============================================================ */
+/* 01 — inspector column */
+.P1-ep { right: 20px; top: 16px; width: 238px; }
+.P1-ep .ep-body { max-height: 336px; overflow-y: auto; }
+
+/* 02 — icon tab deck */
+.P2-ep { right: 20px; top: 16px; width: 238px; }
+.tabbar { display: flex; gap: 3px; padding: 7px 9px 0; }
+.tabbar button {
+  flex: 1; font: 600 8.5px var(--mono); letter-spacing: 0.08em;
+  padding: 5px 0; border: 1px solid var(--sep); border-radius: 6px;
+  background: transparent; color: var(--muted); cursor: pointer; position: relative;
+}
+.tabbar button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.tabbar button .gd { position: absolute; top: -3px; right: -3px; }
+.gd {
+  width: 7px; height: 7px; border-radius: 50%; display: none;
+  background: var(--accent); border: 1px solid var(--surface);
+}
+.gd.on { display: block; }
+
+/* 03 — accordion sheet */
+.P3-ep { right: 20px; top: 16px; width: 244px; }
+.P3-ep .ep-body { padding: 5px 7px 7px; max-height: 348px; overflow-y: auto; }
+.acc + .acc { border-top: 1px solid var(--sep); }
+.acc-h {
+  width: 100%; display: flex; align-items: center; gap: 6px;
+  font: 500 9px var(--mono); letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 7px 4px; background: transparent; border: 0; color: var(--dim); cursor: pointer;
+}
+.acc-h:hover { color: var(--text); }
+.acc-h .gd { position: static; flex: none; }
+.acc-h .acc-c { margin-left: auto; color: var(--faint); transition: rotate 0.15s; rotate: 90deg; }
+.acc.open .acc-c { rotate: -90deg; }
+.acc-b { display: none; padding: 0 4px 9px; }
+.acc.open .acc-b { display: block; }
+
+/* 04 — spec ledger */
+.P4-ep { right: 20px; top: 16px; width: 262px; }
+.P4-ep .ep-body { max-height: 344px; overflow-y: auto; }
+.g-cap {
+  font: 500 8px var(--mono); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--faint); margin: 8px 0 2px;
+}
+[data-g] > .g-cap:first-child { margin-top: 0; }
+.P4-ep .f-lab { overflow: hidden; white-space: nowrap; }
+.P4-ep .f-lab::after { content: " ·······················"; color: var(--sep); letter-spacing: 2px; }
+
+/* 05 — toolbar that blooms */
+.P5-ep { left: 24px; top: 246px; min-width: 442px; }
+.striprow { display: flex; gap: 3px; padding: 6px 9px; }
+.striprow button {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  font: 600 8.5px var(--mono); letter-spacing: 0.08em;
+  padding: 5px 9px; border: 1px solid var(--sep); border-radius: 7px;
+  background: transparent; color: var(--muted); cursor: pointer; position: relative;
+}
+.striprow button span { font: 8px var(--mono); letter-spacing: 0.04em; text-transform: lowercase; color: var(--faint); }
+.striprow button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); }
+.striprow button[aria-selected="true"], .striprow button[aria-selected="true"] span { color: var(--on-accent); }
+.striprow button .gd { position: absolute; top: -3px; right: -3px; }
+.bloom { border-top: 1px solid var(--sep); padding: 9px 11px; }
+.bloom .pane.on { display: grid; grid-template-columns: 1fr 1fr; gap: 1px 18px; }
+
+/* 06 — console deck */
+.P6-ep { left: 18px; right: 18px; bottom: 14px; }
+.deck { display: grid; grid-template-columns: repeat(6, 1fr); }
+.dcol { padding: 8px 10px; min-width: 0; }
+.dcol + .dcol { border-left: 1px solid var(--sep); }
+.dcol .fld { flex-wrap: wrap; gap: 4px; }
+.dcol .f-lab { flex-basis: 100%; }
+.dcol .tok b { min-width: 34px; }
+
+/* 07 — chips and popovers */
+.P7-ep { left: 24px; top: 250px; width: 356px; }
+.chiprow { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px 9px; }
+.chip {
+  display: flex; align-items: center; gap: 5px;
+  font: 500 9px var(--mono); padding: 4px 7px;
+  border: 1px solid var(--sep); border-radius: 6px;
+  background: transparent; color: var(--muted); cursor: pointer; position: relative;
+}
+.chip b { font-weight: 500; color: var(--text); font-variant-numeric: tabular-nums; }
+.ch-lab { color: var(--faint); text-transform: lowercase; }
+.chip[aria-selected="true"] { border-color: var(--accent); color: var(--accent); }
+.chip .gd { position: absolute; top: -3px; right: -3px; }
+.popwrap .pane { border-top: 1px solid var(--sep); padding: 9px 11px; }
+
+/* 08 — style as a sentence */
+.P8-ep { right: 20px; top: 16px; width: 306px; }
+.prose { font: 10.5px/2.3 var(--mono); color: var(--dim); padding: 10px 12px; }
+.prose .val, .prose .tok, .prose .swz, .prose .segz { vertical-align: middle; margin: 0 1px; }
+.prose .val { min-width: 0; }
+.prose .dd { vertical-align: middle; }
+
+/* 09 — essentials first */
+.P9-ep { right: 20px; top: 16px; width: 238px; }
+.morebar { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--sep); }
+.more {
+  display: flex; align-items: center; gap: 4px;
+  font: 500 8.5px var(--mono); letter-spacing: 0.05em; text-transform: lowercase;
+  padding: 3px 7px; border: 1px solid var(--sep); border-radius: 10px;
+  background: transparent; color: var(--muted); cursor: pointer;
+}
+.more:hover { color: var(--text); border-color: var(--accent); }
+.more[aria-expanded="true"] { background: color-mix(in srgb, var(--surface) 55%, var(--sep)); color: var(--text); }
+.more .gd { position: static; }
+.more-b { display: none; margin-top: 7px; padding-top: 5px; border-top: 1px dashed var(--sep); }
+.more-b.on { display: block; }
+
+/* 10 — token ladders */
+.P10-ep { right: 20px; top: 16px; width: 380px; }
+.lad-grid { display: grid; grid-template-columns: 1fr 158px; gap: 12px; }
+.lad-right { border-left: 1px solid var(--sep); padding-left: 12px; }
+.lad-left .ep-scrolla { max-height: 320px; overflow-y: auto; }
+.ladder { margin-bottom: 10px; }
+.lad-cap { font: 500 8px var(--mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--faint); margin: 0 0 4px; }
+.rungs { display: flex; flex-direction: column; gap: 2px; }
+.rung {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  font: 9px var(--mono); padding: 2px 6px; border-radius: 4px;
+  border: 1px solid transparent; background: transparent; color: var(--muted);
+  cursor: pointer; width: 100%; text-align: left;
+}
+.rung i { font-style: normal; color: var(--faint); font-variant-numeric: tabular-nums; }
+.rung:hover { border-color: var(--sep); }
+.rung.on { border-color: var(--accent); color: var(--accent); background: rgb(from var(--accent) r g b / 0.1); }
+.rung.on i { color: var(--accent); }
+.palrail { display: flex; gap: 4px; flex-wrap: wrap; }
+.palrail .swz.on { border-color: var(--accent); outline: 1px solid var(--accent); }
+
+/* 11 — fader bank */
+.P11-ep { right: 20px; top: 16px; width: 312px; }
+.frow { display: flex; align-items: center; gap: 7px; padding: 3px 0; }
+.frow .f-lab { flex: none; width: 52px; }
+.rail {
+  flex: 1; height: 14px; position: relative; cursor: ew-resize;
+  touch-action: none;
+}
+.rail::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 6px; height: 2px;
+  background: var(--sep); border-radius: 1px;
+}
+.rail .detent {
+  position: absolute; top: 4px; width: 1.5px; height: 6px;
+  background: var(--faint); translate: -50% 0;
+}
+.rail .thumb {
+  position: absolute; top: 2px; width: 9px; height: 10px;
+  background: var(--accent); border-radius: 3px; translate: -50% 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,.4);
+}
+.fval {
+  font: 500 9px var(--mono); font-variant-numeric: tabular-nums;
+  color: var(--text); flex: none; width: 44px; text-align: right;
+}
+.fval i { font-style: normal; color: var(--faint); font-size: 8px; }
+
+/* 12 — text and box */
+.P12-ep { right: 20px; top: 16px; width: 262px; }
+.tabbar2 { display: flex; gap: 3px; padding: 7px 9px 0; }
+.tabbar2 button {
+  flex: 1; font: 500 9.5px var(--mono); letter-spacing: 0.1em; text-transform: uppercase;
+  padding: 6px 0; border: 1px solid var(--sep); border-radius: 6px;
+  background: transparent; color: var(--muted); cursor: pointer; position: relative;
+}
+.tabbar2 button[aria-selected="true"] { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.tabbar2 button .gd { position: absolute; top: -3px; right: -3px; }
+.boxd { padding: 8px; border: 1px dashed var(--sep); border-radius: 8px; text-align: center; }
+.boxd .bd-cap { font: 8px var(--mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--faint); display: block; margin-bottom: 3px; }
+.bd-b { border: 1.5px solid var(--accent); border-radius: 8px; padding: 7px; position: relative; margin-top: 3px; }
+.bd-r { position: absolute; top: -9px; right: -6px; }
+.bd-p { border: 1px dashed rgb(from var(--accent) r g b / 0.5); border-radius: 5px; padding: 7px; margin-top: 3px; }
+.bd-c { display: flex; align-items: center; justify-content: center; gap: 5px; padding: 8px 0; font: 9px var(--mono); color: var(--faint); }
+.boxd .val { min-width: 34px; }
+.bd-row { display: flex; align-items: center; justify-content: center; gap: 4px; margin: 2px 0; }
+.bd-row .bd-cap { margin-bottom: 0; }
+.boxd-rows { margin-top: 9px; }
+
+/* narrow container fallback: panels rejoin the flow */
+@container (max-width: 660px) {
+  .vp { min-height: 0; }
+  .vp .ep { position: static; margin: 16px 0 0; width: auto; max-width: 400px; }
+  .cards { flex-wrap: wrap; }
+  .deck { grid-template-columns: repeat(2, 1fr); }
+  .dcol { border-left: 0 !important; }
+  .P5-ep { min-width: 0; }
+  .lad-grid { grid-template-columns: 1fr; }
+  .lad-right { border-left: 0; padding-left: 0; }
+}
+</style>
+
+<header class="topbar">
+  <div class="wrap topbar-in">
+    <p class="topbar-title">Probe · Edit panel · 12 prototypes</p>
+    <nav class="jump" aria-label="Jump to prototype">
+      <a href="#p1">1</a><a href="#p2">2</a><a href="#p3">3</a><a href="#p4">4</a>
+      <a href="#p5">5</a><a href="#p6">6</a><a href="#p7">7</a><a href="#p8">8</a>
+      <a href="#p9">9</a><a href="#p10">10</a><a href="#p11">11</a><a href="#p12">12</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="masthead">
+    <p class="eyebrow">Phase 0 · pick one before implementation</p>
+    <h1>Twelve architectures for the Edit panel</h1>
+    <p class="lede">
+      Same feature in every one — six groups (type, spacing, size, surface, border,
+      shadow), token stepper beside raw value, dirty dots, one Copy that emits the
+      delta block, a draggable header with the way back. What differs is the shape
+      of the surface: how twenty controls organize into a floating panel, and what
+      that shape costs.
+    </p>
+    <div class="howto">
+      <p><strong>These are live.</strong> Drag any value sideways to scrub it (or
+        focus it and arrow-key, Shift for ×10), step tokens with ‹ ›, click
+        swatches to cycle the page's palette. Dirty dots revert one property;
+        Copy writes the real pointer + deltas block to your clipboard. Panels drag
+        by their header. ‹ goes back to the toolbar; the pencil returns.</p>
+      <p><strong>The card is honest.</strong> It is a real element being restyled
+        inline — exactly what Edit Mode does. Same six groups, same both-mode
+        controls in every frame; only the architecture changes. Theme dots in each
+        title bar re-skin that frame.</p>
+      <p><strong>Pick by the tradeoff line,</strong> not the prettiest render —
+        every one of these can be made pretty. Tell me a number (or a hybrid) and
+        I'll build it.</p>
+    </div>
+  </div>
+
+  <!-- ============ 01 ============ -->
+  <section class="proto" id="p1">
+    <div class="proto-head">
+      <span class="proto-num">01</span>
+      <h2>Inspector column</h2>
+      <p class="thesis">The Figma answer, verbatim. One narrow column, six titled
+        sections, everything visible at the cost of height — the scrollbar is the
+        tax, familiarity is the payoff.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="1">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P1-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="ep-body">
+            <div class="g-sec" data-g="typography"></div>
+            <div class="g-sec" data-g="spacing"></div>
+            <div class="g-sec" data-g="size"></div>
+            <div class="g-sec" data-g="surface"></div>
+            <div class="g-sec" data-g="border"></div>
+            <div class="g-sec" data-g="shadow"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Instant familiarity — anyone who has opened Figma or Sketch reads it at a glance, and every control keeps a permanent address, so muscle memory forms fast.</dd>
+      <dt>Costs</dt><dd>The tallest chrome of the twelve: over a short element it dwarfs the thing being edited, and the scroll hides whichever group you didn't park at.</dd>
+      <dt>Scales to</dt><dd>More groups gracefully — absorbing inventory is what inspectors do. Small viewports poorly.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 02 ============ -->
+  <section class="proto" id="p2">
+    <div class="proto-head">
+      <span class="proto-num">02</span>
+      <h2>Icon tab deck</h2>
+      <p class="thesis">Six groups, one visible. The panel stays business-card
+        sized because it never shows two categories at once; the tab strip is the
+        map of what's editable.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord" data-proto="2">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P2-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="tabbar" data-slot="tabs"></div>
+          <div class="ep-body">
+            <div class="pane" data-tab="typography"><div data-g="typography"></div></div>
+            <div class="pane" data-tab="spacing"><div data-g="spacing"></div></div>
+            <div class="pane" data-tab="size"><div data-g="size"></div></div>
+            <div class="pane" data-tab="surface"><div data-g="surface"></div></div>
+            <div class="pane" data-tab="border"><div data-g="border"></div></div>
+            <div class="pane" data-tab="shadow"><div data-g="shadow"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Smallest steady footprint that still carries the full inventory; dirty badges on the tabs say where you've been without opening anything.</dd>
+      <dt>Costs</dt><dd>Cross-group moves — radius and shadow together — become tab-hopping, and a group you never visit is a group you never discover.</dd>
+      <dt>Scales to</dt><dd>More groups by adding tabs, until the strip itself needs to scroll.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 03 ============ -->
+  <section class="proto" id="p3">
+    <div class="proto-head">
+      <span class="proto-num">03</span>
+      <h2>Accordion sheet</h2>
+      <p class="thesis">The settings page's collapsible sections, floated. Open
+        what you're tuning, close what you're not — dirty dots keep the closed
+        sections honest.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light" data-proto="3">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P3-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="ep-body" data-slot="accordion"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The user sets the height-versus-detail tradeoff per session, and the closed-section dots are a live preview of what the delta block will contain.</dd>
+      <dt>Costs</dt><dd>Two clicks to reach anything closed; open three sections and it's as tall as 01 with more furniture per group.</dd>
+      <dt>Scales to</dt><dd>Many groups gracefully — collapsing the long tail is the accordion's whole trick.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 04 ============ -->
+  <section class="proto" id="p4">
+    <div class="proto-head">
+      <span class="proto-num">04</span>
+      <h2>Spec ledger</h2>
+      <p class="thesis">The repo's spec-sheet dialect: label, leader dots, control.
+        No section furniture at all — twenty rows under four quiet caps, maximum
+        density, one dialect across the whole extension.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night" data-proto="4">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P4-ep" data-ep data-fill="ledger">
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="ep-body">
+            <div data-g="typography"></div>
+            <div data-g="spacing"></div>
+            <div data-g="size"></div>
+            <div data-g="surface"></div>
+            <div data-g="border"></div>
+            <div data-g="shadow"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The most controls per pixel in the gallery, and it reads like the settings page — the extension keeps speaking one language everywhere.</dd>
+      <dt>Costs</dt><dd>Density is a skill issue: first-time users face a wall of rows, and the token chips crowd an already busy line.</dd>
+      <dt>Scales to</dt><dd>More properties by getting taller, never wider — and the wall only grows.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 05 ============ -->
+  <section class="proto" id="p5">
+    <div class="proto-head">
+      <span class="proto-num">05</span>
+      <h2>Toolbar that blooms</h2>
+      <p class="thesis">Edit Mode keeps the toolbar's shape: a horizontal strip of
+        group buttons sits where the bar was, and the active group blooms beneath
+        it. The mode transition is a morph, not a swap.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="monokai" data-proto="5">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P5-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="striprow" data-slot="tabs"></div>
+          <div class="bloom">
+            <div class="pane" data-tab="typography"><div data-g="typography"></div></div>
+            <div class="pane" data-tab="spacing"><div data-g="spacing"></div></div>
+            <div class="pane" data-tab="size"><div data-g="size"></div></div>
+            <div class="pane" data-tab="surface"><div data-g="surface"></div></div>
+            <div class="pane" data-tab="border"><div data-g="border"></div></div>
+            <div class="pane" data-tab="shadow"><div data-g="shadow"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The seamless entry: the bar you clicked becomes the bar you tune with, in the same place — horizontal chrome that hugs the element's edge instead of covering the page beside it.</dd>
+      <dt>Costs</dt><dd>One group at a time, the bloom's height bounces as groups change, and a wide strip needs a wide viewport.</dd>
+      <dt>Scales to</dt><dd>Badly past about seven groups — the strip runs out of edge.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 06 ============ -->
+  <section class="proto" id="p6">
+    <div class="proto-head">
+      <span class="proto-num">06</span>
+      <h2>Console deck</h2>
+      <p class="thesis">All six groups side by side in one wide, short deck along
+        the bottom — a mixing console under the page. Nothing hidden, nothing
+        stacked, nothing covering the element.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="6">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit" style="min-height:470px">
+        <div data-slot="page"></div>
+        <div class="ep P6-ep" data-ep data-fill="col">
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="deck">
+            <div class="dcol" data-g="typography"></div>
+            <div class="dcol" data-g="spacing"></div>
+            <div class="dcol" data-g="size"></div>
+            <div class="dcol" data-g="surface"></div>
+            <div class="dcol" data-g="border"></div>
+            <div class="dcol" data-g="shadow"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Zero navigation — every control on screen at once, in a shape that never covers the element because it hugs the viewport's bottom edge.</dd>
+      <dt>Costs</dt><dd>Wide: it wants ~620px of viewport, and the columns force every control into its tersest, most cramped form.</dd>
+      <dt>Scales to</dt><dd>Wider viewports beautifully; phones and split screens not at all.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 07 ============ -->
+  <section class="proto" id="p7">
+    <div class="proto-head">
+      <span class="proto-num">07</span>
+      <h2>Chips and popovers</h2>
+      <p class="thesis">The panel is a reading of the current style — six value
+        chips — and each chip opens the controls that change it. The summary is
+        the interface.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="dracula" data-proto="7">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P7-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="chiprow" data-slot="chips"></div>
+          <div class="popwrap">
+            <div class="pane" data-tab="typography"><div data-g="typography"></div></div>
+            <div class="pane" data-tab="spacing"><div data-g="spacing"></div></div>
+            <div class="pane" data-tab="size"><div data-g="size"></div></div>
+            <div class="pane" data-tab="surface"><div data-g="surface"></div></div>
+            <div class="pane" data-tab="border"><div data-g="border"></div></div>
+            <div class="pane" data-tab="shadow"><div data-g="shadow"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Tiniest resting state in the gallery, and the chip row doubles as the delta summary — what you changed is literally what you're looking at.</dd>
+      <dt>Costs</dt><dd>Everything is two interactions deep, and popovers sprouting from a floating panel is chrome growing chrome.</dd>
+      <dt>Scales to</dt><dd>Lightly-tuned elements best; a heavy session reopens the same popovers over and over.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 08 ============ -->
+  <section class="proto" id="p8">
+    <div class="proto-head">
+      <span class="proto-num">08</span>
+      <h2>Style as a sentence</h2>
+      <p class="thesis">The element's style written as an editable sentence —
+        every number scrubs in place, every token is a chip mid-prose. The
+        settings gallery's "sentence" heritage, applied to the panel.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-light" data-proto="8">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P8-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="prose" data-slot="sentence"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The most legible statement of current state — you read the element's style like documentation and edit it exactly where you read it.</dd>
+      <dt>Costs</dt><dd>Prose order is fixed, so finding "radius" means reading; and the scrub targets are small and shoulder to shoulder.</dd>
+      <dt>Scales to</dt><dd>The property set it was written for — every added property rewrites the sentence.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 09 ============ -->
+  <section class="proto" id="p9">
+    <div class="proto-head">
+      <span class="proto-num">09</span>
+      <h2>Essentials first</h2>
+      <p class="thesis">Six hero controls flat on the panel — size, color, fill,
+        pad, radius, shadow — and a "more" pill per group for the long tail.
+        The 80% loop pays nothing for the 20%.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="solarized-dark" data-proto="9">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P9-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="ep-body">
+            <div data-slot="hero"></div>
+            <div class="morebar" data-slot="morebar"></div>
+            <div class="more-b" data-morefor="typography"><div data-g="typography" data-skip="fontSize,color"></div></div>
+            <div class="more-b" data-morefor="spacing"><div data-g="spacing" data-skip="pad"></div></div>
+            <div class="more-b" data-morefor="size"><div data-g="size"></div></div>
+            <div class="more-b" data-morefor="surface"><div data-g="surface" data-skip="bg"></div></div>
+            <div class="more-b" data-morefor="border"><div data-g="border" data-skip="radius"></div></div>
+            <div class="more-b" data-morefor="shadow"><div data-g="shadow" data-skip="shadowY"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The common loop is one interaction deep with zero hunting, and the panel stays short over any element.</dd>
+      <dt>Costs</dt><dd>The other twenty percent hides behind expanders that shift the layout, and any fixed hero pick is wrong for somebody.</dd>
+      <dt>Scales to</dt><dd>Long tails well — that's the point. A differently-shaped 80% badly.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 10 ============ -->
+  <section class="proto" id="p10">
+    <div class="proto-head">
+      <span class="proto-num">10</span>
+      <h2>Token ladders</h2>
+      <p class="thesis">Both-mode made spatial: raw values on the left, and on the
+        right the design system's scales drawn as ladders — the value's position
+        on the rail is the interface.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="terracotta-dark" data-proto="10">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit" style="min-height:640px">
+        <div data-slot="page"></div>
+        <div class="ep P10-ep" data-ep data-fill="ledger">
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="ep-body lad-grid">
+            <div class="lad-left">
+              <div data-g="typography" data-notok="1"></div>
+              <div data-g="spacing" data-notok="1"></div>
+              <div data-g="size" data-notok="1"></div>
+              <div data-g="surface" data-notok="1"></div>
+              <div data-g="border" data-notok="1"></div>
+              <div data-g="shadow" data-notok="1"></div>
+            </div>
+            <div class="lad-right" data-slot="ladders"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The token story is visible instead of named — you see 14 sitting on text-base and title-lg two rungs up; off-scale values are literally off the rail.</dd>
+      <dt>Costs</dt><dd>The widest interior of any stacked frame, and four ladders plus palette rails is a lot of ink for a handful of properties.</dd>
+      <dt>Scales to</dt><dd>Token-rich design systems superbly; token-less pages waste half the panel.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 11 ============ -->
+  <section class="proto" id="p11">
+    <div class="proto-head">
+      <span class="proto-num">11</span>
+      <h2>Fader bank</h2>
+      <p class="thesis">Every number is a fader with token detents. The panel is a
+        tuning desk: grab anything, slide, feel the notches where the design
+        system's stops are.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="tokyo-night" data-proto="11">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P11-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="ep-body" data-slot="faders"></div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">The most tune-feeling frame: the scrub affordance is explicit everywhere, and detents make tokens tactile rather than something you read.</dd>
+      <dt>Costs</dt><dd>Faders communicate position, not value — the numbers ride shotgun — and colors, alignment, and enums always need a second idiom.</dd>
+      <dt>Scales to</dt><dd>Numeric properties only; every non-number is an exception to the metaphor.</dd>
+    </dl>
+  </section>
+
+  <!-- ============ 12 ============ -->
+  <section class="proto" id="p12">
+    <div class="proto-head">
+      <span class="proto-num">12</span>
+      <h2>Text and box</h2>
+      <p class="thesis">Two tabs, one mental model: what the words look like, and
+        what the box around them looks like — the box tab drawn as the box-model
+        diagram itself, controls sitting where they act.</p>
+    </div>
+    <div class="viewport" data-ccp-theme="nord" data-proto="12">
+      <div class="viewport-bar">
+        <i class="dot"></i><i class="dot"></i><i class="dot"></i>
+        <span class="viewport-url">https://skills.example.dev/catalog</span>
+        <span class="dots" data-slot="dots"></span>
+      </div>
+      <div class="vp" data-state="edit">
+        <div data-slot="page"></div>
+        <div class="ep P12-ep" data-ep>
+          <div class="ep-head" data-drag data-slot="head"></div>
+          <div class="tabbar2" data-slot="tabs2"></div>
+          <div class="ep-body">
+            <div class="pane" data-tab="text"><div data-g="typography"></div></div>
+            <div class="pane" data-tab="box">
+              <div data-slot="boxd"></div>
+              <div class="boxd-rows">
+                <div data-g="surface"></div>
+                <div data-g="shadow"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <dl class="tradeoff">
+      <dt>Wins</dt><dd class="win">Matches how people describe elements — "the text is fine, the box is wrong" — and the diagram puts pad, size, and radius where they act instead of behind labels.</dd>
+      <dt>Costs</dt><dd>Six groups forced into two buckets means surface and shadow live in "box" by argument, and diagram controls carry no labels for newcomers.</dd>
+      <dt>Scales to</dt><dd>Exactly this inventory — the diagram has a finite number of edges to pin controls to.</dd>
+    </dl>
+  </section>
+
+</main>
+
+<script>
+/* ============================================================
+   ONE LOOP, EVERY PROTOTYPE
+   Shared control builders + shared behaviours. Each prototype
+   is a different arrangement of the same live inventory: the
+   selected card really is restyled inline, dirty dots really
+   revert, Copy really writes the pointer + deltas block.
+   ============================================================ */
+
+const THEMES = [
+  ["terracotta-dark", "Terracotta Dark", "#141413", "#d97757"],
+  ["terracotta-light", "Terracotta Light", "#faf9f5", "#c2603f"],
+  ["dracula", "Dracula", "#282a36", "#bd93f9"],
+  ["monokai", "Monokai", "#272822", "#f92672"],
+  ["nord", "Nord", "#2e3440", "#88c0d0"],
+  ["solarized-dark", "Solarized Dark", "#002b36", "#cb4b16"],
+  ["tokyo-night", "Tokyo Night", "#1a1b26", "#bb9af7"],
+];
+
+/* The fake page's design system — what the token resolver would find. */
+const FAM = {
+  text:   [["text-xs", 10], ["text-sm", 12], ["text-base", 14], ["text-lg", 16], ["text-xl", 18], ["text-2xl", 22]],
+  weight: [["w-regular", 400], ["w-medium", 500], ["w-semibold", 600], ["w-bold", 700]],
+  space:  [["space-0", 0], ["space-1", 4], ["space-2", 8], ["space-3", 12], ["space-4", 16], ["space-5", 24], ["space-6", 32]],
+  radius: [["radius-0", 0], ["radius-xs", 2], ["radius-sm", 4], ["radius-md", 8], ["radius-lg", 12], ["radius-xl", 16], ["radius-pill", 24]],
+};
+const PAL = {
+  ink:  [["ink", "#1F1E1B"], ["dim", "#5A574E"], ["soft", "#8B887E"], ["terra", "#B8542F"], ["paper", "#FBFAF7"]],
+  fill: [["paper", "#FBFAF7"], ["cream", "#F4EFE6"], ["mist", "#E9EEF4"], ["moss", "#E7EBDD"], ["slate", "#2B2E33"]],
+  line: [["hairline", "#E5E0D4"], ["stone", "#C9C3B4"], ["terra", "#B8542F"], ["ink", "#1F1E1B"]],
+};
+
+const CTRL = {
+  fontSize:      { g: "typography", lab: "size",     unit: "px", fam: "text",   min: 8,    max: 40,  step: 1 },
+  weight:        { g: "typography", lab: "weight",   unit: "",   fam: "weight", min: 300,  max: 800, step: 100 },
+  lineHeight:    { g: "typography", lab: "leading",  unit: "",   min: 1,     max: 2.4, step: 0.1,  dec: 1 },
+  letterSpacing: { g: "typography", lab: "tracking", unit: "em", min: -0.05, max: 0.2, step: 0.01, dec: 2 },
+  align:         { g: "typography", lab: "align",    type: "seg" },
+  color:         { g: "typography", lab: "color",    type: "color", pal: "ink" },
+  pad:           { g: "spacing",    lab: "padding",  unit: "px", fam: "space", min: 0, max: 48, step: 1 },
+  margin:        { g: "spacing",    lab: "margin",   unit: "px", fam: "space", min: 0, max: 48, step: 1 },
+  gap:           { g: "spacing",    lab: "gap",      unit: "px", fam: "space", min: 0, max: 32, step: 1 },
+  width:         { g: "size",       lab: "width",    unit: "px", min: 180, max: 340, step: 1, auto: true },
+  height:        { g: "size",       lab: "height",   unit: "px", min: 120, max: 280, step: 1, auto: true },
+  bg:            { g: "surface",    lab: "fill",     type: "color", pal: "fill" },
+  opacity:       { g: "surface",    lab: "opacity",  unit: "%",  min: 20, max: 100, step: 1 },
+  borderW:       { g: "border",     lab: "stroke",   unit: "px", min: 0, max: 6, step: 1 },
+  borderC:       { g: "border",     lab: "tint",     type: "color", pal: "line" },
+  radius:        { g: "border",     lab: "radius",   unit: "px", fam: "radius", min: 0, max: 24, step: 1 },
+  shadowY:       { g: "shadow",     lab: "y",        unit: "px", min: 0, max: 24, step: 1 },
+  shadowB:       { g: "shadow",     lab: "blur",     unit: "px", min: 0, max: 48, step: 1 },
+  shadowA:       { g: "shadow",     lab: "alpha",    unit: "%",  min: 0, max: 45, step: 1 },
+};
+const GROUPS = {};
+for (const [k, c] of Object.entries(CTRL)) (GROUPS[c.g] ||= []).push(k);
+const GLABEL = { typography: "type", spacing: "space", size: "size", surface: "fill", border: "line", shadow: "shadow" };
+const GAB = { typography: "TY", spacing: "SP", size: "SZ", surface: "SF", border: "BR", shadow: "SH" };
+
+const DEFAULTS = {
+  fontSize: 14, weight: 500, lineHeight: 1.5, letterSpacing: 0, align: "left", color: "#1F1E1B",
+  pad: 16, margin: 0, gap: 8,
+  width: 250, widthAuto: "off", height: 150, heightAuto: "on",
+  bg: "#FBFAF7", opacity: 100,
+  borderW: 1, borderC: "#E5E0D4", radius: 12,
+  shadowY: 2, shadowB: 8, shadowA: 8,
+};
+
+const CSSNAME = {
+  fontSize: "font-size", weight: "font-weight", lineHeight: "line-height",
+  letterSpacing: "letter-spacing", align: "text-align", color: "color",
+  pad: "padding", margin: "margin", gap: "gap", width: "width", height: "height",
+  bg: "background", opacity: "opacity", borderW: "border-width", borderC: "border-color",
+  radius: "border-radius",
+};
+
+const PENCIL = '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
+const SVG_ALIGN = {
+  left:   '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M1.5 2h7M1.5 5h4M1.5 8h6"/></svg>',
+  center: '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M1.5 2h7M3 5h4M2 8h6"/></svg>',
+  right:  '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M1.5 2h7M4.5 5h4M2.5 8h6"/></svg>',
+};
+
+/* ---------- formatting ---------- */
+const dec = (k) => CTRL[k].dec || 0;
+const fmtNum = (k, v) => Number(v.toFixed(dec(k))).toString();
+const famOf = (k) => CTRL[k].fam ? FAM[CTRL[k].fam] : null;
+const tokenOf = (k, v) => {
+  const fam = famOf(k);
+  if (!fam) return null;
+  const hit = fam.find(([, fv]) => Math.abs(fv - v) < 0.25);
+  return hit ? hit[0] : null;
+};
+const palOf = (k, hex) => {
+  const pal = CTRL[k].pal ? PAL[CTRL[k].pal] : null;
+  if (!pal) return null;
+  const hit = pal.find(([, h]) => h.toLowerCase() === String(hex).toLowerCase());
+  return hit ? hit[0] : null;
+};
+
+/* ---------- control builders ---------- */
+const dd = (k) => `<button class="dd" data-dot="${k}" title="Reset ${CTRL[k].lab}"></button>`;
+const val = (k) => `<span class="val" tabindex="0" data-scrub="${k}"><b data-k="${k}"></b>${CTRL[k].unit ? `<i>${CTRL[k].unit}</i>` : ""}</span>`;
+const tok = (k) => `<span class="tok" data-tokwrap="${k}"><button data-step="${k}:-1" title="Step token down">‹</button><b data-tokname="${k}"></b><button data-step="${k}:1" title="Step token up">›</button></span>`;
+const swz = (k) => `<button class="swz" data-cycle="${k}" title="Cycle the page's palette"><i data-swz="${k}"></i></button>`;
+const colorCtl = (k) => `${swz(k)}<span class="pname" data-pname="${k}"></span><span class="hex" data-hex="${k}"></span>`;
+const seg = () => `<span class="segz" role="radiogroup" aria-label="align">${["left", "center", "right"].map((v) => `<button data-seg="align:${v}" title="${v}">${SVG_ALIGN[v]}</button>`).join("")}</span>`;
+const autoBtn = (k) => `<button class="at" data-auto="${k}">auto</button>`;
+
+function fld(k, o = {}) {
+  const c = CTRL[k];
+  let ctl;
+  if (c.type === "seg") ctl = seg();
+  else if (c.type === "color") ctl = colorCtl(k);
+  else ctl = val(k) + (c.auto ? autoBtn(k) : "") + (c.fam && !o.notok ? tok(k) : "");
+  return `<div class="fld">${dd(k)}<span class="f-lab">${c.lab}</span>${ctl}</div>`;
+}
+
+function groupBody(g, o = {}) {
+  const skip = o.skip || [];
+  const keys = GROUPS[g].filter((k) => !skip.includes(k));
+  const cap = o.ledger ? `<p class="g-cap">${g}</p>` : `<p class="g-leg">${g}</p>`;
+  return cap + keys.map((k) => fld(k, o)).join("");
+}
+
+const headHTML = () =>
+  `<button class="ep-back" data-back title="Back to selection">‹</button>` +
+  `<span class="ep-id">div<b>.skill-card</b></span><span class="ep-sp"></span>` +
+  `<button class="ep-act" data-copy title="Copy pointer + deltas">copy<i data-count></i></button>` +
+  `<button class="ep-act" data-resetall title="Reset all edits">↺</button>`;
+
+const pageHTML = () => `
+  <h3>AI Skills for Design Engineers</h3>
+  <p class="pg-sub">For designers and engineers building better interfaces.</p>
+  <div class="cards">
+    <div class="skill-card" data-card>
+      <span class="sc-name">emil-design-eng</span>
+      <span class="sc-desc">Mostly animation, plus some design advice.</span>
+      <span class="sc-btn">Add skill</span>
+    </div>
+    <div class="skill-card ghost">
+      <span class="sc-name">improve-animations</span>
+      <span class="sc-desc">Audit the motion. Get plans any agent can run.</span>
+      <span class="sc-btn">Add skill</span>
+    </div>
+  </div>
+  <div class="mini-bar">
+    <div class="mb-bar">
+      <button class="mb-btn" type="button">&lt;&gt; copy code</button>
+      <button class="mb-btn" type="button">⧉ screenshot</button>
+      <button class="mb-pencil" data-pencil type="button" title="Edit">${PENCIL}</button>
+    </div>
+  </div>`;
+
+const tabsHTML = (withWord) => Object.keys(GROUPS).map((g) =>
+  `<button type="button" data-tabbtn="${g}" title="${g}">${GAB[g]}${withWord ? `<span>${GLABEL[g]}</span>` : ""}<i class="gd" data-gdot="${g}"></i></button>`).join("");
+
+const accordionHTML = () => Object.keys(GROUPS).map((g, i) => `
+  <div class="acc${i === 0 ? " open" : ""}">
+    <button type="button" class="acc-h" data-acc><i class="gd" data-gdot="${g}"></i>${g}<span class="acc-c">›</span></button>
+    <div class="acc-b"><div data-g="${g}" data-nocap="1"></div></div>
+  </div>`).join("");
+
+const chipsHTML = () => Object.keys(GROUPS).map((g) =>
+  `<button type="button" class="chip" data-popbtn="${g}"><span class="ch-lab">${GLABEL[g]}</span><b data-sum="${g}"></b><i class="gd" data-gdot="${g}"></i></button>`).join("");
+
+const morebarHTML = () => Object.keys(GROUPS).map((g) =>
+  `<button type="button" class="more" data-more="${g}">+ ${GLABEL[g]}<i class="gd" data-gdot="${g}"></i></button>`).join("");
+
+const laddersHTML = () => {
+  const rail = (k, capTxt) => {
+    const fam = famOf(k);
+    return `<div class="ladder"><p class="lad-cap">${capTxt}</p><div class="rungs">${
+      fam.map(([n, v]) => `<button type="button" class="rung" data-rung="${k}:${v}"><span>${n}</span><i>${v}${CTRL[k].unit}</i></button>`).join("")
+    }</div></div>`;
+  };
+  const pal = (k, capTxt) =>
+    `<div class="ladder"><p class="lad-cap">${capTxt}</p><div class="palrail" data-palrail="${k}">${
+      PAL[CTRL[k].pal].map(([n, h]) => `<button type="button" class="swz" data-setcolor="${k}:${h}" title="${n}"><i style="background:${h}"></i></button>`).join("")
+    }</div></div>`;
+  return rail("fontSize", "size · text scale") + rail("pad", "padding · space scale") +
+    rail("radius", "radius scale") + pal("bg", "fill · palette") + pal("color", "ink · palette");
+};
+
+const fadersHTML = () => {
+  const row = (k) => {
+    const c = CTRL[k];
+    const fam = famOf(k) || [];
+    const detents = fam
+      .filter(([, v]) => v >= c.min && v <= c.max)
+      .map(([n, v]) => `<i class="detent" style="left:${((v - c.min) / (c.max - c.min) * 100).toFixed(1)}%" title="${n}"></i>`).join("");
+    return `<div class="frow">${dd(k)}<span class="f-lab">${c.lab}</span><div class="rail" data-fader="${k}">${detents}<b class="thumb" data-thumb="${k}"></b></div><span class="fval"><b data-k="${k}"></b>${c.unit ? `<i>${c.unit}</i>` : ""}</span></div>`;
+  };
+  const faderKeys = ["fontSize", "weight", "lineHeight", "pad", "margin", "gap", "width", "opacity", "borderW", "radius", "shadowY", "shadowB", "shadowA"];
+  return faderKeys.map(row).join("") +
+    `<div class="frow">${dd("color")}<span class="f-lab">color</span><span class="ep-sp"></span>${colorCtl("color")}</div>` +
+    `<div class="frow">${dd("bg")}<span class="f-lab">fill</span><span class="ep-sp"></span>${colorCtl("bg")}</div>` +
+    `<div class="frow">${dd("borderC")}<span class="f-lab">tint</span><span class="ep-sp"></span>${colorCtl("borderC")}</div>` +
+    `<div class="frow">${dd("align")}<span class="f-lab">align</span><span class="ep-sp"></span>${seg()}</div>`;
+};
+
+const sentenceHTML = () => `
+  Set the type ${dd("fontSize")}${val("fontSize")}${tok("fontSize")} at ${dd("weight")}${val("weight")}${tok("weight")},
+  leading ${dd("lineHeight")}${val("lineHeight")}, tracked ${dd("letterSpacing")}${val("letterSpacing")},
+  ${dd("align")}${seg()}-set, inked ${dd("color")}${colorCtl("color")}.<br>
+  Give the box ${dd("pad")}${val("pad")}${tok("pad")} padding, a ${dd("gap")}${val("gap")} gap,
+  ${dd("margin")}${val("margin")} margin, ${dd("width")}${val("width")}${autoBtn("width")} across.<br>
+  Paint it ${dd("bg")}${colorCtl("bg")} at ${dd("opacity")}${val("opacity")},
+  stroke ${dd("borderW")}${val("borderW")} of ${dd("borderC")}${swz("borderC")},
+  round the corners ${dd("radius")}${val("radius")}${tok("radius")},
+  and float it ${dd("shadowY")}${val("shadowY")} / ${dd("shadowB")}${val("shadowB")} at ${dd("shadowA")}${val("shadowA")}.`;
+
+const heroHTML = () => ["fontSize", "color", "bg", "pad", "radius", "shadowY"].map((k) => fld(k)).join("");
+
+const tabs2HTML = () =>
+  `<button type="button" data-tabbtn="text">Text<i class="gd" data-gdot="typography"></i></button>` +
+  `<button type="button" data-tabbtn="box">Box<i class="gd" data-gdot="box"></i></button>`;
+
+const boxdHTML = () => `
+  <div class="boxd">
+    <div class="bd-row"><span class="bd-cap">margin</span>${dd("margin")}${val("margin")}</div>
+    <div class="bd-b">
+      <span class="bd-r">${val("radius")}</span>
+      <div class="bd-row"><span class="bd-cap">stroke</span>${val("borderW")}${swz("borderC")}</div>
+      <div class="bd-p">
+        <div class="bd-row"><span class="bd-cap">pad</span>${dd("pad")}${val("pad")}${tok("pad")}</div>
+        <div class="bd-c">${val("width")}${autoBtn("width")} × ${val("height")}${autoBtn("height")}</div>
+      </div>
+    </div>
+  </div>
+  <div class="bd-row" style="margin-top:7px"><span class="bd-cap">gap</span>${dd("gap")}${val("gap")}${tok("gap")}</div>`;
+
+/* ---------- the delta block (what Copy writes) ---------- */
+const sideTxt = (k, v) => {
+  if (CTRL[k].type === "color") {
+    const n = palOf(k, v);
+    return n ? `${n} (${v})` : String(v);
+  }
+  if (k === "align") return v;
+  const t = tokenOf(k, v);
+  const raw = fmtNum(k, v) + CTRL[k].unit;
+  return t ? `${t} (${raw})` : raw;
+};
+
+function isDirty(s, k) {
+  if (s[k] !== DEFAULTS[k]) return true;
+  if (CTRL[k].auto && s[k + "Auto"] !== DEFAULTS[k + "Auto"]) return true;
+  return false;
+}
+const dirtyKeys = (s) => Object.keys(CTRL).filter((k) => isDirty(s, k));
+
+function buildBlock(s) {
+  const L = [
+    "# source: src/components/SkillCard.tsx",
+    "# selector: main > .cards > .skill-card:first-child",
+    '# text: "emil-design-eng — Mostly animation, plus some design advice."',
+    "# edits: apply these style changes to this element in the source",
+  ];
+  const shadowDirty = ["shadowY", "shadowB", "shadowA"].some((k) => isDirty(s, k));
+  const sizeSide = (k, st) =>
+    st[k + "Auto"] === "on" ? "auto" : fmtNum(k, st[k]) + "px";
+  for (const k of dirtyKeys(s)) {
+    if (k.startsWith("shadow")) continue;
+    if (CTRL[k].auto) {
+      L.push(`#   ${CSSNAME[k]}: ${sizeSide(k, { ...DEFAULTS })} → ${sizeSide(k, s)}`);
+    } else if (k === "opacity") {
+      L.push(`#   opacity: ${DEFAULTS.opacity / 100} → ${s.opacity / 100}`);
+    } else {
+      L.push(`#   ${CSSNAME[k]}: ${sideTxt(k, DEFAULTS[k])} → ${sideTxt(k, s[k])}`);
+    }
+  }
+  if (shadowDirty) {
+    const sh = (t) => `0 ${t.shadowY}px ${t.shadowB}px rgb(0 0 0 / ${(t.shadowA / 100).toFixed(2)})`;
+    L.push(`#   box-shadow: ${sh(DEFAULTS)} → ${sh(s)}`);
+  }
+  L.push('<div class="skill-card">…</div>');
+  return "```\n" + L.join("\n") + "\n```";
+}
+
+/* ---------- paint ---------- */
+function paint(root, s) {
+  const card = root.querySelector("[data-card]");
+  const alignItems = { left: "flex-start", center: "center", right: "flex-end" }[s.align];
+  card.style.cssText =
+    `display:flex;flex-direction:column;` +
+    `font-size:${s.fontSize}px;font-weight:${s.weight};line-height:${s.lineHeight};` +
+    `letter-spacing:${s.letterSpacing}em;text-align:${s.align};align-items:${alignItems};color:${s.color};` +
+    `padding:${s.pad}px;margin:${s.margin}px;gap:${s.gap}px;` +
+    `width:${s.widthAuto === "on" ? "auto" : s.width + "px"};` +
+    `height:${s.heightAuto === "on" ? "auto" : s.height + "px"};` +
+    `background:${s.bg};opacity:${s.opacity / 100};` +
+    `border:${s.borderW}px solid ${s.borderC};border-radius:${s.radius}px;` +
+    `box-shadow:0 ${s.shadowY}px ${s.shadowB}px rgb(0 0 0 / ${(s.shadowA / 100).toFixed(2)});`;
+  if (s.widthAuto !== "on") card.style.maxWidth = "100%";
+
+  root.querySelectorAll("[data-k]").forEach((el) => { el.textContent = fmtNum(el.dataset.k, s[el.dataset.k]); });
+  root.querySelectorAll("[data-tokname]").forEach((el) => {
+    const k = el.dataset.tokname, t = tokenOf(k, s[k]);
+    el.textContent = t || "—";
+    el.closest(".tok").classList.toggle("off", !t);
+  });
+  root.querySelectorAll("[data-swz]").forEach((el) => { el.style.background = s[el.dataset.swz]; });
+  root.querySelectorAll("[data-pname]").forEach((el) => { el.textContent = palOf(el.dataset.pname, s[el.dataset.pname]) || ""; });
+  root.querySelectorAll("[data-hex]").forEach((el) => {
+    const k = el.dataset.hex;
+    el.textContent = palOf(k, s[k]) ? "" : s[k];
+  });
+  root.querySelectorAll("[data-seg]").forEach((b) => {
+    const [k, v] = b.dataset.seg.split(":");
+    b.setAttribute("aria-checked", String(s[k] === v));
+  });
+  root.querySelectorAll("[data-auto]").forEach((b) => {
+    const k = b.dataset.auto;
+    b.setAttribute("aria-checked", String(s[k + "Auto"] === "on"));
+    const chip = b.parentElement.querySelector(`[data-scrub="${k}"]`);
+    if (chip) chip.classList.toggle("auto", s[k + "Auto"] === "on");
+  });
+  root.querySelectorAll("[data-dot]").forEach((b) => { b.classList.toggle("on", isDirty(s, b.dataset.dot)); });
+  root.querySelectorAll("[data-gdot]").forEach((b) => {
+    const g = b.dataset.gdot;
+    const keys = g === "box"
+      ? Object.keys(CTRL).filter((k) => CTRL[k].g !== "typography")
+      : GROUPS[g] || [];
+    b.classList.toggle("on", keys.some((k) => isDirty(s, k)));
+  });
+  root.querySelectorAll("[data-sum]").forEach((el) => {
+    const g = el.dataset.sum;
+    el.textContent = {
+      typography: `${fmtNum("fontSize", s.fontSize)}·${s.weight}·${fmtNum("lineHeight", s.lineHeight)}`,
+      spacing: `${s.pad}/${s.gap}`,
+      size: s.widthAuto === "on" ? "auto" : `${s.width}px`,
+      surface: palOf("bg", s.bg) || s.bg,
+      border: `${s.borderW}/${s.radius}`,
+      shadow: `${s.shadowY}/${s.shadowB}`,
+    }[g];
+  });
+  root.querySelectorAll("[data-thumb]").forEach((el) => {
+    const k = el.dataset.thumb, c = CTRL[k];
+    el.style.left = ((s[k] - c.min) / (c.max - c.min) * 100).toFixed(1) + "%";
+  });
+  root.querySelectorAll("[data-rung]").forEach((b) => {
+    const [k, v] = b.dataset.rung.split(":");
+    b.classList.toggle("on", Math.abs(s[k] - Number(v)) < 0.25);
+  });
+  root.querySelectorAll("[data-palrail]").forEach((rail) => {
+    const k = rail.dataset.palrail;
+    rail.querySelectorAll("[data-setcolor]").forEach((b) => {
+      b.classList.toggle("on", b.dataset.setcolor.split(":")[1].toLowerCase() === String(s[k]).toLowerCase());
+    });
+  });
+  const n = dirtyKeys(s).length;
+  root.querySelectorAll("[data-count]").forEach((el) => { el.textContent = n ? String(n) : ""; });
+}
+
+/* ---------- wiring ---------- */
+const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+const roundStep = (k, v) => {
+  const c = CTRL[k];
+  return Number((Math.round(v / c.step) * c.step).toFixed(dec(k)));
+};
+
+document.querySelectorAll("[data-proto]").forEach((root) => {
+  const s = { ...DEFAULTS };
+  const vp = root.querySelector(".vp");
+
+  /* fill the shared slots that exist in this frame */
+  const slot = (name) => root.querySelector(`[data-slot="${name}"]`);
+  slot("page").innerHTML = pageHTML();
+  root.querySelectorAll('[data-slot="head"]').forEach((h) => { h.innerHTML = headHTML(); });
+  slot("dots").innerHTML = THEMES.map(([id, name, surface, accent]) =>
+    `<button type="button" class="tdot" data-theme="${id}" title="${name}" style="background:linear-gradient(135deg,${surface} 50%,${accent} 50%)"></button>`).join("");
+  if (slot("tabs")) slot("tabs").innerHTML = tabsHTML(root.dataset.proto === "5");
+  if (slot("accordion")) slot("accordion").innerHTML = accordionHTML();
+  if (slot("chips")) slot("chips").innerHTML = chipsHTML();
+  if (slot("sentence")) slot("sentence").innerHTML = sentenceHTML();
+  if (slot("hero")) slot("hero").innerHTML = heroHTML();
+  if (slot("morebar")) slot("morebar").innerHTML = morebarHTML();
+  if (slot("ladders")) slot("ladders").innerHTML = laddersHTML();
+  if (slot("faders")) slot("faders").innerHTML = fadersHTML();
+  if (slot("tabs2")) slot("tabs2").innerHTML = tabs2HTML();
+  if (slot("boxd")) slot("boxd").innerHTML = boxdHTML();
+
+  /* fill the groups */
+  root.querySelectorAll("[data-g]").forEach((h) => {
+    const ledger = !!h.closest('[data-fill="ledger"]');
+    const skip = h.dataset.skip ? h.dataset.skip.split(",") : [];
+    const body = groupBody(h.dataset.g, { ledger, skip, notok: !!h.dataset.notok });
+    h.innerHTML = h.dataset.nocap ? body.replace(/^<p class="g-(leg|cap)">.*?<\/p>/, "") : body;
+  });
+
+  /* default-active tabs */
+  const firstTab = root.querySelector("[data-tabbtn]");
+  const activateTab = (btn) => {
+    const ep = btn.closest("[data-ep]");
+    ep.querySelectorAll("[data-tabbtn]").forEach((b) => b.setAttribute("aria-selected", String(b === btn)));
+    ep.querySelectorAll("[data-tab]").forEach((p) => p.classList.toggle("on", p.dataset.tab === btn.dataset.tabbtn));
+  };
+  if (firstTab && !root.querySelector("[data-popbtn]")) activateTab(firstTab);
+
+  /* clicks */
+  root.addEventListener("click", (e) => {
+    const hit = (sel) => e.target.closest(sel);
+    let el;
+    if ((el = hit("[data-theme]"))) { root.dataset.ccpTheme = el.dataset.theme; return; }
+    if ((el = hit("[data-back]"))) { vp.dataset.state = "select"; return; }
+    if ((el = hit("[data-pencil]"))) {
+      vp.dataset.state = "edit";
+      const ep = vp.querySelector("[data-ep]");
+      ep.style.left = ep.style.top = ep.style.right = ep.style.bottom = ep.style.width = ""; /* re-solve on entry */
+      return;
+    }
+    if ((el = hit("[data-dot]"))) {
+      const k = el.dataset.dot;
+      s[k] = DEFAULTS[k];
+      if (CTRL[k].auto) s[k + "Auto"] = DEFAULTS[k + "Auto"];
+      paint(root, s); return;
+    }
+    if ((el = hit("[data-resetall]"))) { Object.assign(s, DEFAULTS); paint(root, s); return; }
+    if ((el = hit("[data-copy]"))) {
+      navigator.clipboard?.writeText(buildBlock(s));
+      const label = el.firstChild;
+      label.textContent = "copied";
+      setTimeout(() => { label.textContent = "copy"; }, 1200);
+      return;
+    }
+    if ((el = hit("[data-step]"))) {
+      const [k, dir] = el.dataset.step.split(":");
+      const fam = famOf(k).map(([, v]) => v);
+      const cur = s[k];
+      let i = fam.findIndex((v) => Math.abs(v - cur) < 0.25);
+      if (i === -1) {
+        /* off-scale: snap toward the nearest rung in the step direction */
+        if (dir === "1") { const j = fam.findIndex((v) => v > cur); i = j === -1 ? fam.length - 1 : j - 1; }
+        else { const j = fam.findLastIndex((v) => v < cur); i = j === -1 ? 0 : j + 1; }
+      }
+      const next = clamp(i + (dir === "1" ? 1 : -1), 0, fam.length - 1);
+      s[k] = fam[next];
+      paint(root, s); return;
+    }
+    if ((el = hit("[data-cycle]"))) {
+      const k = el.dataset.cycle, pal = PAL[CTRL[k].pal];
+      const i = pal.findIndex(([, h]) => h.toLowerCase() === String(s[k]).toLowerCase());
+      s[k] = pal[(i + 1) % pal.length][1];
+      paint(root, s); return;
+    }
+    if ((el = hit("[data-setcolor]"))) {
+      const [k, hex] = el.dataset.setcolor.split(":");
+      s[k] = hex; paint(root, s); return;
+    }
+    if ((el = hit("[data-seg]"))) {
+      const [k, v] = el.dataset.seg.split(":");
+      s[k] = v; paint(root, s); return;
+    }
+    if ((el = hit("[data-auto]"))) {
+      const k = el.dataset.auto;
+      s[k + "Auto"] = s[k + "Auto"] === "on" ? "off" : "on";
+      paint(root, s); return;
+    }
+    if ((el = hit("[data-rung]"))) {
+      const [k, v] = el.dataset.rung.split(":");
+      s[k] = Number(v); paint(root, s); return;
+    }
+    if ((el = hit("[data-popbtn]"))) {
+      const ep = el.closest("[data-ep]");
+      const open = el.getAttribute("aria-selected") === "true";
+      ep.querySelectorAll("[data-popbtn]").forEach((b) => b.setAttribute("aria-selected", String(!open && b === el)));
+      ep.querySelectorAll("[data-tab]").forEach((p) => p.classList.toggle("on", !open && p.dataset.tab === el.dataset.popbtn));
+      return;
+    }
+    if ((el = hit("[data-tabbtn]"))) { activateTab(el); return; }
+    if ((el = hit("[data-acc]"))) { el.closest(".acc").classList.toggle("open"); return; }
+    if ((el = hit("[data-more]"))) {
+      const open = el.getAttribute("aria-expanded") === "true";
+      el.setAttribute("aria-expanded", String(!open));
+      el.closest(".ep-body").querySelector(`[data-morefor="${el.dataset.more}"]`)?.classList.toggle("on", !open);
+      return;
+    }
+  });
+
+  /* arrow keys on value chips: ±1, Shift ±10 */
+  root.addEventListener("keydown", (e) => {
+    const chip = e.target.closest?.("[data-scrub]");
+    if (!chip || (e.key !== "ArrowUp" && e.key !== "ArrowDown")) return;
+    e.preventDefault();
+    const k = chip.dataset.scrub, c = CTRL[k];
+    const d = (e.key === "ArrowUp" ? 1 : -1) * c.step * (e.shiftKey ? 10 : 1);
+    if (c.auto) s[k + "Auto"] = "off";
+    s[k] = roundStep(k, clamp(s[k] + d, c.min, c.max));
+    paint(root, s);
+  });
+
+  /* pointer: value scrub, fader scrub, panel drag */
+  root.addEventListener("pointerdown", (e) => {
+    const drag = e.target.closest("[data-drag]");
+    if (drag && !e.target.closest("button")) {
+      const ep = drag.closest("[data-ep]");
+      const vpr = vp.getBoundingClientRect();
+      const epr = ep.getBoundingClientRect();
+      const ox = e.clientX - epr.left, oy = e.clientY - epr.top;
+      drag.setPointerCapture(e.pointerId);
+      ep.style.width = epr.width + "px"; /* left+right-anchored panels keep their size */
+      const move = (ev) => {
+        ep.style.right = ep.style.bottom = "auto";
+        ep.style.left = clamp(ev.clientX - vpr.left - ox, 4, vpr.width - epr.width - 4) + "px";
+        ep.style.top = clamp(ev.clientY - vpr.top - oy, 4, vpr.height - epr.height - 4) + "px";
+      };
+      const up = () => { drag.removeEventListener("pointermove", move); drag.removeEventListener("pointerup", up); };
+      drag.addEventListener("pointermove", move);
+      drag.addEventListener("pointerup", up);
+      return;
+    }
+    const fader = e.target.closest("[data-fader]");
+    if (fader) {
+      const k = fader.dataset.fader, c = CTRL[k];
+      const r = fader.getBoundingClientRect();
+      const apply = (ev) => {
+        const t = clamp((ev.clientX - r.left) / r.width, 0, 1);
+        if (c.auto) s[k + "Auto"] = "off";
+        s[k] = roundStep(k, c.min + t * (c.max - c.min));
+        paint(root, s);
+      };
+      fader.setPointerCapture(e.pointerId);
+      apply(e);
+      const move = (ev) => apply(ev);
+      const up = () => { fader.removeEventListener("pointermove", move); fader.removeEventListener("pointerup", up); };
+      fader.addEventListener("pointermove", move);
+      fader.addEventListener("pointerup", up);
+      return;
+    }
+    const chip = e.target.closest("[data-scrub]");
+    if (chip) {
+      e.preventDefault();
+      chip.focus(); /* preventDefault suppresses native focus; arrows must still work */
+      const k = chip.dataset.scrub, c = CTRL[k];
+      const startX = e.clientX, startV = s[k];
+      chip.setPointerCapture(e.pointerId);
+      const move = (ev) => {
+        const d = Math.round((ev.clientX - startX) / 3) * c.step * (ev.shiftKey ? 10 : 1);
+        if (c.auto) s[k + "Auto"] = "off";
+        s[k] = roundStep(k, clamp(startV + d, c.min, c.max));
+        paint(root, s);
+      };
+      const up = () => { chip.removeEventListener("pointermove", move); chip.removeEventListener("pointerup", up); };
+      chip.addEventListener("pointermove", move);
+      chip.addEventListener("pointerup", up);
+    }
+  });
+
+  paint(root, s);
+});
+</script>
+
