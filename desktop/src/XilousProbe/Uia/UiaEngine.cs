@@ -63,6 +63,17 @@ public sealed class UiaEngine : IDisposable
         return tcs.Task;
     }
 
+    /// <summary>
+    /// The shortest time between two hover lookups. Each one is a hit test inside the target app;
+    /// in a Chromium or Electron app that is a trip through its accessibility tree, and asking
+    /// back to back while the cursor sweeps slows the app itself. So the hover follows the cursor
+    /// loosely: at most this often, always for wherever the cursor is by then, never for the
+    /// points it passed on the way.
+    /// </summary>
+    private static readonly TimeSpan HoverInterval = TimeSpan.FromMilliseconds(70);
+    private readonly Stopwatch _sinceHover = Stopwatch.StartNew();
+    private FlaUI.Core.CacheRequest? _hoverCache;
+
     /// <summary>Asks for the element under a screen point. Only the latest request is served.</summary>
     public void RequestHover(int x, int y)
     {
@@ -71,10 +82,51 @@ public sealed class UiaEngine : IDisposable
         if (Interlocked.Exchange(ref _hoverQueued, 1) == 1) return;
         _queue.Add(() =>
         {
+            var wait = HoverInterval - _sinceHover.Elapsed;
+            if (wait > TimeSpan.Zero) Thread.Sleep(wait);
+            // Read the position only now, after the wait, so the lookup is for where the cursor is.
             Interlocked.Exchange(ref _hoverQueued, 0);
-            var el = SafeFromPoint(Volatile.Read(ref _hoverX), Volatile.Read(ref _hoverY));
-            Hovered?.Invoke(el is null ? null : Describe(el, detailed: false));
+            int hx = Volatile.Read(ref _hoverX), hy = Volatile.Read(ref _hoverY);
+            _sinceHover.Restart();
+            Hovered?.Invoke(HoverAt(hx, hy));
         });
+    }
+
+    /// <summary>
+    /// The hover readout in one round trip: the element and the handful of properties the label
+    /// shows come back together from the hit test, instead of one cross-process call per property.
+    /// </summary>
+    private ElementInfo? HoverAt(int x, int y)
+    {
+        var a = _automation!;
+        if (_hoverCache is null)
+        {
+            var lib = a.PropertyLibrary.Element;
+            _hoverCache = new FlaUI.Core.CacheRequest
+            {
+                TreeScope = FlaUI.Core.Definitions.TreeScope.Element,
+                // Cached values only: the hover never keeps a live reference into the target app.
+                AutomationElementMode = FlaUI.Core.Definitions.AutomationElementMode.None,
+            };
+            foreach (var p in new[] { lib.ControlType, lib.Name, lib.AutomationId, lib.ClassName, lib.FrameworkId, lib.BoundingRectangle, lib.ProcessId })
+                _hoverCache.Add(p);
+        }
+        try
+        {
+            using (_hoverCache.Activate())
+            {
+                var el = a.FromPoint(new DPoint(x, y));
+                if (el is null) return null;
+                uint pid = (uint)el.Properties.ProcessId.ValueOrDefault;
+                if (pid == _ownPid || pid == 0) return null;
+                return Describe(el, detailed: false);
+            }
+        }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or TimeoutException or UnauthorizedAccessException
+                                       or FlaUI.Core.Exceptions.ElementNotAvailableException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Selects the element under a point and returns its full description.</summary>

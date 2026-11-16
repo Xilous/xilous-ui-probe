@@ -3,13 +3,11 @@ Point at any element. Copy it. Paste it into Claude Code.
 
 ## Xilous Probe for Windows (desktop app)
 
-`desktop/` is a standalone Windows app (.NET 10, WPF) that points at any window or website
-with one hotkey, **Ctrl+Shift+X**:
-
-| Target | How it is read | What you get |
-|---|---|---|
-| **Any Windows app** (Win32, WinForms, WPF, WinUI, Electron, Office, GP…) | UI Automation | Outline + label, then Copy (pointer below), Screenshot, Parent, Alt to measure |
-| **Websites**, in the probe Chrome | DevTools Protocol | The full web pointer from this extension: Copy Code, Screenshot, Edit with design tokens, Select Parent, measure |
+`desktop/` is a standalone Windows app (.NET 10, WPF) that points at anything on screen
+with one hotkey, **Ctrl+Shift+X**: any Windows app (Win32, WinForms, WPF, WinUI, Office,
+GP…), Electron apps and pages in any browser, all read through UI Automation as they run.
+Hover for an outline and label; click to select, then **Copy** (the pointer below),
+**Screenshot**, **Parent**, and hold **Alt** to measure.
 
 Esc steps back one layer at a time, as in the extension: selection, then Point Mode.
 
@@ -17,7 +15,7 @@ Esc steps back one layer at a time, as in the extension: selection, then Point M
 
 ```sh
 cd desktop
-dotnet test                          # unit tests, plus the shim run under Node
+dotnet test                          # unit tests
 dotnet run --project src/XilousProbe # or publish a single .exe:
 dotnet publish src/XilousProbe -c Release -r win-x64 --self-contained -p:PublishSingleFile=true \
   -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish   # ~73 MB, no .NET install needed
@@ -40,39 +38,23 @@ Xilous Probe is a small widget docked on an outer edge of the desktop, floating 
 windows: collapsed, just its round button. It moves like the Xilous Usage Monitor's widget
 (the dock motion is a port of its `dock.rs`):
 
-- **Hover** it and it expands away from its edge: pointing state, the website box, status,
-  settings and the version. It collapses a moment after the cursor leaves, and stays open
-  while you type in it.
-- **Click** the round button to toggle Point Mode; the ring turns terracotta while pointing,
-  and a blue dot shows while the probe Chrome is attached.
+- **Hover** it and it expands away from its edge: pointing state, the hotkey, status and
+  the version. It collapses a moment after the cursor leaves.
+- **Click** the round button to toggle Point Mode; the ring turns terracotta while pointing.
 - **Drag** it anywhere, across monitors too. Near an outer edge a magnet pulls it in and it
   snaps on; let go and it carries the throw onto the nearest outer edge, never one shared by
   two monitors and never under the taskbar. It remembers its edge.
-- **Right-click** it, or the tray icon, for the menu: pointing, Settings, Show/Hide widget,
-  Reset position, Check for updates, Restart as administrator, Quit.
+- **Right-click** it, or the tray icon, for the menu: pointing, Show/Hide widget, Reset
+  position, Check for updates, Restart as administrator, Quit.
 
-It never takes focus from the app you are pointing at, except while you type a URL.
-Settings opens this extension's own settings page, so themes and copy options are shared.
-The interactive prototype it was designed from is `desktop/prototypes/widget.html`.
+It never takes focus from the app you are pointing at. The interactive prototype it was designed from is `desktop/prototypes/widget.html`.
 
-### Websites: the probe Chrome
+### Electron apps and browsers
 
-Type a URL and press Open. Chrome 136+ refuses DevTools on your everyday profile, so the
-app keeps a permanent profile of its own (`%LOCALAPPDATA%\XilousProbe\ChromeProfile`) that
-runs beside your normal Chrome. Sign in to Chrome there once and sync brings your
-bookmarks, extensions and passwords; logins stay after that. Opening another URL while it
-runs adds a tab.
-
-### Electron apps
-
-Electron apps are pointed at through UI Automation like any other window, as they run, with
-no restart: names, types, automation ids (from HTML `id`s), the accessibility path and
-bounds. A page in the probe Chrome that enforces Trusted Types (as VS Code does) falls back
-to UI Automation the same way.
-
-For **file:line** in a React 19 app's pointer, the app needs a dev-only build plugin that
-stamps `data-inspector-*` or `data-source-*` attributes (React 19 dropped `_debugSource`).
-Component names work without it.
+Read like any other window: names, types, automation ids (from HTML `id`s), the
+accessibility path and bounds, with no restart. The hover follows the cursor loosely (a
+lookup at most every 70 ms, always for where the cursor is now) so sweeping across a busy
+Chromium app does not slow it down.
 
 ### The desktop pointer
 
