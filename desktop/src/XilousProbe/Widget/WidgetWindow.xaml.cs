@@ -7,7 +7,6 @@ using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows.Threading;
 using Microsoft.Win32;
-using XilousProbe.Launcher;
 
 namespace XilousProbe.Widget;
 
@@ -26,7 +25,7 @@ public partial class WidgetWindow : Window
 {
     /// <summary>Room around the panel for its shadow, in DIPs.</summary>
     private const double ShadowMargin = 24;
-    private const double ExpandedWidth = 340;
+    private const double ExpandedWidth = 300;
     private const double Radius = 14;
 
     private readonly App _app;
@@ -40,7 +39,7 @@ public partial class WidgetWindow : Window
     private bool _pressOnDisc;
     private bool _saveWhenSettled;
     private bool _menuOpen;
-    private bool _typing;
+    private double _showUntil = double.NegativeInfinity;
 
     public WidgetWindow(App app)
     {
@@ -66,10 +65,6 @@ public partial class WidgetWindow : Window
         Card.MouseLeave += (_, _) => { _motion.SetHovered(false, Now); Kick(); };
         Card.MouseRightButtonUp += OnMenu;
 
-        UrlBox.PreviewMouseLeftButtonDown += (_, _) => BeginTyping();
-        UrlBox.TextChanged += (_, _) => UrlPlaceholder.Visibility = UrlBox.Text.Length == 0 ? Visibility.Visible : Visibility.Collapsed;
-        UrlBox.LostKeyboardFocus += (_, _) => EndTyping();
-        Deactivated += (_, _) => EndTyping();
 
         _displaysChanged = (_, _) => Dispatcher.BeginInvoke(() => { _displays = ReadDisplays(); Kick(); });
         SystemEvents.DisplaySettingsChanged += _displaysChanged;
@@ -88,7 +83,7 @@ public partial class WidgetWindow : Window
         SetActivatable(false);
     }
 
-    /// <summary>Off by default, so clicking the widget never takes focus from the app being pointed at.</summary>
+    /// <summary>The widget never activates, so clicking it never takes focus from the app being pointed at.</summary>
     private void SetActivatable(bool activatable)
     {
         if (_hwnd == 0) return;
@@ -138,12 +133,12 @@ public partial class WidgetWindow : Window
 
     public void SetStatus(string text) => StatusText.Text = text;
 
-    /// <summary>A dot under the round button while the probe Chrome is attached.</summary>
-    public void SetChromeAttached(bool attached)
+    /// <summary>Shows a message in the status line and opens the widget long enough to read it.</summary>
+    public void ShowMessage(string text, double seconds = 5)
     {
-        Dots.Children.Clear();
-        if (attached)
-            Dots.Children.Add(new Ellipse { Width = 6, Height = 6, Fill = new SolidColorBrush(Color.FromRgb(0x6A, 0xA9, 0xFF)), ToolTip = "Probe Chrome attached" });
+        SetStatus(text);
+        _showUntil = Now + seconds;
+        UpdateHold();
     }
 
     // ===== Input =====
@@ -212,51 +207,10 @@ public partial class WidgetWindow : Window
         e.Handled = true;
     }
 
-    private void BeginTyping()
-    {
-        // Typing needs keyboard focus, so the widget becomes activatable just for that.
-        SetActivatable(true);
-        Activate();
-        UrlBox.Focus();
-        _typing = true;
-        UpdateHold();
-    }
-
-    private void EndTyping()
-    {
-        if (!_typing) return;
-        _typing = false;
-        SetActivatable(false);
-        UpdateHold();
-    }
-
     private void UpdateHold()
     {
-        _motion.HoldOpen = _menuOpen || _typing;
+        _motion.HoldOpen = _menuOpen || Now < _showUntil;
         Kick();
-    }
-
-    private void OnUrlKeyDown(object sender, KeyEventArgs e)
-    {
-        if (e.Key == Key.Enter) { OnOpen(sender, e); e.Handled = true; }
-        else if (e.Key == Key.Escape) { EndTyping(); Keyboard.ClearFocus(); e.Handled = true; }
-    }
-
-    private async void OnOpen(object sender, RoutedEventArgs e)
-    {
-        var url = UrlInput.Normalize(UrlBox.Text);
-        if (url is null) { SetStatus("Type a URL, such as localhost:5173 or example.com."); return; }
-        UrlBox.Text = url;
-        _app.Settings.Data.LastUrl = url;
-        _app.Settings.Save();
-        await _app.OpenUrlAsync(url);
-    }
-
-    private void OnSettings(object sender, RoutedEventArgs e) => _app.OpenSettings();
-
-    public void PrefillUrl(string url)
-    {
-        UrlBox.Text = url;
     }
 
     // ===== Animation =====
@@ -274,6 +228,7 @@ public partial class WidgetWindow : Window
         double now = Now, dt = now - _lastTick;
         _lastTick = now;
         double s = Scale;
+        _motion.HoldOpen = _menuOpen || now < _showUntil;
 
         Body.Measure(new Size(ExpandedWidth, double.PositiveInfinity));
         double contentH = Body.DesiredSize.Height;
@@ -281,7 +236,7 @@ public partial class WidgetWindow : Window
         if (frame is not { } f) return;
         Render(f, s, contentH);
 
-        if (!f.Moving)
+        if (!f.Moving && now >= _showUntil)
         {
             _timer.Stop();
             if (_saveWhenSettled)

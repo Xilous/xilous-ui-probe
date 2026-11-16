@@ -6,7 +6,6 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using H.NotifyIcon;
-using XilousProbe.Cdp;
 using XilousProbe.Input;
 using XilousProbe.Widget;
 using XilousProbe.Settings;
@@ -25,9 +24,7 @@ public partial class App : Application
     private TaskbarIcon? _tray;
     private GlobalHotkey? _hotkey;
     private WidgetWindow? _widget;
-    private SettingsWindow? _settingsWindow;
     private DesktopPointer? _desktop;
-    private WebBridge? _bridge;
     private bool _pointMode;
 
     public SettingsStore Settings { get; private set; } = null!;
@@ -57,13 +54,8 @@ public partial class App : Application
         };
 
         Settings = new SettingsStore();
-        _bridge = new WebBridge(Settings);
-        _bridge.PointModeRequested += on => Dispatcher.BeginInvoke(() => SetPointMode(on));
-        _bridge.SettingsRequested += () => Dispatcher.BeginInvoke(OpenSettings);
-        _bridge.Log += Log;
-        _bridge.BrowsersChanged += () => Dispatcher.BeginInvoke(() => _widget?.SetChromeAttached(_bridge.Browsers.Any(b => b.IsOpen)));
 
-        _desktop = new DesktopPointer(Dispatcher, pid => _bridge.OwnsProcess(pid));
+        _desktop = new DesktopPointer(Dispatcher);
         _desktop.ExitRequested += () => SetPointMode(false);
 
         _hotkey = new GlobalHotkey(HotkeyModifiers, HotkeyKey);
@@ -71,7 +63,6 @@ public partial class App : Application
 
         CreateTray();
         if (!Settings.Data.WidgetHidden) ShowWidget();
-        _ = ReattachProbeChromeAsync();
         StartUpdateChecks();
     }
 
@@ -103,6 +94,7 @@ public partial class App : Application
         if (_updateBusy) return;
         if (_stagedUpdate is not null) { ApplyStagedUpdate(); return; }
         _updateBusy = true;
+        if (manual) _widget?.ShowMessage("Checking for updates…", 30);
         try
         {
             var update = await _updater.CheckAsync();
@@ -137,8 +129,13 @@ public partial class App : Application
         Quit();
     }
 
+    /// <summary>
+    /// Tells the user something: in the widget's status line, opened so it can be read, and as a
+    /// Windows notification from the tray icon (which Focus assist or notification settings may hide).
+    /// </summary>
     private void Notify(string title, string message)
     {
+        if (_widget is { IsVisible: true }) _widget.ShowMessage(message);
         try { _tray?.ShowNotification(title, message); }
         catch { /* notifications off */ }
         Log($"{title}: {message}");
@@ -149,8 +146,6 @@ public partial class App : Application
     {
         var point = new MenuItem { Header = $"{(_pointMode ? "Stop" : "Start")} pointing", InputGestureText = HotkeyDisplay, FontWeight = FontWeights.SemiBold };
         point.Click += (_, _) => TogglePointMode();
-        var settings = new MenuItem { Header = "Settings" };
-        settings.Click += (_, _) => OpenSettings();
         var widget = new MenuItem { Header = _widget is { IsVisible: true } ? "Hide widget" : "Show widget" };
         widget.Click += (_, _) => { if (_widget is { IsVisible: true }) HideWidget(); else ShowWidget(); };
         var reset = new MenuItem { Header = "Reset position" };
@@ -165,7 +160,7 @@ public partial class App : Application
         quit.Click += (_, _) => Quit();
 
         var menu = new ContextMenu();
-        foreach (var item in new object[] { point, settings, new Separator(), widget, reset, new Separator(), version, updates, admin, quit })
+        foreach (var item in new object[] { point, new Separator(), widget, reset, new Separator(), version, updates, admin, quit })
             menu.Items.Add(item);
         return menu;
     }
@@ -192,8 +187,6 @@ public partial class App : Application
     {
         _widget ??= new WidgetWindow(this);
         _widget.SetPointing(_pointMode);
-        _widget.SetChromeAttached(_bridge?.Browsers.Any(b => b.IsOpen) ?? false);
-        _widget.PrefillUrl(Settings.Data.LastUrl);
         _widget.Show();
         if (Settings.Data.WidgetHidden) { Settings.Data.WidgetHidden = false; Settings.Save(); }
         RefreshTrayMenu();
@@ -205,17 +198,6 @@ public partial class App : Application
         Settings.Data.WidgetHidden = true;
         Settings.Save();
         RefreshTrayMenu();
-    }
-
-    public void OpenSettings()
-    {
-        if (_settingsWindow is null)
-        {
-            _settingsWindow = new SettingsWindow(Settings);
-            _settingsWindow.Closed += (_, _) => _settingsWindow = null;
-        }
-        _settingsWindow.Show();
-        _settingsWindow.Activate();
     }
 
     public void TogglePointMode() => SetPointMode(!_pointMode);
@@ -233,59 +215,11 @@ public partial class App : Application
             _pointMode = false;
             MessageBox.Show(ex.Message, "Point Mode could not start");
         }
-        _ = _bridge!.SetPointModeAsync(_pointMode);
         RefreshTrayMenu();
         _widget?.SetPointing(_pointMode);
         if (_tray is not null) _tray.ToolTipText = _pointMode ? "Xilous Probe: pointing" : "Xilous Probe";
         PointModeChanged?.Invoke();
         if (!_pointMode && _stagedUpdate is not null) Dispatcher.BeginInvoke(ApplyStagedUpdate);
-    }
-
-    /// <summary>Opens a URL in the probe Chrome: a new tab if it is running, a fresh launch if not.</summary>
-    public async Task OpenUrlAsync(string url)
-    {
-        try
-        {
-            if (await ChromeLauncher.FindRunningPortAsync() is int running)
-            {
-                var browser = await _bridge!.AttachAsync("Probe Chrome", running, TimeSpan.FromSeconds(5));
-                await browser.OpenTabAsync(url);
-                _widget?.SetStatus($"Opened in the probe Chrome. {HotkeyDisplay} to point.");
-                return;
-            }
-
-            bool firstRun = !Directory.Exists(ChromeLauncher.ProfileDir);
-            _widget?.SetStatus("Starting the probe Chrome…");
-            int port = await ChromeLauncher.LaunchAsync(url);
-            await _bridge!.AttachAsync("Probe Chrome", port, TimeSpan.FromSeconds(15));
-            _widget?.SetStatus(firstRun || !Settings.Data.ChromeProfileIntroShown
-                ? "This is the probe Chrome's own profile. Sign in to Chrome there once (profile icon, top right) and sync brings your bookmarks, extensions and passwords. Logins stay after that."
-                : $"Probe Chrome is ready. {HotkeyDisplay} to point.");
-            if (!Settings.Data.ChromeProfileIntroShown)
-            {
-                Settings.Data.ChromeProfileIntroShown = true;
-                Settings.Save();
-            }
-        }
-        catch (Exception ex)
-        {
-            Log($"Open URL failed: {ex}");
-            _widget?.SetStatus($"Could not open it: {ex.Message}");
-        }
-    }
-
-    /// <summary>A probe Chrome left running from the last session is picked back up.</summary>
-    private async Task ReattachProbeChromeAsync()
-    {
-        try
-        {
-            if (await ChromeLauncher.FindRunningPortAsync() is int port)
-                await _bridge!.AttachAsync("Probe Chrome", port, TimeSpan.FromSeconds(3));
-        }
-        catch (Exception ex)
-        {
-            Log($"Reattach failed: {ex.Message}");
-        }
     }
 
     private static bool IsElevated
@@ -322,7 +256,6 @@ public partial class App : Application
         _desktop?.Dispose();
         _hotkey?.Dispose();
         _tray?.Dispose();
-        if (_bridge is not null) _bridge.DisposeAsync().AsTask().Wait(TimeSpan.FromSeconds(3));
         Shutdown();
     }
 

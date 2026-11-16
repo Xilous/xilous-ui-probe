@@ -137,18 +137,8 @@
         <span>Ctrl+Shift+X · Esc steps back</span>
       </div>
     </div>
-    <div class="section">
-      <label class="label" for="url">WEBSITE</label>
-      <div class="url-row">
-        <input id="url" type="text" placeholder="localhost:5173 or example.com" autocomplete="off" spellcheck="false">
-        <button class="primary" type="button" id="open">Open</button>
-      </div>
-    </div>
     <div class="foot">
       <span id="status">Ready. Nothing attached yet.</span>
-      <button class="icon-btn" type="button" id="settings" aria-label="Settings">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
-      </button>
       <span class="ver">v0.1.1</span>
     </div>
   </div>
@@ -162,7 +152,6 @@
 
 <div id="menu" role="menu" aria-label="Xilous Probe">
   <button type="button" role="menuitem" data-act="point"><b id="menu-point">Start pointing</b><span>Ctrl+Shift+X</span></button>
-  <button type="button" role="menuitem" data-act="settings">Settings</button>
   <hr>
   <button type="button" role="menuitem" data-act="reset">Reset position</button>
   <button type="button" role="menuitem" data-act="updates">Check for updates</button>
@@ -337,7 +326,6 @@ function buildDesk() {
 const widget = document.getElementById("widget");
 const content = document.getElementById("content");
 const disc = document.getElementById("disc");
-const urlInput = document.getElementById("url");
 
 const motion = {
   x: new Spring(), y: new Spring(), expand: new Spring(), lift: new Spring(),
@@ -393,7 +381,7 @@ function release(now) {
 let menuOpen = false;
 function wantsExpanded(now) {
   if (dragging()) return false;
-  return motion.hovered || now - motion.leftAt < HOVER_LINGER || document.activeElement === urlInput || menuOpen;
+  return motion.hovered || now - motion.leftAt < HOVER_LINGER || menuOpen;
 }
 
 function tick(now, dt) {
@@ -605,16 +593,6 @@ function renderDots() {
   dots.innerHTML = "";
   if (chromeAttached) dots.appendChild(Object.assign(document.createElement("span"), { style: "background: var(--chrome-dot)" }));
 }
-document.getElementById("open").addEventListener("click", () => {
-  const raw = urlInput.value.trim();
-  if (!raw) { statusEl.textContent = "Type a URL first, such as localhost:5173."; urlInput.focus(); return; }
-  const url = raw.includes("://") ? raw : (/^(localhost|127\.)/.test(raw) ? "http://" : "https://") + raw;
-  urlInput.value = url;
-  chromeAttached = true; renderDots();
-  statusEl.textContent = "Opened in the probe Chrome.";
-});
-urlInput.addEventListener("keydown", (ev) => { if (ev.key === "Enter") document.getElementById("open").click(); });
-document.getElementById("settings").addEventListener("click", () => toast("Settings would open here"));
 
 // ===== Point Mode on the mock app =====
 const outline = document.getElementById("outline"), tag = document.getElementById("tag");

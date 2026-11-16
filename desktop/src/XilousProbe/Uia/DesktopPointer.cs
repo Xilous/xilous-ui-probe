@@ -7,16 +7,15 @@ namespace XilousProbe.Uia;
 
 /// <summary>
 /// Point Mode for desktop windows: hover outlines through UI Automation, click to
-/// select, then Copy, Screenshot, Parent, and Alt to measure. Windows the web pointer
-/// covers (the probe Chrome, attached Electron apps) are left alone: the pointer
-/// inside the page handles them, mouse and keys included.
+/// select, then Copy, Screenshot, Parent, and Alt to measure. Every window is read the
+/// same way: Win32, WPF, WinUI, browsers and Electron apps alike. Only Xilous Probe's own
+/// windows (the widget, the toolbar) are left alone.
 /// </summary>
 public sealed class DesktopPointer : IDisposable
 {
     private readonly Dispatcher _dispatcher;
     private readonly UiaEngine _engine = new();
     private readonly InputHooks _hooks;
-    private readonly Func<uint, bool> _isWebProcess;
     private readonly uint _ownPid = (uint)Environment.ProcessId;
 
     private readonly HighlightWindow _hover = new();
@@ -30,14 +29,15 @@ public sealed class DesktopPointer : IDisposable
     private bool _active;
     private readonly DispatcherTimer _poll;
     private (int X, int Y) _lastCursor = (int.MinValue, int.MinValue);
+    /// <summary>The element the hover outline is on now, while one is shown.</summary>
+    private PxRect? _hoverShown;
 
     /// <summary>Esc at the last layer: the user wants Point Mode off.</summary>
     public event Action? ExitRequested;
 
-    public DesktopPointer(Dispatcher dispatcher, Func<uint, bool> isWebProcess)
+    public DesktopPointer(Dispatcher dispatcher)
     {
         _dispatcher = dispatcher;
-        _isWebProcess = isWebProcess;
         _hooks = new InputHooks(dispatcher)
         {
             ShouldCaptureClick = ShouldCaptureClick,
@@ -87,6 +87,7 @@ public sealed class DesktopPointer : IDisposable
         _poll.Stop();
         _hooks.Uninstall();
         _selected = null;
+        _hoverShown = null;
         _alt = false;
         _engine.ClearSelection();
         HideAll();
@@ -112,23 +113,18 @@ public sealed class DesktopPointer : IDisposable
     private bool ShouldCaptureClick(int x, int y)
     {
         uint pid = ProcessAt(x, y);
-        return pid != 0 && pid != _ownPid && !_isWebProcess(pid);
+        return pid != 0 && pid != _ownPid;
     }
 
-    private bool ShouldCaptureKeys()
-    {
-        var fg = Native.GetForegroundWindow();
-        return fg == 0 || !_isWebProcess(Native.ProcessIdOf(fg));
-    }
+    private static bool ShouldCaptureKeys() => true;
 
     private void OnMoved(int x, int y)
     {
         if (!_active) return;
         uint pid = ProcessAt(x, y);
-        if (pid == _ownPid) return; // over our own toolbar or launcher: keep what is shown
-        if (pid == 0 || _isWebProcess(pid))
+        if (pid == _ownPid) return; // over our own widget or toolbar: keep what is shown
+        if (pid == 0)
         {
-            // The page's own pointer takes over inside a web window.
             _hover.HideOverlay();
             _measureTarget.HideOverlay();
             _redline.HideOverlay();
@@ -136,14 +132,26 @@ public sealed class DesktopPointer : IDisposable
             return;
         }
         if (_selected is not null && !_alt) return; // the selection holds still until Esc or another click
+        // The outline never trails behind: once the cursor leaves the element it shows, it goes,
+        // and the next lookup (for wherever the cursor is by then) draws the new one.
+        if (_selected is null && _hoverShown is { } shown && !shown.Contains(x, y)) HideHover();
         _engine.RequestHover(x, y);
+    }
+
+    private void HideHover()
+    {
+        _hoverShown = null;
+        _hover.HideOverlay();
+        _info.HideOverlay();
     }
 
     private void OnHovered(ElementInfo? info)
     {
         if (!_active) return;
-        // A lookup that finished after the cursor moved into a web window is stale.
-        if (info is not null && Native.GetCursorPos(out var cur) && _isWebProcess(ProcessAt(cur.X, cur.Y))) return;
+        // A result for a spot the cursor has already left is stale: skip it. The lookup for where
+        // the cursor is now is already on its way.
+        if (info is not null && Native.GetCursorPos(out var cur) && (cur.X, cur.Y) != _lastCursor && !info.Bounds.Contains(cur.X, cur.Y))
+            return;
         if (info is null || info.Bounds.IsEmpty)
         {
             _hover.HideOverlay();
@@ -161,6 +169,7 @@ public sealed class DesktopPointer : IDisposable
             return;
         }
 
+        _hoverShown = info.Bounds;
         _hover.Show(info.Bounds, HighlightStyle.Hover);
         _info.SetInfo(info);
         _info.SetSelected(false, false);
