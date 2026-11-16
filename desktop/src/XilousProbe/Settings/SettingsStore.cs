@@ -4,36 +4,6 @@ using System.Text.Json.Nodes;
 
 namespace XilousProbe.Settings;
 
-/// <summary>How an app in the Apps list is started.</summary>
-public enum AppKind
-{
-    /// <summary>A command run in a working directory, such as an electron-vite dev server.</summary>
-    DevCommand,
-    /// <summary>A packaged executable, launched with --remote-debugging-port appended.</summary>
-    Executable,
-    /// <summary>An app already running with remote debugging on a known port.</summary>
-    Attach,
-}
-
-public sealed class AppEntry
-{
-    public string Name { get; set; } = "";
-    public AppKind Kind { get; set; }
-    /// <summary>The command line (DevCommand) or the exe path (Executable). {port} is replaced with the debugging port.</summary>
-    public string Command { get; set; } = "";
-    public string Arguments { get; set; } = "";
-    public string WorkingDirectory { get; set; } = "";
-    public int Port { get; set; }
-
-    [System.Text.Json.Serialization.JsonIgnore]
-    public string Summary => Kind switch
-    {
-        AppKind.Attach => $"attach to port {Port}",
-        _ => $"{Command} {Arguments}".Replace("{port}", Port.ToString()).Trim() +
-             (string.IsNullOrEmpty(WorkingDirectory) ? "" : $"  ·  {WorkingDirectory}"),
-    };
-}
-
 /// <summary>
 /// Everything the app remembers, in %APPDATA%\XilousProbe\settings.json.
 /// <see cref="WebPrefs"/> is the extension's chrome.storage.local, kept as raw JSON so the
@@ -43,7 +13,10 @@ public sealed class SettingsData
 {
     public string LastUrl { get; set; } = "";
     public bool ChromeProfileIntroShown { get; set; }
-    public List<AppEntry> Apps { get; set; } = [];
+    /// <summary>Where the widget docks: the point it snaps to the nearest outer edge from, in physical pixels.</summary>
+    public double? WidgetX { get; set; }
+    public double? WidgetY { get; set; }
+    public bool WidgetHidden { get; set; }
     public JsonObject WebPrefs { get; set; } = [];
 }
 
@@ -87,7 +60,6 @@ public sealed class SettingsStore
             File.Copy(_path, _path + ".broken", overwrite: true);
             Data = new();
         }
-        if (Data.Apps.Count == 0) Data.Apps.AddRange(DefaultApps());
     }
 
     public void Save()
@@ -144,22 +116,5 @@ public sealed class SettingsStore
         if (changed.Count == 0) return;
         Save();
         WebPrefsChanged?.Invoke(changed);
-    }
-
-    public static IEnumerable<AppEntry> DefaultApps()
-    {
-        var fieldwire = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "fieldwire_client_ucsh", "desktop");
-        if (Directory.Exists(fieldwire))
-        {
-            yield return new AppEntry
-            {
-                Name = "Fieldwire client (dev)",
-                Kind = AppKind.DevCommand,
-                Command = "npm",
-                Arguments = "run dev -- --remoteDebuggingPort {port}",
-                WorkingDirectory = fieldwire,
-                Port = 9333,
-            };
-        }
     }
 }

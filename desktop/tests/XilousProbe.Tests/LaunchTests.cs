@@ -33,36 +33,6 @@ public class ChromeLauncherTests
         Assert.DoesNotContain(ChromeLauncher.BuildArguments(@"C:\p", null), a => a.StartsWith("http"));
 }
 
-public class AppLauncherTests
-{
-    [Fact]
-    public void Runs_a_dev_command_through_cmd_with_the_port_filled_in()
-    {
-        var entry = new AppEntry { Kind = AppKind.DevCommand, Command = "npm", Arguments = "run dev -- --remoteDebuggingPort {port}", Port = 9333 };
-        var (file, args) = AppLauncher.BuildCommand(entry)!.Value;
-        Assert.Equal("cmd.exe", file);
-        Assert.Equal("/d /s /c \"npm run dev -- --remoteDebuggingPort 9333\"", args);
-    }
-
-    [Fact]
-    public void Adds_the_debugging_switch_to_an_executable()
-    {
-        var entry = new AppEntry { Kind = AppKind.Executable, Command = @"C:\Apps\Thing.exe", Arguments = "--flag", Port = 9400 };
-        Assert.Equal((@"C:\Apps\Thing.exe", "--flag --remote-debugging-port=9400"), AppLauncher.BuildCommand(entry));
-    }
-
-    [Fact]
-    public void Does_not_add_the_switch_twice()
-    {
-        var entry = new AppEntry { Kind = AppKind.Executable, Command = "a.exe", Arguments = "--remote-debugging-port={port}", Port = 9401 };
-        Assert.Equal(("a.exe", "--remote-debugging-port=9401"), AppLauncher.BuildCommand(entry));
-    }
-
-    [Fact]
-    public void Attach_starts_nothing() =>
-        Assert.Null(AppLauncher.BuildCommand(new AppEntry { Kind = AppKind.Attach, Port = 9222 }));
-}
-
 public class UrlTests
 {
     [Theory]
@@ -74,7 +44,7 @@ public class UrlTests
     [InlineData("", null)]
     [InlineData("   ", null)]
     public void Normalizes_what_people_type(string raw, string? expected) =>
-        Assert.Equal(expected, LauncherWindow.NormalizeUrl(raw));
+        Assert.Equal(expected, UrlInput.Normalize(raw));
 }
 
 public sealed class SettingsStoreTests : IDisposable

@@ -109,6 +109,27 @@ internal static partial class Native
     [return: MarshalAs(UnmanagedType.Bool)]
     public static partial bool GetMonitorInfo(nint hMonitor, ref MONITORINFO lpmi);
 
+    public const uint MONITORINFOF_PRIMARY = 1;
+
+    public delegate bool MonitorEnumProc(nint hMonitor, nint hdc, nint lprcMonitor, nint dwData);
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool EnumDisplayMonitors(nint hdc, nint lprcClip, MonitorEnumProc lpfnEnum, nint dwData);
+
+    /// <summary>Every monitor's bounds and work area in physical pixels, and whether it is the primary one.</summary>
+    public static List<(RECT Bounds, RECT Work, bool Primary)> Monitors()
+    {
+        var list = new List<(RECT, RECT, bool)>();
+        EnumDisplayMonitors(0, 0, (h, _, _, _) =>
+        {
+            var mi = new MONITORINFO { cbSize = Marshal.SizeOf<MONITORINFO>() };
+            if (GetMonitorInfo(h, ref mi)) list.Add((mi.rcMonitor, mi.rcWork, (mi.dwFlags & MONITORINFOF_PRIMARY) != 0));
+            return true;
+        }, 0);
+        return list;
+    }
+
     /// <summary>The work area (screen minus taskbar) of the monitor nearest a point, in physical pixels.</summary>
     public static RECT WorkAreaAt(int x, int y)
     {

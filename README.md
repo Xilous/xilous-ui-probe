@@ -3,14 +3,13 @@ Point at any element. Copy it. Paste it into Claude Code.
 
 ## Xilous Probe for Windows (desktop app)
 
-`desktop/` is a standalone Windows app (.NET 10, WPF) that points at three kinds of
-target with one hotkey, **Ctrl+Shift+X**:
+`desktop/` is a standalone Windows app (.NET 10, WPF) that points at any window or website
+with one hotkey, **Ctrl+Shift+X**:
 
 | Target | How it is read | What you get |
 |---|---|---|
-| **Any Windows app** (Win32, WinForms, WPF, WinUI, Office, GP…) | UI Automation | Outline + label, then Copy (pointer below), Screenshot, Parent, Alt to measure |
+| **Any Windows app** (Win32, WinForms, WPF, WinUI, Electron, Office, GP…) | UI Automation | Outline + label, then Copy (pointer below), Screenshot, Parent, Alt to measure |
 | **Websites**, in the probe Chrome | DevTools Protocol | The full web pointer from this extension: Copy Code, Screenshot, Edit with design tokens, Select Parent, measure |
-| **Electron apps** launched from the app (the Fieldwire client, for one) | DevTools Protocol | The same full web pointer, inside the app's windows, React component names included |
 
 Esc steps back one layer at a time, as in the extension: selection, then Point Mode.
 
@@ -35,8 +34,26 @@ that, verifies the download against the release's SHA-256 digest, swaps itself i
 and restarts, waiting until you are not mid-Point Mode. The tray menu shows the version
 and has **Check for updates**. Builds made locally never update themselves.
 
-It lives in the tray; left-click the tray icon to toggle Point Mode. Settings opens this
-extension's own settings page, so themes and copy options are shared.
+### The widget
+
+Xilous Probe is a small widget docked on an outer edge of the desktop, floating above other
+windows: collapsed, just its round button. It moves like the Xilous Usage Monitor's widget
+(the dock motion is a port of its `dock.rs`):
+
+- **Hover** it and it expands away from its edge: pointing state, the website box, status,
+  settings and the version. It collapses a moment after the cursor leaves, and stays open
+  while you type in it.
+- **Click** the round button to toggle Point Mode; the ring turns terracotta while pointing,
+  and a blue dot shows while the probe Chrome is attached.
+- **Drag** it anywhere, across monitors too. Near an outer edge a magnet pulls it in and it
+  snaps on; let go and it carries the throw onto the nearest outer edge, never one shared by
+  two monitors and never under the taskbar. It remembers its edge.
+- **Right-click** it, or the tray icon, for the menu: pointing, Settings, Show/Hide widget,
+  Reset position, Check for updates, Restart as administrator, Quit.
+
+It never takes focus from the app you are pointing at, except while you type a URL.
+Settings opens this extension's own settings page, so themes and copy options are shared.
+The interactive prototype it was designed from is `desktop/prototypes/widget.html`.
 
 ### Websites: the probe Chrome
 
@@ -48,18 +65,10 @@ runs adds a tab.
 
 ### Electron apps
 
-Add an app under **Electron apps**, as one of:
-
-- **Dev command**: a command in a working directory. electron-vite:
-  `npm run dev -- --remoteDebuggingPort {port}`; electron-forge:
-  `npm start -- -- --remote-debugging-port={port}`. The Fieldwire client is preset when
-  `Documents\fieldwire_client_ucsh` exists.
-- **Packaged .exe**: started with `--remote-debugging-port={port}` added.
-- **Attach**: just a port, for an app already running with remote debugging.
-
-A window the web pointer cannot reach (an app whose fuses block remote debugging, or a
-page that enforces Trusted Types, as VS Code does) is pointed at through UI Automation
-instead.
+Electron apps are pointed at through UI Automation like any other window, as they run, with
+no restart: names, types, automation ids (from HTML `id`s), the accessibility path and
+bounds. A page in the probe Chrome that enforces Trusted Types (as VS Code does) falls back
+to UI Automation the same way.
 
 For **file:line** in a React 19 app's pointer, the app needs a dev-only build plugin that
 stamps `data-inspector-*` or `data-source-*` attributes (React 19 dropped `_debugSource`).
