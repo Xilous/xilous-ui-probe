@@ -41,6 +41,7 @@ public partial class WidgetWindow : Window
     private bool _saveWhenSettled;
     private bool _menuOpen;
     private bool _typing;
+    private double _showUntil = double.NegativeInfinity;
 
     public WidgetWindow(App app)
     {
@@ -138,6 +139,14 @@ public partial class WidgetWindow : Window
 
     public void SetStatus(string text) => StatusText.Text = text;
 
+    /// <summary>Shows a message in the status line and opens the widget long enough to read it.</summary>
+    public void ShowMessage(string text, double seconds = 5)
+    {
+        SetStatus(text);
+        _showUntil = Now + seconds;
+        UpdateHold();
+    }
+
     /// <summary>A dot under the round button while the probe Chrome is attached.</summary>
     public void SetChromeAttached(bool attached)
     {
@@ -232,7 +241,7 @@ public partial class WidgetWindow : Window
 
     private void UpdateHold()
     {
-        _motion.HoldOpen = _menuOpen || _typing;
+        _motion.HoldOpen = _menuOpen || _typing || Now < _showUntil;
         Kick();
     }
 
@@ -274,6 +283,7 @@ public partial class WidgetWindow : Window
         double now = Now, dt = now - _lastTick;
         _lastTick = now;
         double s = Scale;
+        _motion.HoldOpen = _menuOpen || _typing || now < _showUntil;
 
         Body.Measure(new Size(ExpandedWidth, double.PositiveInfinity));
         double contentH = Body.DesiredSize.Height;
@@ -281,7 +291,7 @@ public partial class WidgetWindow : Window
         if (frame is not { } f) return;
         Render(f, s, contentH);
 
-        if (!f.Moving)
+        if (!f.Moving && now >= _showUntil)
         {
             _timer.Stop();
             if (_saveWhenSettled)

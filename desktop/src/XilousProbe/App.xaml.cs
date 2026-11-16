@@ -103,6 +103,7 @@ public partial class App : Application
         if (_updateBusy) return;
         if (_stagedUpdate is not null) { ApplyStagedUpdate(); return; }
         _updateBusy = true;
+        if (manual) _widget?.ShowMessage("Checking for updates…", 30);
         try
         {
             var update = await _updater.CheckAsync();
@@ -137,8 +138,13 @@ public partial class App : Application
         Quit();
     }
 
+    /// <summary>
+    /// Tells the user something: in the widget's status line, opened so it can be read, and as a
+    /// Windows notification from the tray icon (which Focus assist or notification settings may hide).
+    /// </summary>
     private void Notify(string title, string message)
     {
+        if (_widget is { IsVisible: true }) _widget.ShowMessage(message);
         try { _tray?.ShowNotification(title, message); }
         catch { /* notifications off */ }
         Log($"{title}: {message}");
