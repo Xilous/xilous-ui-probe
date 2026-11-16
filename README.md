@@ -40,12 +40,18 @@ windows: collapsed, just its round button. It moves like the Xilous Usage Monito
 
 - **Hover** it and it expands away from its edge: pointing state, the hotkey, status and
   the version. It collapses a moment after the cursor leaves.
-- **Click** the round button to toggle Point Mode; the ring turns terracotta while pointing.
+- **Click** the round button to toggle Point Mode; the ring takes the theme's accent while pointing.
 - **Drag** it anywhere, across monitors too. Near an outer edge a magnet pulls it in and it
   snaps on; let go and it carries the throw onto the nearest outer edge, never one shared by
   two monitors and never under the taskbar. It remembers its edge.
 - **Right-click** it, or the tray icon, for the menu: pointing, Show/Hide widget, Reset
   position, Check for updates, Restart as administrator, Quit.
+
+It wears the Xilous Usage Monitor's theme: whichever theme you pick in the monitor's
+appearance studio (Graphite, Paper, Midnight, Black & gold, Red & white and the rest, or your
+own colours) paints the widget, the hover outline, the label and the measurements, and a
+change shows at once. Without the monitor it follows Windows between Graphite and Paper. The
+outline takes the theme's 7d colour and the measurements its Fable colour.
 
 It never takes focus from the app you are pointing at. The interactive prototype it was designed from is `desktop/prototypes/widget.html`.
 
@@ -74,13 +80,13 @@ administrator** in the tray menu. Logs go to `%LOCALAPPDATA%\XilousProbe\xilous-
 
 ## Install
 
-**[Install from Chrome Web Store](https://chromewebstore.google.com/detail/igboajiogegaabhkjehjmdgmfkcopogj?utm_source=item-share-cb)**
+Xilous Probe is not on the Chrome Web Store; load it from source.
 
 ### From source
 
 ```sh
-git clone https://github.com/Jingquank/Claude-Code-Probe.git
-cd Claude-Code-Probe
+git clone https://github.com/Xilous/xilous-ui-probe.git
+cd xilous-ui-probe
 npm install
 ```
 
@@ -209,13 +215,16 @@ a measuring vignette while you tune redlines, the edit panel while you tune edit
 clipboard payload itself while you tune copying. Hovering a row spotlights the part of
 the preview that row controls.
 
-**Appearance** — the theme. Eight of them.
+**Appearance** — the theme. Eleven choices, matching the Xilous Usage Monitor's palettes.
 
 | | |
 |---|---|
-| Terracotta Dark | the default — unchanged from before there was a switch |
-| Terracotta Light | same accent, light ground |
-| System | follows your OS, and switches when it does |
+| Graphite | the default — neutral charcoal with a blue accent |
+| Paper | Graphite's light counterpart |
+| System | follows your OS, Graphite or Paper, and switches when it does |
+| Midnight | blue-black ground, peach accent |
+| Black & gold | near-black ground, gold accent |
+| Red & white | white ground, red accent |
 | Dracula · Monokai · Nord · Solarized Dark · Tokyo Night | |
 
 The info panel already colours tag, `#id` and `.class` separately, which is the same

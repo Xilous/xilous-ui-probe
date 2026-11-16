@@ -12,9 +12,12 @@
 // setting, the "theme" convention.
 
 const THEMES = [
-  { id: "terracotta-dark", name: "Terracotta Dark" },
-  { id: "terracotta-light", name: "Terracotta Light" },
+  { id: "graphite", name: "Graphite" },
+  { id: "paper", name: "Paper" },
   { id: "system", name: "System" },
+  { id: "midnight", name: "Midnight" },
+  { id: "black-and-gold", name: "Black & gold" },
+  { id: "red-and-white", name: "Red & white" },
   { id: "dracula", name: "Dracula" },
   { id: "monokai", name: "Monokai" },
   { id: "nord", name: "Nord" },
@@ -23,7 +26,16 @@ const THEMES = [
 ];
 
 const THEME_KEY = "theme";
-const DEFAULT_THEME = "terracotta-dark";
+const DEFAULT_THEME = "graphite";
+
+// Theme ids that were renamed when the terracotta pair was replaced. A value
+// stored by an older version still resolves to its successor. The same map is
+// in content.js and background.js — change all three.
+const LEGACY_THEMES = {
+  "terracotta-dark": "graphite",
+  "terracotta-light": "paper",
+};
+const migrateTheme = (id) => LEGACY_THEMES[id] || id;
 
 // Mirror of REDLINE_PREFS in content.js — change both.
 const REDLINE_PREFS = {
@@ -268,15 +280,15 @@ let pointerResolves = true;
 // will actually render.
 function resolveTheme(pref) {
   if (pref !== "system") return pref;
-  return darkQuery.matches ? "terracotta-dark" : "terracotta-light";
+  return darkQuery.matches ? "graphite" : "paper";
 }
 
 function swatchMarkup(id) {
   if (id === "system") {
     return (
       '<span class="sp-sw sp-sw-split" aria-hidden="true">' +
-      '<span data-ccp-theme="terracotta-dark"><i></i><i></i></span>' +
-      '<span data-ccp-theme="terracotta-light"><i></i><i></i></span>' +
+      '<span data-ccp-theme="graphite"><i></i><i></i></span>' +
+      '<span data-ccp-theme="paper"><i></i><i></i></span>' +
       "</span>"
     );
   }
@@ -652,7 +664,7 @@ darkQuery.addEventListener("change", () => {
 store.onChange((changes, area) => {
   if (area !== "local") return;
   if (changes[THEME_KEY]) {
-    const next = changes[THEME_KEY].newValue || DEFAULT_THEME;
+    const next = migrateTheme(changes[THEME_KEY].newValue || DEFAULT_THEME);
     if (next !== current) {
       current = next;
       paintTheme();
@@ -671,7 +683,7 @@ store.onChange((changes, area) => {
 });
 
 store.get([THEME_KEY, ...Object.keys(ALL_PREFS)], (stored) => {
-  if (stored && typeof stored[THEME_KEY] === "string") current = stored[THEME_KEY];
+  if (stored && typeof stored[THEME_KEY] === "string") current = migrateTheme(stored[THEME_KEY]);
   for (const key of Object.keys(ALL_PREFS)) {
     if (stored && ALL_PREFS[key].includes(stored[key])) prefs[key] = stored[key];
   }

@@ -1,7 +1,7 @@
 const activeTabs = new Set();
 
 const THEME_KEY = "theme";
-const DEFAULT_BADGE = "#d97757"; // terracotta-dark's accent
+const DEFAULT_BADGE = "#38a3f5"; // graphite's accent
 
 // The content script's injection lists are duplicated here for tabs that were
 // already open when the extension was installed or reloaded — chrome.scripting
@@ -10,12 +10,23 @@ const DEFAULT_BADGE = "#d97757"; // terracotta-dark's accent
 const INJECT_JS = ["lib/html2canvas.min.js", "content.js"];
 const INJECT_CSS = ["tokens.css", "content.css"];
 
+// Theme ids that were renamed when the terracotta pair was replaced. A value
+// stored by an older version still resolves to its successor. The same map is
+// in content.js and settings/settings.js — change all three.
+const LEGACY_THEMES = {
+  "terracotta-dark": "graphite",
+  "terracotta-light": "paper",
+};
+
 // The badge is browser chrome, not page chrome, so it can't read tokens.css.
 // These mirror --ccp-accent from each theme block; a theme missing from here
 // falls back to the default rather than showing no badge colour.
 const BADGE_ACCENT = {
-  "terracotta-dark": "#d97757",
-  "terracotta-light": "#a94f30",
+  graphite: "#38a3f5",
+  paper: "#1d6fd8",
+  midnight: "#f0aa87",
+  "black-and-gold": "#d4af37",
+  "red-and-white": "#d7192a",
   dracula: "#bd93f9",
   monokai: "#f92672",
   nord: "#88c0d0",
@@ -26,10 +37,11 @@ const BADGE_ACCENT = {
 async function badgeColor() {
   try {
     const stored = await chrome.storage.local.get(THEME_KEY);
-    let theme = stored[THEME_KEY] || "terracotta-dark";
-    // "system" has no palette; both terracotta blocks share an accent family, so
+    let theme = stored[THEME_KEY] || "graphite";
+    theme = LEGACY_THEMES[theme] || theme;
+    // "system" has no palette; graphite and paper share a blue accent family, so
     // the dark one's accent is the right badge in either resolution.
-    if (theme === "system") theme = "terracotta-dark";
+    if (theme === "system") theme = "graphite";
     return BADGE_ACCENT[theme] || DEFAULT_BADGE;
   } catch {
     return DEFAULT_BADGE;

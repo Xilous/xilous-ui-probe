@@ -11,19 +11,16 @@ namespace XilousProbe.Overlay;
 /// </summary>
 public sealed class InfoWindow : OverlayWindow
 {
-    private static readonly Brush CardBg = new SolidColorBrush(Color.FromRgb(0x1F, 0x1E, 0x1C));
-    private static readonly Brush CardLine = new SolidColorBrush(Color.FromRgb(0x3A, 0x38, 0x35));
-    private static readonly Brush Text = new SolidColorBrush(Color.FromRgb(0xF4, 0xF1, 0xEC));
-    private static readonly Brush Muted = new SolidColorBrush(Color.FromRgb(0xA8, 0xA2, 0x99));
-    private static readonly Brush AccentBrush = new SolidColorBrush(HighlightWindow.Accent);
     private static readonly FontFamily Mono = new("Cascadia Mono, Consolas");
 
-    private readonly TextBlock _title = new() { Foreground = Text, FontWeight = FontWeights.SemiBold, FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 420 };
-    private readonly TextBlock _detail = new() { Foreground = Muted, FontFamily = Mono, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 420, Margin = new Thickness(0, 2, 0, 0) };
-    private readonly TextBlock _source = new() { Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 2, 0, 0) };
+    private readonly Border _card;
+    private readonly List<Button> _buttons = new();
+    private readonly TextBlock _title = new() { FontWeight = FontWeights.SemiBold, FontSize = 13, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 420 };
+    private readonly TextBlock _detail = new() { FontFamily = Mono, FontSize = 11, TextTrimming = TextTrimming.CharacterEllipsis, MaxWidth = 420, Margin = new Thickness(0, 2, 0, 0) };
+    private readonly TextBlock _source = new() { FontSize = 11, Margin = new Thickness(0, 2, 0, 0) };
     private readonly StackPanel _toolbar = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(0, 10, 0, 0) };
-    private readonly TextBlock _hint = new() { Foreground = Muted, FontSize = 11, Margin = new Thickness(0, 8, 0, 0), Text = "Alt  measure   ·   Esc  back" };
-    private readonly TextBlock _toast = new() { Foreground = AccentBrush, FontSize = 12, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
+    private readonly TextBlock _hint = new() { FontSize = 11, Margin = new Thickness(0, 8, 0, 0), Text = "Alt  measure   ·   Esc  back" };
+    private readonly TextBlock _toast = new() { FontSize = 12, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
     private readonly Button _parentButton;
     private CancellationTokenSource? _toastCts;
 
@@ -49,10 +46,8 @@ public sealed class InfoWindow : OverlayWindow
         stack.Children.Add(_hint);
         stack.Children.Add(_toast);
 
-        Content = new Border
+        Content = _card = new Border
         {
-            Background = CardBg,
-            BorderBrush = CardLine,
             BorderThickness = new Thickness(1),
             CornerRadius = new CornerRadius(8),
             Padding = new Thickness(12, 9, 12, 10),
@@ -61,9 +56,29 @@ public sealed class InfoWindow : OverlayWindow
             Margin = new Thickness(8),
         };
         SetSelected(false, false);
+        ApplyTheme();
+        Theme.XilousTheme.Changed += ApplyTheme;
+        Closed += (_, _) => Theme.XilousTheme.Changed -= ApplyTheme;
     }
 
-    private static Button MakeButton(string text, string tip, Action onClick)
+    /// <summary>Repaints the card in the current Xilous theme.</summary>
+    private void ApplyTheme()
+    {
+        var p = Theme.XilousTheme.Current;
+        _card.Background = Theme.Palette.Brush(p.Bg);
+        _card.BorderBrush = Theme.Palette.Brush(p.Line);
+        _title.Foreground = Theme.Palette.Brush(p.Ink);
+        foreach (var t in new[] { _detail, _source, _hint }) t.Foreground = Theme.Palette.Brush(p.Muted);
+        _toast.Foreground = Theme.Palette.Brush(p.Accent);
+        foreach (var b in _buttons)
+        {
+            b.Foreground = Theme.Palette.Brush(p.Ink);
+            b.Background = Theme.Palette.Brush(p.Field);
+            b.BorderBrush = Theme.Palette.Brush(p.Line);
+        }
+    }
+
+    private Button MakeButton(string text, string tip, Action onClick)
     {
         var b = new Button
         {
@@ -71,13 +86,11 @@ public sealed class InfoWindow : OverlayWindow
             ToolTip = tip,
             Margin = new Thickness(0, 0, 6, 0),
             Padding = new Thickness(10, 4, 10, 4),
-            Foreground = Text,
-            Background = new SolidColorBrush(Color.FromRgb(0x33, 0x31, 0x2E)),
-            BorderBrush = CardLine,
             Cursor = System.Windows.Input.Cursors.Hand,
             Focusable = false,
         };
         b.Click += (_, _) => onClick();
+        _buttons.Add(b);
         return b;
     }
 
@@ -104,7 +117,8 @@ public sealed class InfoWindow : OverlayWindow
         _toastCts?.Cancel();
         var cts = _toastCts = new CancellationTokenSource();
         _toast.Text = text;
-        _toast.Foreground = error ? new SolidColorBrush(Color.FromRgb(0xF2, 0x8B, 0x82)) : AccentBrush;
+        var p = Theme.XilousTheme.Current;
+        _toast.Foreground = Theme.Palette.Brush(error ? p.Error : p.Accent);
         _toast.Visibility = Visibility.Visible;
         try { await Task.Delay(1800, cts.Token); }
         catch (TaskCanceledException) { return; }

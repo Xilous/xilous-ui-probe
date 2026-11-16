@@ -44,7 +44,7 @@ if (!fs.existsSync(outFile)) {
   console.log("  html2canvas already present.\n");
 }
 
-console.log(`  To use Claude Code Probe:
+console.log(`  To use Xilous Probe:
 
   chrome://extensions → Developer mode → Load unpacked → select this folder
 `);

@@ -61,7 +61,16 @@ Dracula should recolour the chrome, not resize it.
 
 **Tier 2 — 19 semantic tokens, redeclared per theme.** Surface, a four-step text
 ramp, accent trio plus its ink, two syntax colours, error plus its ink, two
-shadows, a swatch border, and Clawd's body and legs.
+shadows, a swatch border, and the Xilous mark's ring and arc (`--ccp-mark-ring`,
+`--ccp-mark-arc`).
+
+The default theme is **Graphite**, which is also the `:root` block, so the chrome
+is already themed before the stored preference has been read. Alongside it are
+Paper (its light counterpart, and what System resolves to in light mode),
+Midnight, Black & gold and Red & white, all taken from the Xilous Usage Monitor's
+palettes, and the five editor themes. Ids stored by releases before 1.6.0
+(`terracotta-dark`, `terracotta-light`) are migrated to `graphite` and `paper`
+wherever the stored theme is read.
 
 The split is what makes the contract checkable. "Every theme declares exactly
 these 19" is a test; "the theme looks right" is not.
@@ -108,9 +117,9 @@ all.
 
 ### 4. `system` resolves in JS, not in a media query
 
-`matchMedia("(prefers-color-scheme: dark)")` picks one of the two terracotta
-blocks and writes the *resolved* id into the attribute, with a `change` listener
-so it follows the OS live.
+`matchMedia("(prefers-color-scheme: dark)")` picks `graphite` or `paper` and
+writes the *resolved* id into the attribute, with a `change` listener so it
+follows the OS live.
 
 The alternative — wrapping every block in `@media` — would double the file and
 put two copies of each palette one edit apart. It would also make the settings
@@ -171,9 +180,11 @@ border follows the theme.
 
 Four durations and one curve are tokens. That made an existing gap obvious: the
 `prefers-reduced-motion` query disabled `#ccp-ants` and `.ccp-spin` but **not
-Clawd's 24s walk or 1.1s bob**, so the mascot kept pacing for anyone who had
-asked their OS for stillness. The marquee was missing too. Both are now in the
-query.
+the old mascot's walk and bob**, so it kept pacing for anyone who had asked
+their OS for stillness. The marquee was missing too, and is now in the query.
+The mascot has since been replaced by the Xilous mark, which is still in the
+info panel; only the small mark in the Copying... button moves, and its arc
+sweep sits inside a `prefers-reduced-motion: no-preference` query of its own.
 
 Anything animated must be listed there. There is no automated check for this one
 — it is the weakest link in this document. The settings page keeps its own
@@ -189,7 +200,7 @@ the tween never reads as lag.
 
 ### 8. Contrast is checked, and one shortfall is recorded rather than hidden
 
-Eight hand-tuned palettes is exactly how an unreadable theme ships, so
+Ten hand-tuned palettes is exactly how an unreadable theme ships, so
 `test/tokens.mjs` computes WCAG 2.1 ratios for ten foreground/background pairs
 per theme. Two tiers:
 
@@ -198,14 +209,14 @@ per theme. Two tiers:
 | text | `text`, `text-dim`, `text-muted`, `syntax-id`, `syntax-class`, `on-accent` on `accent`, `on-error` on `error` | **4.5:1** | AA for body text |
 | non-text / transient | `text-faint`, `accent` on `surface`, `on-accent` on `accent-dark` | **3:1**, warn under 4.5 | `accent` doubles as a border and icon colour, where 3:1 is the correct AA bar; `accent-dark` is only the `:active` fill, held for as long as a mouse button is down |
 
-**`--ccp-text-faint` does not reach AA in seven of the eight themes** — 3.39:1 in
-the default. This is inherited, not introduced: it is the shipped 1.2.0 grey, and
-`terracotta-dark` must stay pixel-identical. Raising it to 4.5:1 would collapse
-the info panel's four-step text hierarchy into two, because `text-muted` sits at
-5.14:1 and there is no room between them.
+**`--ccp-text-faint` does not reach AA in any of the ten themes** — 4.02:1 in
+the default, Graphite. This is inherited, not introduced: the label's four-step
+text hierarchy has always put its faintest step below AA. Raising it to 4.5:1
+would collapse that hierarchy into two steps, because there is not enough room
+between it and `text-muted`.
 
-So it is reported as a WARN on every run rather than quietly passed. Ten warnings
-stand today. The honest summary: **the de-emphasised 10px readout is below AA,
+So it is reported as a WARN on every run rather than quietly passed. Thirteen
+warnings stand today. The honest summary: **the de-emphasised 10px readout is below AA,
 and fixing it is a redesign of the label's hierarchy, not a token change.** A
 High Contrast theme is the intended answer and is not in this release.
 
@@ -226,7 +237,7 @@ badge fails the run.
 ## Adding a theme
 
 1. Copy any block in `tokens.css` and change the 19 values. Order them
-   surface → text ramp → accent → syntax → status → shadows → mascot, as the
+   surface → text ramp → accent → syntax → status → shadows → mark, as the
    others do, so the blocks diff cleanly.
 2. Add `{ id, name }` to `THEMES` in `settings/settings.js`. No colours — the
    pill's swatch reads them from the block you just wrote.
@@ -571,15 +582,16 @@ be asserting something that was already true.
 Then, in the browser — a `content.js` or `content.css` edit needs an *extension*
 reload, not just a page reload:
 
-1. **The default must be pixel-identical to the previous release.** This is the
-   whole regression surface of the refactor; screenshot-diff if in doubt.
+1. **The default must look the same as the previous release** unless the release
+   changes it on purpose (1.6.0 did: Graphite replaced Terracotta Dark as part of
+   the Xilous rebrand). Screenshot-diff if in doubt.
 2. Switch theme in the options tab — an already-open probe tab re-themes with no
    reload, via `chrome.storage.onChanged`.
 3. `System` follows an OS light/dark flip live.
 4. Per theme: the label's swatches still show *page* colours, and light-theme
    shadows read as shadows.
-5. Turn on reduced motion at the OS level: Clawd stops walking and bobbing, and
-   the undo flash holds still instead of pulsing — it stays *visible*, because
+5. Turn on reduced motion at the OS level: the mark in the Copying... button
+   stops sweeping, and the undo flash holds still instead of pulsing — it stays *visible*, because
    it is the only way an undo on an off-screen element announces itself, and
    zeroing it would remove information rather than motion.
 6. Edit Mode, in `test/edit-harness.html` (which runs the real `content.js`

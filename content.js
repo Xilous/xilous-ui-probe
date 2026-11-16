@@ -163,17 +163,26 @@
   // One attribute themes all five injected roots, because custom properties
   // inherit and `all: initial` does not reset them (CSS Cascade 4 §3.2).
   const THEME_KEY = "theme";
-  const DEFAULT_THEME = "terracotta-dark";
+  const DEFAULT_THEME = "graphite";
   const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
   let themePref = DEFAULT_THEME;
 
-  // "system" has no palette of its own — it picks one of the two terracotta
-  // blocks. Resolving here rather than duplicating every block inside an @media
+  // Theme ids that were renamed when the terracotta pair was replaced. A value
+  // stored by an older version still resolves to its successor. The same map is
+  // in background.js and settings/settings.js — change all three.
+  const LEGACY_THEMES = {
+    "terracotta-dark": "graphite",
+    "terracotta-light": "paper",
+  };
+  const migrateTheme = (id) => LEGACY_THEMES[id] || id;
+
+  // "system" has no palette of its own — it picks graphite or paper.
+  // Resolving here rather than duplicating every block inside an @media
   // query keeps tokens.css single-source, and lets the settings page preview
   // exactly what the page will render.
   function resolveTheme(pref) {
     if (pref !== "system") return pref;
-    return darkQuery.matches ? "terracotta-dark" : "terracotta-light";
+    return darkQuery.matches ? "graphite" : "paper";
   }
 
   function applyTheme() {
@@ -191,9 +200,9 @@
   // Fired immediately at script load, not on activate(), so the first paint of
   // the chrome already has the right palette. activate() applies whatever has
   // arrived by then; until it does, the tokens.css :root block is the default,
-  // so an unresolved read shows terracotta-dark rather than an unstyled box.
+  // so an unresolved read shows graphite rather than an unstyled box.
   chrome.storage?.local.get(THEME_KEY, (stored) => {
-    if (stored && typeof stored[THEME_KEY] === "string") themePref = stored[THEME_KEY];
+    if (stored && typeof stored[THEME_KEY] === "string") themePref = migrateTheme(stored[THEME_KEY]);
     if (probeActive) applyTheme();
   });
 
@@ -202,7 +211,7 @@
   // message plumbing through the service worker.
   chrome.storage?.onChanged.addListener((changes, area) => {
     if (area !== "local" || !changes[THEME_KEY]) return;
-    themePref = changes[THEME_KEY].newValue || DEFAULT_THEME;
+    themePref = migrateTheme(changes[THEME_KEY].newValue || DEFAULT_THEME);
     if (probeActive) applyTheme();
   });
 
@@ -372,12 +381,15 @@
     );
   }
 
-  // Clawd's colours arrive from tokens.css via the .ccp-clawd-* classes rather
-  // than fill="" attributes: var() is not resolved inside an SVG presentation
-  // attribute, only in a real style rule. See content.css.
+  // The Xilous mark: a ring gauge with a crosshair dot. Its colours arrive from
+  // tokens.css via the .ccp-mark-* classes rather than stroke="" / fill=""
+  // attributes: var() is not resolved inside an SVG presentation attribute,
+  // only in a real style rule. See content.css.
+  const MARK_PATHS = `<circle class="ccp-mark-ring" cx="16" cy="16" r="11" stroke-width="3.5"/><path class="ccp-mark-arc" d="M16 5 A11 11 0 1 1 5.54 19.4" stroke-width="3.5" stroke-linecap="round"/><circle class="ccp-mark-dot" cx="16" cy="16" r="2.6"/>`;
 
-  // ===== Clawd Mini (for toast loading state) =====
-  const CLAWD_MINI = `<svg viewBox="-4 -4 120 80" width="28" height="20" fill="none" style="flex-shrink:0;overflow:visible"><rect class="ccp-clawd-body" x="8" y="0" width="96" height="56" rx="4"/><rect class="ccp-clawd-body" x="-4" y="25.6" width="12" height="14.4" rx="3"/><rect class="ccp-clawd-body" x="104" y="25.6" width="12" height="14.4" rx="3"/><rect class="ccp-clawd-eye" x="28" y="14" width="8" height="16" rx="2"/><rect class="ccp-clawd-eye" x="76" y="14" width="8" height="16" rx="2"/><rect class="ccp-clawd-leg" x="16" y="56" width="9.6" height="20" rx="2"><animate attributeName="height" values="20;16;20" dur="0.4s" begin="0s" repeatCount="indefinite"/></rect><rect class="ccp-clawd-leg" x="30.4" y="56" width="9.6" height="20" rx="2"><animate attributeName="height" values="20;16;20" dur="0.4s" begin="0.1s" repeatCount="indefinite"/></rect><rect class="ccp-clawd-leg" x="72" y="56" width="9.6" height="20" rx="2"><animate attributeName="height" values="20;16;20" dur="0.4s" begin="0.2s" repeatCount="indefinite"/></rect><rect class="ccp-clawd-leg" x="86.4" y="56" width="9.6" height="20" rx="2"><animate attributeName="height" values="20;16;20" dur="0.4s" begin="0.3s" repeatCount="indefinite"/></rect></svg>`;
+  // ===== Mark Mini (for the button's loading state) =====
+  // The ccp-mark-mini class is what makes its arc sweep while the copy runs.
+  const MARK_MINI = `<svg class="ccp-mark-mini" viewBox="0 0 32 32" width="20" height="20" fill="none" style="flex-shrink:0">${MARK_PATHS}</svg>`;
 
   // ===== SVG Icons =====
   const ICONS = {
@@ -389,45 +401,8 @@
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
   };
 
-  // ===== Clawd Mascot SVG (mood="happy", from clawd-react) =====
-  const CLAWD_SVG = `<svg viewBox="-16 -4 144 104" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <!-- Shadow -->
-    <ellipse class="ccp-clawd-shadow" cx="56" cy="91.5" rx="32" ry="4"/>
-    <!-- Body -->
-    <rect class="ccp-clawd-body" x="8" y="0" width="96" height="56" rx="4"/>
-    <!-- Arm nubs -->
-    <rect class="ccp-clawd-body" x="-4" y="25.6" width="12" height="14.4" rx="3"/>
-    <rect class="ccp-clawd-body" x="104" y="25.6" width="12" height="14.4" rx="3"/>
-    <!-- Eyes -->
-    <rect class="ccp-clawd-eye" x="28" y="14" width="8" height="16" rx="2"/>
-    <rect class="ccp-clawd-eye" x="76" y="14" width="8" height="16" rx="2"/>
-    <!-- Legs -->
-    <rect class="ccp-clawd-leg" x="16" y="56" width="9.6" height="20" rx="2">
-      <animate attributeName="height" values="20;16;20" dur="0.4s" begin="0s" repeatCount="indefinite"/>
-    </rect>
-    <rect class="ccp-clawd-leg" x="30.4" y="56" width="9.6" height="20" rx="2">
-      <animate attributeName="height" values="20;16;20" dur="0.4s" begin="0.1s" repeatCount="indefinite"/>
-    </rect>
-    <rect class="ccp-clawd-leg" x="72" y="56" width="9.6" height="20" rx="2">
-      <animate attributeName="height" values="20;16;20" dur="0.4s" begin="0.2s" repeatCount="indefinite"/>
-    </rect>
-    <rect class="ccp-clawd-leg" x="86.4" y="56" width="9.6" height="20" rx="2">
-      <animate attributeName="height" values="20;16;20" dur="0.4s" begin="0.3s" repeatCount="indefinite"/>
-    </rect>
-    <!-- Sparkles -->
-    <circle class="ccp-clawd-spark" cx="108" cy="8" r="3.5" opacity="0">
-      <animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/>
-      <animate attributeName="r" values="1;3.5;1" dur="1.5s" repeatCount="indefinite"/>
-    </circle>
-    <circle class="ccp-clawd-spark" cx="116" cy="-2" r="2.5" opacity="0">
-      <animate attributeName="opacity" values="0;1;0" dur="1.5s" begin="0.4s" repeatCount="indefinite"/>
-      <animate attributeName="r" values="0.5;2.5;0.5" dur="1.5s" begin="0.4s" repeatCount="indefinite"/>
-    </circle>
-    <circle class="ccp-clawd-spark" cx="120" cy="18" r="2" opacity="0">
-      <animate attributeName="opacity" values="0;1;0" dur="1.5s" begin="0.8s" repeatCount="indefinite"/>
-      <animate attributeName="r" values="0.5;2;0.5" dur="1.5s" begin="0.8s" repeatCount="indefinite"/>
-    </circle>
-  </svg>`;
+  // ===== Mark SVG (the label's header mark) =====
+  const MARK_SVG = `<svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">${MARK_PATHS}</svg>`;
 
   // ===== Style formatting helpers =====
   function colorSwatch(rawColor) {
@@ -798,11 +773,11 @@
     labelEl.id = "ccp-label";
     labelEl.style.display = "none";
 
-    // Inject Clawd mascot
-    const clawdContainer = document.createElement("div");
-    clawdContainer.className = "ccp-clawd";
-    clawdContainer.innerHTML = CLAWD_SVG;
-    labelEl.appendChild(clawdContainer);
+    // Inject the mark
+    const markContainer = document.createElement("div");
+    markContainer.className = "ccp-mark";
+    markContainer.innerHTML = MARK_SVG;
+    labelEl.appendChild(markContainer);
 
     document.documentElement.appendChild(overlayContainer);
     document.documentElement.appendChild(labelEl);
@@ -1108,8 +1083,8 @@
     if (!layout.label.hidden) {
       labelEl.style.top = layout.label.top + "px";
       labelEl.style.left = layout.label.left + "px";
-      // Only clip when the label actually had to give up height — Clawd walks
-      // outside the box, so overflow stays visible in every ordinary case.
+      // Only clip when the label actually had to give up height — the mark sits
+      // across the top edge, so overflow stays visible in every ordinary case.
       if (layout.label.h < label.h) {
         labelEl.style.maxHeight = layout.label.h + "px";
         labelEl.style.overflow = "hidden";
@@ -1299,7 +1274,7 @@
       line3 = `<div class="ccp-label-line ccp-label-marquee ccp-line-breadcrumb"><span class="ccp-label-breadcrumb ccp-marquee-inner">${path}<span class="ccp-label-sep">&nbsp;&nbsp;&nbsp;·&nbsp;&nbsp;&nbsp;</span>${path}</span></div>`;
     }
 
-    // Preserve Clawd mascot, update only the content wrapper
+    // Preserve the mark, update only the content wrapper
     let contentWrap = labelEl.querySelector(".ccp-label-content");
     if (!contentWrap) {
       contentWrap = document.createElement("div");
@@ -8059,7 +8034,7 @@
   // ===== Button State Helpers =====
   function setButtonLoading(btnEl) {
     if (!btnEl) return;
-    btnEl.innerHTML = CLAWD_MINI + `<span>Copying...</span>`;
+    btnEl.innerHTML = MARK_MINI + `<span>Copying...</span>`;
     btnEl.disabled = true;
     btnEl.style.opacity = token("--ccp-opacity-loading", "0.7");
   }
@@ -8119,7 +8094,7 @@
   }
 
   // ===== Toast =====
-  // The `isLoading` variant (CLAWD_MINI plus text) was never reachable — no
+  // The `isLoading` variant (a loading mark plus text) was never reachable — no
   // caller ever passed a third argument, and the loading affordance in practice
   // is setButtonLoading() on the button itself. Removed with the signature.
   function showToast(message, isError = false) {

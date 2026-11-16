@@ -71,6 +71,27 @@ public partial class WidgetWindow : Window
         DpiChanged += (_, _) => Kick();
         Closed += (_, _) => SystemEvents.DisplaySettingsChanged -= _displaysChanged;
         Loaded += (_, _) => Kick();
+
+        ApplyTheme();
+        Theme.XilousTheme.Changed += ApplyTheme;
+        Closed += (_, _) => Theme.XilousTheme.Changed -= ApplyTheme;
+    }
+
+    private bool _pointing;
+
+    /// <summary>Repaints the widget in the current Xilous theme.</summary>
+    private void ApplyTheme()
+    {
+        var p = Theme.XilousTheme.Current;
+        Resources["InkBrush"] = Theme.Palette.Brush(p.Ink);
+        Resources["DimBrush"] = Theme.Palette.Brush(p.Dim);
+        Resources["CardBrush"] = Theme.Palette.Brush(p.Bg);
+        Resources["CardLine"] = Theme.Palette.Brush(p.Line);
+        Resources["MutedBrush"] = Theme.Palette.Brush(p.Muted);
+        Resources["FaintBrush"] = Theme.Palette.Brush(p.Faint);
+        Resources["AccentBrush"] = Theme.Palette.Brush(p.Accent);
+        Shadow.Opacity = p.Dark ? 0.35 : 0.18;
+        SetPointing(_pointing);
     }
 
     private double Now => _clock.Elapsed.TotalSeconds;
@@ -121,11 +142,12 @@ public partial class WidgetWindow : Window
 
     public void SetPointing(bool on)
     {
-        var accent = (Brush)FindResource("AccentBrush");
-        var idle = new SolidColorBrush(Color.FromRgb(0x5A, 0x56, 0x50));
-        var muted = (Brush)FindResource("MutedBrush");
-        Ring.Stroke = on ? accent : idle;
-        Ring.Fill = on ? new SolidColorBrush(Color.FromArgb(0x29, 0xD9, 0x77, 0x57)) : Brushes.Transparent;
+        _pointing = on;
+        var p = Theme.XilousTheme.Current;
+        var accent = Theme.Palette.Brush(p.Accent);
+        var muted = Theme.Palette.Brush(p.Muted);
+        Ring.Stroke = on ? accent : Theme.Palette.Brush(p.Track);
+        Ring.Fill = on ? Theme.Palette.Brush(Theme.Palette.WithAlpha(p.Accent, 0x29)) : Brushes.Transparent;
         Crosshair.Stroke = on ? accent : muted;
         Center.Fill = on ? accent : muted;
         PointLabel.Text = on ? "Pointing" : "Not pointing";
