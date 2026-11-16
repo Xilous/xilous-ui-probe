@@ -9,8 +9,10 @@ public enum HighlightStyle { Hover, Selected, MeasureTarget }
 /// <summary>The outline drawn over an element: dashed while hovering, solid once selected.</summary>
 public sealed class HighlightWindow : OverlayWindow
 {
-    public static readonly Color Accent = Color.FromRgb(0xD9, 0x77, 0x57);
-    public static readonly Color MeasureColor = Color.FromRgb(0x3B, 0x82, 0xF6);
+    /// <summary>The selection colour: the Xilous theme's accent.</summary>
+    public static Color Accent => Theme.XilousTheme.Current.Accent;
+    /// <summary>The measuring colour, kept apart from the selection's.</summary>
+    public static Color MeasureColor => Theme.XilousTheme.Current.Measure;
 
     private readonly Rectangle _rect = new() { StrokeThickness = 1.5, SnapsToDevicePixels = true };
 

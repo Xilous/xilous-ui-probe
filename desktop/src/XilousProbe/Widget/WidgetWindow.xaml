@@ -4,15 +4,16 @@
         Title="Xilous Probe" WindowStyle="None" AllowsTransparency="True" Background="Transparent"
         Topmost="True" ShowInTaskbar="False" ShowActivated="False" ResizeMode="NoResize"
         Width="400" Height="300" Left="-32000" Top="-32000"
-        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Foreground="#F4F1EC">
+        FontFamily="Segoe UI Variable Text, Segoe UI" FontSize="13" Foreground="{DynamicResource InkBrush}">
     <Window.Resources>
-        <SolidColorBrush x:Key="CardBrush" Color="#1F1E1C" />
-        <SolidColorBrush x:Key="CardLine" Color="#3A3835" />
-        <SolidColorBrush x:Key="FieldBrush" Color="#141414" />
-        <SolidColorBrush x:Key="FieldLine" Color="#45423E" />
-        <SolidColorBrush x:Key="MutedBrush" Color="#B5AFA6" />
-        <SolidColorBrush x:Key="FaintBrush" Color="#8A847B" />
-        <SolidColorBrush x:Key="AccentBrush" Color="#D97757" />
+        <!-- Set from the Xilous theme at start and whenever it changes (ApplyTheme). -->
+        <SolidColorBrush x:Key="InkBrush" Color="#ECEFF2" />
+        <SolidColorBrush x:Key="DimBrush" Color="#C3C7CC" />
+        <SolidColorBrush x:Key="CardBrush" Color="#1C1C1E" />
+        <SolidColorBrush x:Key="CardLine" Color="#3A3B3F" />
+        <SolidColorBrush x:Key="MutedBrush" Color="#9AA0A6" />
+        <SolidColorBrush x:Key="FaintBrush" Color="#7A7F85" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#38A3F5" />
         <FontFamily x:Key="Mono">Cascadia Mono, Consolas</FontFamily>
 
         <Style x:Key="FlatButton" TargetType="Button">
@@ -37,7 +38,7 @@
     </Window.Resources>
 
     <Canvas x:Name="Root">
-        <Border x:Name="Card" Background="{StaticResource CardBrush}" BorderBrush="{StaticResource CardLine}"
+        <Border x:Name="Card" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardLine}"
                 CornerRadius="14,0,0,14" BorderThickness="1,1,0,1" ClipToBounds="True">
             <Border.Effect>
                 <DropShadowEffect x:Name="Shadow" BlurRadius="18" ShadowDepth="5" Direction="270" Opacity="0.35" />
@@ -60,16 +61,16 @@
                         <StackPanel x:Name="HeaderText" Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock x:Name="PointLabel" Text="Not pointing" FontSize="14" FontWeight="SemiBold" />
                             <TextBlock x:Name="HotkeyLabel" Text="Ctrl+Shift+X · Esc steps back" FontFamily="{StaticResource Mono}"
-                                       FontSize="11" Foreground="{StaticResource MutedBrush}" Margin="0,2,0,0" />
+                                       FontSize="11" Foreground="{DynamicResource MutedBrush}" Margin="0,2,0,0" />
                         </StackPanel>
                     </Grid>
 
-                    <Border x:Name="Footer" Grid.Row="2" BorderBrush="#33312E" BorderThickness="0,1,0,0" Margin="16,0" Padding="0,10,0,12">
+                    <Border x:Name="Footer" Grid.Row="2" BorderBrush="{DynamicResource CardLine}" BorderThickness="0,1,0,0" Margin="16,0" Padding="0,10,0,12">
                         <DockPanel LastChildFill="True">
                             <TextBlock x:Name="VersionLabel" DockPanel.Dock="Right" VerticalAlignment="Center" Margin="8,0,0,0"
-                                       FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{StaticResource FaintBrush}" />
+                                       FontFamily="{StaticResource Mono}" FontSize="11" Foreground="{DynamicResource FaintBrush}" />
                             <TextBlock x:Name="StatusText" Text="Ready." TextWrapping="Wrap" VerticalAlignment="Center"
-                                       FontSize="12" Foreground="#C9C3BA" />
+                                       FontSize="12" Foreground="{DynamicResource DimBrush}" />
                         </DockPanel>
                     </Border>
                 </Grid>
@@ -78,11 +79,11 @@
                 <!-- The round button: always in the corner on the edge's side. Click toggles Point Mode; drag moves the widget. -->
                 <Grid x:Name="Disc" Width="52" Height="52" HorizontalAlignment="Right" VerticalAlignment="Top"
                       Background="Transparent" Cursor="Hand" ToolTip="Point Mode (Ctrl+Shift+X). Drag to move.">
-                    <Ellipse x:Name="Ring" Width="34" Height="34" StrokeThickness="2" Stroke="#5A5650" Fill="Transparent" />
-                    <Path x:Name="Crosshair" Width="18" Height="18" Stretch="Uniform" Stroke="#B5AFA6" StrokeThickness="2"
+                    <Ellipse x:Name="Ring" Width="34" Height="34" StrokeThickness="2" Fill="Transparent" />
+                    <Path x:Name="Crosshair" Width="18" Height="18" Stretch="Uniform" StrokeThickness="2"
                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                           Data="M12,5 A7,7 0 1 1 11.99,5 Z M12,1 L12,5 M12,19 L12,23 M1,12 L5,12 M19,12 L23,12" />
-                    <Ellipse x:Name="Center" Width="3" Height="3" Fill="#B5AFA6" />
+                    <Ellipse x:Name="Center" Width="3" Height="3" />
                 </Grid>
             </Grid>
         </Border>

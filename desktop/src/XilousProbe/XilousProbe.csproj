@@ -11,7 +11,7 @@
     <ApplicationIcon>..\..\..\icons\app.ico</ApplicationIcon>
     <AssemblyName>XilousProbe</AssemblyName>
     <RootNamespace>XilousProbe</RootNamespace>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <!-- LibraryImport's generated marshalling needs it; there is no hand-written unsafe code. -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>

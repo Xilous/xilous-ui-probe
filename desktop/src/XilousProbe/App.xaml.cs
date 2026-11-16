@@ -36,6 +36,7 @@ public partial class App : Application
     protected override void OnStartup(StartupEventArgs e)
     {
         base.OnStartup(e);
+        Theme.XilousTheme.Start(Dispatcher);
         // After a self-update the previous version may still be closing; it holds the mutex.
         Updater.FinishPreviousUpdate(e.Args);
         _singleInstance = new Mutex(true, @"Local\XilousProbe.SingleInstance", out bool first);

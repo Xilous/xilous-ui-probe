@@ -11,7 +11,6 @@ public sealed class RedlineWindow : OverlayWindow
 {
     private const int Pad = 40;
     private readonly Canvas _canvas = new();
-    private static readonly Brush LineBrush = new SolidColorBrush(HighlightWindow.MeasureColor);
 
     public RedlineWindow() : base(clickThrough: true)
     {
@@ -26,6 +25,9 @@ public sealed class RedlineWindow : OverlayWindow
         PlacePx(area);
         double s = Scale;
         _canvas.Children.Clear();
+        var palette = Theme.XilousTheme.Current;
+        var LineBrush = Theme.Palette.Brush(palette.Measure);
+        var labelInk = Theme.Palette.Brush(palette.OnMeasure);
 
         foreach (var m in measures)
         {
@@ -43,7 +45,7 @@ public sealed class RedlineWindow : OverlayWindow
                 Background = LineBrush,
                 CornerRadius = new CornerRadius(4),
                 Padding = new Thickness(5, 1, 5, 1),
-                Child = new TextBlock { Text = m.Length.ToString(), Foreground = Brushes.White, FontSize = 11, FontWeight = FontWeights.SemiBold },
+                Child = new TextBlock { Text = m.Length.ToString(), Foreground = labelInk, FontSize = 11, FontWeight = FontWeights.SemiBold },
             };
             pill.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
             double cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;

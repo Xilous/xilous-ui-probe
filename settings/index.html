@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en" data-ccp-theme="terracotta-dark">
+<html lang="en" data-ccp-theme="graphite">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Claude Code Probe — Settings</title>
+<title>Xilous Probe — Settings</title>
 <!--
   tokens.css and content.css are the real stylesheets the content script uses.
   Loading them here rather than restyling a lookalike is what stops the preview
@@ -19,7 +19,7 @@
 
 <main class="sp">
   <header class="sp-header">
-    <h1>Claude Code Probe</h1>
+    <h1>Xilous Probe</h1>
     <p class="sp-version">Settings</p>
   </header>
 
@@ -342,9 +342,9 @@
       <footer class="sp-footer">
         <p>
           Your settings are stored on this device and never leave it.
-          <a href="https://github.com/Jingquank/Claude-Code-Probe/blob/main/PRIVACY.md"
+          <a href="https://github.com/Xilous/xilous-ui-probe/blob/main/PRIVACY.md"
              target="_blank" rel="noreferrer">Privacy</a> ·
-          <a href="https://github.com/Jingquank/Claude-Code-Probe/blob/main/DESIGN.md"
+          <a href="https://github.com/Xilous/xilous-ui-probe/blob/main/DESIGN.md"
              target="_blank" rel="noreferrer">Design</a>
         </p>
       </footer>
@@ -441,22 +441,14 @@
           <p class="an-cap" aria-hidden="true">Info panel</p>
           <div id="ccp-label">
             <!--
-              Clawd, so --ccp-clawd-body and --ccp-clawd-leg get previewed too.
-              This is the compact silhouette rather than the full mascot from
-              content.js — a static preview does not need the walk cycle, and
-              settings.css holds it still.
+              The mark, so --ccp-mark-ring and --ccp-mark-arc get previewed too.
+              Same SVG as MARK_SVG in content.js.
             -->
-            <div class="ccp-clawd" aria-hidden="true">
-              <svg viewBox="-4 -4 120 80" fill="none">
-                <rect class="ccp-clawd-body" x="8" y="0" width="96" height="56" rx="4"/>
-                <rect class="ccp-clawd-body" x="-4" y="25.6" width="12" height="14.4" rx="3"/>
-                <rect class="ccp-clawd-body" x="104" y="25.6" width="12" height="14.4" rx="3"/>
-                <rect class="ccp-clawd-eye" x="28" y="14" width="8" height="16" rx="2"/>
-                <rect class="ccp-clawd-eye" x="76" y="14" width="8" height="16" rx="2"/>
-                <rect class="ccp-clawd-leg" x="16" y="56" width="9.6" height="20" rx="2"/>
-                <rect class="ccp-clawd-leg" x="30.4" y="56" width="9.6" height="20" rx="2"/>
-                <rect class="ccp-clawd-leg" x="72" y="56" width="9.6" height="20" rx="2"/>
-                <rect class="ccp-clawd-leg" x="86.4" y="56" width="9.6" height="20" rx="2"/>
+            <div class="ccp-mark" aria-hidden="true">
+              <svg viewBox="0 0 32 32" fill="none">
+                <circle class="ccp-mark-ring" cx="16" cy="16" r="11" stroke-width="3.5"/>
+                <path class="ccp-mark-arc" d="M16 5 A11 11 0 1 1 5.54 19.4" stroke-width="3.5" stroke-linecap="round"/>
+                <circle class="ccp-mark-dot" cx="16" cy="16" r="2.6"/>
               </svg>
             </div>
             <div class="ccp-label-content">

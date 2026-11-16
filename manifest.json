@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Claude Code Probe",
-  "version": "1.5.0",
+  "name": "Xilous Probe",
+  "version": "1.6.0",
   "description": "Inspect, edit, and copy any element on any webpage — styles, text, design tokens, even WebGL shaders.",
   "permissions": ["activeTab", "clipboardWrite", "scripting", "storage"],
   "host_permissions": ["<all_urls>"],

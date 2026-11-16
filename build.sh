@@ -14,7 +14,7 @@ for f in $SRC_FILES; do cp "$f" dist/chrome/; done
 for d in $SRC_DIRS; do cp -r "$d" dist/chrome/; done
 rm -f dist/chrome/icons/generate-icons.js
 
-(cd dist/chrome && zip -qr ../claude-code-probe-chrome.zip . -x ".*")
-echo "Chrome build: dist/claude-code-probe-chrome.zip"
+(cd dist/chrome && zip -qr ../xilous-probe-chrome.zip . -x ".*")
+echo "Chrome build: dist/xilous-probe-chrome.zip"
 
 echo "Done!"

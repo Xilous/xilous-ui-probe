@@ -672,8 +672,8 @@ details:not([open]) > .sp-summary .sp-caret {
 
 .an-span { grid-column: 1 / -1; }
 
-/* Headroom for Clawd, who stands above the label's top edge. */
-.an-label #ccp-label { margin-top: 26px; }
+/* Headroom for the mark, which sits across the label's top edge. */
+.an-label #ccp-label { margin-top: 18px; }
 
 .an-cap {
   margin: 0;
@@ -755,13 +755,6 @@ details:not([open]) > .sp-summary .sp-caret {
 .ccp-mock #ccp-settings-btn {
   position: static;
   cursor: default;
-}
-
-/* A still preview. Clawd's walk would carry him out of the clipped frame, and a
-   pacing mascot beside a colour picker is a distraction from the colours. */
-.ccp-mock .ccp-clawd,
-.ccp-mock .ccp-clawd svg {
-  animation: none;
 }
 
 /* ===== Context swap =====

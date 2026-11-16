@@ -97,18 +97,11 @@
   --ccp-picker-black: #000;
   --ccp-hue-ramp: linear-gradient(to right,
     #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
-
-  /* Clawd's two fixed features. The body and legs are themed (see below); these
-     two are not, because they have to work against whatever the theme makes the
-     body. A dark eye reads on every accent in the roster, and a cast shadow
-     falls on the host page rather than on our chrome, so it stays neutral. */
-  --ccp-clawd-eye: #141413;
-  --ccp-clawd-shadow: rgb(0 0 0 / 0.15);
 }
 
 /* ===== Tier 2: themes =====
    Nineteen declarations each. Ordered surface → text ramp → accent → syntax →
-   status → shadows → mascot, the same order in every block so they diff cleanly.
+   status → shadows → mark, the same order in every block so they diff cleanly.
 
    `--ccp-text-faint` is the one value that does not reach WCAG AA against its
    surface in most of these palettes — it is a 10px de-emphasised grey and
@@ -117,55 +110,132 @@
    DESIGN.md. It is a pre-existing property of the shipped design, not something
    these themes introduced. */
 
-/* Terracotta Dark — the default, and the look shipped before this token layer
-   existed. Every value here is lifted verbatim from the old content.css, so the
-   default renders pixel-identical to 1.2.0. Do not "tidy" these numbers. */
+/* Graphite — the default, and the :root fallback the chrome paints with before
+   the stored theme has been read. A neutral charcoal ground with the Xilous
+   Usage Monitor's blue accent. The text ramp is the ground mixed toward the
+   text colour at fixed steps (dim 0.82, muted 0.62, faint 0.45, separator
+   0.18), and every theme below that was added with it is derived the same way. */
 :root,
-[data-ccp-theme="terracotta-dark"] {
-  --ccp-surface: #141413;
-  --ccp-text: #faf9f5;
-  --ccp-text-dim: #c8c5bc;
-  --ccp-text-muted: #8a8780;
-  --ccp-text-faint: #6a6a64;
-  --ccp-sep: #3a3a35;
-  --ccp-accent: #d97757;
-  --ccp-accent-dark: #b06848;
-  --ccp-accent-light: #ffd9c7;
-  --ccp-on-accent: #1a0d07;
-  --ccp-syntax-id: #6a9bcc;
-  --ccp-syntax-class: #788c5d;
-  --ccp-error: #dc2626;
-  --ccp-on-error: #ffffff;
-  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(20, 20, 19, 0.4);
-  --ccp-shadow-bar: 0 4px 16px rgba(20, 20, 19, 0.6);
+[data-ccp-theme="graphite"] {
+  --ccp-surface: #1c1c1e;
+  --ccp-text: #eceff2;
+  --ccp-text-dim: #c7c9cc;
+  --ccp-text-muted: #9d9fa1;
+  --ccp-text-faint: #7a7b7d;
+  --ccp-sep: #414244;
+  --ccp-accent: #38a3f5;
+  --ccp-accent-dark: #2d82c4;
+  --ccp-accent-light: #b9dffc;
+  --ccp-on-accent: #0e1013;
+  --ccp-syntax-id: #a78bfa;
+  --ccp-syntax-class: #34d399;
+  --ccp-error: #f87171;
+  --ccp-on-error: #0e1013;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --ccp-shadow-bar: 0 4px 16px rgba(0, 0, 0, 0.6);
   --ccp-swatch-border: rgba(255, 255, 255, 0.2);
-  --ccp-clawd-body: #c27c5c;
-  --ccp-clawd-leg: #8b5a42;
+  --ccp-mark-ring: #3d3e40;
+  --ccp-mark-arc: #38a3f5;
 }
 
-/* Terracotta Light — same accent family, inverted ground. The shadows are
-   re-tuned rather than inverted: the dark theme's rgba(20,20,19,.6) reads as a
-   smudge on a light surface, so these are lighter, tighter, and warm-tinted. */
-[data-ccp-theme="terracotta-light"] {
-  --ccp-surface: #faf9f5;
-  --ccp-text: #141413;
-  --ccp-text-dim: #3a3a35;
-  --ccp-text-muted: #5c5952;
-  --ccp-text-faint: #6f6c64;
-  --ccp-sep: #ddd9cf;
-  --ccp-accent: #a94f30;
-  --ccp-accent-dark: #8c3f24;
-  --ccp-accent-light: #e8c4b2;
-  --ccp-on-accent: #fff8f4;
-  --ccp-syntax-id: #2f6291;
-  --ccp-syntax-class: #4d6a36;
-  --ccp-error: #b91c1c;
+/* Paper — Graphite's light counterpart, and what System resolves to in light
+   mode. The shadows are re-tuned rather than inverted: a dark theme's heavy
+   rgba(0,0,0,.6) reads as a smudge on a light surface, so these are lighter and
+   tighter, and neutral rather than tinted. The faint grey sits at a 0.52 mix
+   instead of 0.45 because a light ground needs the extra step to clear 3:1, and
+   the class colour is one shade deeper than the source green for the same
+   reason at 4.5:1. */
+[data-ccp-theme="paper"] {
+  --ccp-surface: #f7f7f8;
+  --ccp-text: #1d2125;
+  --ccp-text-dim: #44484b;
+  --ccp-text-muted: #6d7073;
+  --ccp-text-faint: #86888a;
+  --ccp-sep: #d0d0d2;
+  --ccp-accent: #1d6fd8;
+  --ccp-accent-dark: #1653a2;
+  --ccp-accent-light: #abc7ed;
+  --ccp-on-accent: #ffffff;
+  --ccp-syntax-id: #7c3aed;
+  --ccp-syntax-class: #047857;
+  --ccp-error: #dc2626;
   --ccp-on-error: #ffffff;
-  --ccp-shadow-card: 0 8px 24px -10px rgba(60, 45, 35, 0.28), 0 1px 3px rgba(60, 45, 35, 0.14);
-  --ccp-shadow-bar: 0 4px 14px rgba(60, 45, 35, 0.18);
+  --ccp-shadow-card: 0 8px 24px -10px rgba(20, 22, 26, 0.28), 0 1px 3px rgba(20, 22, 26, 0.14);
+  --ccp-shadow-bar: 0 4px 14px rgba(20, 22, 26, 0.18);
   --ccp-swatch-border: rgba(0, 0, 0, 0.2);
-  --ccp-clawd-body: #c27c5c;
-  --ccp-clawd-leg: #8b5a42;
+  --ccp-mark-ring: #d4d5d6;
+  --ccp-mark-arc: #1d6fd8;
+}
+
+/* Midnight — a blue-black ground with a warm peach accent. */
+[data-ccp-theme="midnight"] {
+  --ccp-surface: #151923;
+  --ccp-text: #e7edf7;
+  --ccp-text-dim: #c1c7d1;
+  --ccp-text-muted: #979ca6;
+  --ccp-text-faint: #747882;
+  --ccp-sep: #3b3f49;
+  --ccp-accent: #f0aa87;
+  --ccp-accent-dark: #c0886c;
+  --ccp-accent-light: #fae1d5;
+  --ccp-on-accent: #0e1013;
+  --ccp-syntax-id: #a6b9ff;
+  --ccp-syntax-class: #74d8d3;
+  --ccp-error: #ff8a8a;
+  --ccp-on-error: #0e1013;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --ccp-shadow-bar: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-mark-ring: #373b45;
+  --ccp-mark-arc: #f0aa87;
+}
+
+/* Black & gold — near-black with a gold accent, bronze ids and platinum classes. */
+[data-ccp-theme="black-and-gold"] {
+  --ccp-surface: #0b0b0c;
+  --ccp-text: #f3ead2;
+  --ccp-text-dim: #c9c2ae;
+  --ccp-text-muted: #9b9587;
+  --ccp-text-faint: #736f65;
+  --ccp-sep: #353330;
+  --ccp-accent: #d4af37;
+  --ccp-accent-dark: #aa8c2c;
+  --ccp-accent-light: #f0e3b9;
+  --ccp-on-accent: #0e1013;
+  --ccp-syntax-id: #b07a3b;
+  --ccp-syntax-class: #e5e4e2;
+  --ccp-error: #e0245e;
+  --ccp-on-error: #ffffff;
+  --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 0, 0, 0.4);
+  --ccp-shadow-bar: 0 4px 16px rgba(0, 0, 0, 0.6);
+  --ccp-swatch-border: rgba(255, 255, 255, 0.2);
+  --ccp-mark-ring: #302f2c;
+  --ccp-mark-arc: #d4af37;
+}
+
+/* Red & white — a white ground with a signal-red accent. The error colour is
+   near-black rather than a second red, so a failure still stands apart from
+   the accent. The faint grey uses Paper's 0.52 mix for the same reason. */
+[data-ccp-theme="red-and-white"] {
+  --ccp-surface: #ffffff;
+  --ccp-text: #1a1a1a;
+  --ccp-text-dim: #434343;
+  --ccp-text-muted: #717171;
+  --ccp-text-faint: #888888;
+  --ccp-sep: #d6d6d6;
+  --ccp-accent: #d7192a;
+  --ccp-accent-dark: #a11320;
+  --ccp-accent-light: #f1afb4;
+  --ccp-on-accent: #ffffff;
+  --ccp-syntax-id: #8e0e1b;
+  --ccp-syntax-class: #6b6b6b;
+  --ccp-error: #111827;
+  --ccp-on-error: #ffffff;
+  --ccp-shadow-card: 0 8px 24px -10px rgba(20, 22, 26, 0.28), 0 1px 3px rgba(20, 22, 26, 0.14);
+  --ccp-shadow-bar: 0 4px 14px rgba(20, 22, 26, 0.18);
+  --ccp-swatch-border: rgba(0, 0, 0, 0.2);
+  --ccp-mark-ring: #dadada;
+  --ccp-mark-arc: #d7192a;
 }
 
 /* Dracula. The label already colours tag / #id / .class separately, which is
@@ -190,8 +260,8 @@
   --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(20, 20, 30, 0.45);
   --ccp-shadow-bar: 0 4px 16px rgba(20, 20, 30, 0.65);
   --ccp-swatch-border: rgba(255, 255, 255, 0.2);
-  --ccp-clawd-body: #bd93f9;
-  --ccp-clawd-leg: #6272a4;
+  --ccp-mark-ring: #494b54;
+  --ccp-mark-arc: #bd93f9;
 }
 
 /* Monokai. */
@@ -213,8 +283,8 @@
   --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(20, 20, 15, 0.45);
   --ccp-shadow-bar: 0 4px 16px rgba(20, 20, 15, 0.65);
   --ccp-swatch-border: rgba(255, 255, 255, 0.2);
-  --ccp-clawd-body: #f92672;
-  --ccp-clawd-leg: #8a866f;
+  --ccp-mark-ring: #484943;
+  --ccp-mark-arc: #f92672;
 }
 
 /* Nord. */
@@ -236,8 +306,8 @@
   --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.5), 0 2px 6px rgba(20, 25, 35, 0.4);
   --ccp-shadow-bar: 0 4px 16px rgba(20, 25, 35, 0.6);
   --ccp-swatch-border: rgba(255, 255, 255, 0.2);
-  --ccp-clawd-body: #88c0d0;
-  --ccp-clawd-leg: #5e81ac;
+  --ccp-mark-ring: #4c525d;
+  --ccp-mark-arc: #88c0d0;
 }
 
 /* Solarized Dark. base03 ground with the documented accent roles; the greys are
@@ -260,8 +330,8 @@
   --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.55), 0 2px 6px rgba(0, 20, 25, 0.45);
   --ccp-shadow-bar: 0 4px 16px rgba(0, 20, 25, 0.65);
   --ccp-swatch-border: rgba(255, 255, 255, 0.2);
-  --ccp-clawd-body: #cb4b16;
-  --ccp-clawd-leg: #7a8c8c;
+  --ccp-mark-ring: #26494f;
+  --ccp-mark-arc: #e5762f;
 }
 
 /* Tokyo Night. */
@@ -283,12 +353,12 @@
   --ccp-shadow-card: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 2px 6px rgba(15, 15, 25, 0.45);
   --ccp-shadow-bar: 0 4px 16px rgba(15, 15, 25, 0.65);
   --ccp-swatch-border: rgba(255, 255, 255, 0.2);
-  --ccp-clawd-body: #bb9af7;
-  --ccp-clawd-leg: #6d75a0;
+  --ccp-mark-ring: #353747;
+  --ccp-mark-arc: #bb9af7;
 }
 
 /* `system` has no block of its own. content.js resolves it through
    matchMedia("(prefers-color-scheme: dark)") and writes the resolved id —
-   terracotta-dark or terracotta-light — into data-ccp-theme. Duplicating every
-   block inside an @media query would double this file and put two copies of
-   each palette out of step the first time one was edited. */
+   graphite or paper — into data-ccp-theme. Duplicating every block inside an
+   @media query would double this file and put two copies of each palette out of
+   step the first time one was edited. */

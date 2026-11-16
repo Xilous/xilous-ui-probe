@@ -1,4 +1,4 @@
-// Claude Code Probe — shader agent.
+// Xilous Probe — shader agent.
 //
 // The only file of this extension that runs in the page's own JavaScript
 // world. The content script lives in Chrome's isolated world, which shares the

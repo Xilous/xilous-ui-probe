@@ -1,14 +1,14 @@
-# Privacy Policy — Claude Code Probe
+# Privacy Policy — Xilous Probe
 
 **Last updated:** August 7, 2026
 
 ## Overview
 
-Claude Code Probe is a browser extension that lets developers inspect and copy element information from web pages. Your privacy is important to us, and this extension is designed to operate entirely on your device with no data collection whatsoever.
+Xilous Probe is a browser extension that lets developers inspect and copy element information from web pages. Your privacy is important to us, and this extension is designed to operate entirely on your device with no data collection whatsoever.
 
 ## Data Collection
 
-Claude Code Probe does **not** collect, store, transmit, or share any data. Specifically:
+Xilous Probe does **not** collect, store, transmit, or share any data. Specifically:
 
 - **No personal information** is collected
 - **No browsing history** is recorded or transmitted
@@ -107,9 +107,9 @@ no telemetry and has no backend.
 
 ## Data Storage
 
-Claude Code Probe stores exactly one kind of thing: **your own settings**, saved with `chrome.storage.local` as a handful of short preference values:
+Xilous Probe stores exactly one kind of thing: **your own settings**, saved with `chrome.storage.local` as a handful of short preference values:
 
-- **`theme`** — which colour scheme you picked, e.g. `terracotta-dark`.
+- **`theme`** — which colour scheme you picked, e.g. `graphite`.
 - **Measuring preferences** — the `redline*` keys from Settings → Measuring: unit, precision, pill placement, guides, overlay quieting, zero pills.
 - **Editing preferences** — the `edit*` keys from Settings → Editing: which groups the panel shows, how design tokens are displayed, and the off-by-default deep shader capture toggle.
 - **Copying preferences** — the `copy*` keys from Settings → Copying: which header fields ride along in a copied payload, and how much HTML comes with them.
@@ -132,4 +132,4 @@ If this privacy policy is updated, the changes will be posted to this page with 
 ## Contact
 
 If you have questions about this privacy policy, please open an issue at:
-https://github.com/Jingquank/Claude-Code-Probe/issues
+https://github.com/Xilous/xilous-ui-probe/issues

@@ -8,7 +8,7 @@
 //      reads as a rendering bug rather than a missing declaration.
 //   3. A var(--ccp-…) that no theme declares — a typo resolves to nothing and
 //      the property is simply dropped.
-//   4. Text that cannot be read against its own surface. Eight hand-tuned
+//   4. Text that cannot be read against its own surface. Ten hand-tuned
 //      palettes is exactly how an unreadable theme ships.
 //
 // No assertion library, same as test/placement.mjs — verdicts are computed and
@@ -68,7 +68,7 @@ for (const b of blocks) {
   }
 }
 
-const REFERENCE = "terracotta-dark";
+const REFERENCE = "graphite";
 const reference = themes.find((t) => t.id === REFERENCE);
 
 const results = [];
