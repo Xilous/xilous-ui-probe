@@ -63,6 +63,8 @@ public partial class App : Application
 
         CreateTray();
         if (!Settings.Data.WidgetHidden) ShowWidget();
+        if (e.Args.Contains("--after-update"))
+            Dispatcher.BeginInvoke(() => Notify("Updated", $"Updated to v{Updater.CurrentVersion}."), DispatcherPriority.ApplicationIdle);
         StartUpdateChecks();
     }
 
@@ -92,7 +94,7 @@ public partial class App : Application
             return;
         }
         if (_updateBusy) return;
-        if (_stagedUpdate is not null) { ApplyStagedUpdate(); return; }
+        if (_stagedUpdate is not null) { await ApplyStagedUpdateAsync(); return; }
         _updateBusy = true;
         if (manual) _widget?.ShowMessage("Checking for updates…", 30);
         try
@@ -104,10 +106,24 @@ public partial class App : Application
                 return;
             }
             Log($"Update available: {update.Tag}");
-            _stagedUpdate = await _updater.DownloadAndStageAsync(update);
+            // Every stage shows in the widget, whether the update was asked for or found in the
+            // background, so a restart never comes out of nowhere.
+            var label = $"v{update.Version}";
+            _widget?.ShowMessage($"Downloading {label}…", 60);
+            int lastPercent = -1;
+            var progress = new Progress<double>(p =>
+            {
+                int percent = (int)(p * 100);
+                if (percent == lastPercent) return;
+                lastPercent = percent;
+                _widget?.ShowMessage($"Downloading {label}… {percent}%", 60);
+            });
+            _stagedUpdate = await _updater.DownloadAndStageAsync(update, progress,
+                verifying: () => Dispatcher.BeginInvoke(() => _widget?.ShowMessage("Verifying the download…", 60)));
             _stagedVersion = update.Version.ToString();
             Log($"Update {update.Tag} staged");
-            ApplyStagedUpdate();
+            if (_pointMode) _widget?.ShowMessage($"{label} is ready. It installs when you stop pointing.", 8);
+            await ApplyStagedUpdateAsync();
         }
         catch (Exception ex)
         {
@@ -120,11 +136,19 @@ public partial class App : Application
         }
     }
 
-    /// <summary>Restarts into the staged update, unless the user is in the middle of pointing.</summary>
-    private void ApplyStagedUpdate()
+    private bool _restarting;
+
+    /// <summary>
+    /// Restarts into the staged update, unless the user is in the middle of pointing. The widget
+    /// says so for a couple of seconds first, so the restart is never a surprise.
+    /// </summary>
+    private async Task ApplyStagedUpdateAsync()
     {
-        if (_stagedUpdate is null || _pointMode) return;
-        Notify("Updated", $"Restarting into Xilous Probe v{_stagedVersion}.");
+        if (_stagedUpdate is null || _pointMode || _restarting) return;
+        _restarting = true;
+        Notify("Updating", $"Restarting into v{_stagedVersion}…");
+        await Task.Delay(TimeSpan.FromSeconds(2));
+        if (_pointMode) { _restarting = false; return; } // started pointing meanwhile: wait for it to end
         Updater.Relaunch(_stagedUpdate);
         Quit();
     }
@@ -219,7 +243,7 @@ public partial class App : Application
         _widget?.SetPointing(_pointMode);
         if (_tray is not null) _tray.ToolTipText = _pointMode ? "Xilous Probe: pointing" : "Xilous Probe";
         PointModeChanged?.Invoke();
-        if (!_pointMode && _stagedUpdate is not null) Dispatcher.BeginInvoke(ApplyStagedUpdate);
+        if (!_pointMode && _stagedUpdate is not null) _ = ApplyStagedUpdateAsync();
     }
 
     private static bool IsElevated
