@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>false</UseWindowsForms>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>..\..\..\icons\app.ico</ApplicationIcon>
+    <AssemblyName>XilousProbe</AssemblyName>
+    <RootNamespace>XilousProbe</RootNamespace>
+    <Version>0.1.0</Version>
+    <!-- LibraryImport's generated marshalling needs it; there is no hand-written unsafe code. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <!-- The release workflow passes -p:ReleaseBuild=true. Only those builds update themselves
+       from GitHub releases; a local build never replaces itself. -->
+  <PropertyGroup Condition="'$(ReleaseBuild)' == 'true'">
+    <DefineConstants>$(DefineConstants);RELEASE_BUILD</DefineConstants>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FlaUI.UIA3" Version="5.0.0" />
+    <PackageReference Include="H.NotifyIcon.Wpf" Version="2.4.1" />
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
+  </ItemGroup>
+
+  <!--
+    The web pointer is shared with the Chrome extension: these are the repo-root
+    files, embedded at build time, never copied into this project. The logical
+    name is the path relative to the repo root, so the injector reads them by
+    the same names the extension's manifest uses.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\..\content.js" LogicalName="web/content.js" />
+    <EmbeddedResource Include="..\..\..\content.css" LogicalName="web/content.css" />
+    <EmbeddedResource Include="..\..\..\tokens.css" LogicalName="web/tokens.css" />
+    <EmbeddedResource Include="..\..\..\shader-agent.js" LogicalName="web/shader-agent.js" />
+    <EmbeddedResource Include="..\..\..\lib\html2canvas.min.js" LogicalName="web/lib/html2canvas.min.js" />
+    <EmbeddedResource Include="..\..\..\settings\**\*" LogicalName="web/settings/%(RecursiveDir)%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Web\chrome-shim.js" LogicalName="web/chrome-shim.js" />
+    <Resource Include="..\..\..\icons\icon-32.png" Link="Assets\icon-32.png" />
+    <Resource Include="..\..\..\icons\app.ico" Link="Assets\app.ico" />
+  </ItemGroup>
+
+</Project>

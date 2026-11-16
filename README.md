@@ -1,6 +1,86 @@
 
 Point at any element. Copy it. Paste it into Claude Code.
 
+## Xilous Probe for Windows (desktop app)
+
+`desktop/` is a standalone Windows app (.NET 10, WPF) that points at three kinds of
+target with one hotkey, **Ctrl+Shift+X**:
+
+| Target | How it is read | What you get |
+|---|---|---|
+| **Any Windows app** (Win32, WinForms, WPF, WinUI, Office, GP…) | UI Automation | Outline + label, then Copy (pointer below), Screenshot, Parent, Alt to measure |
+| **Websites**, in the probe Chrome | DevTools Protocol | The full web pointer from this extension: Copy Code, Screenshot, Edit with design tokens, Select Parent, measure |
+| **Electron apps** launched from the app (the Fieldwire client, for one) | DevTools Protocol | The same full web pointer, inside the app's windows, React component names included |
+
+Esc steps back one layer at a time, as in the extension: selection, then Point Mode.
+
+### Build and run
+
+```sh
+cd desktop
+dotnet test                          # unit tests, plus the shim run under Node
+dotnet run --project src/XilousProbe # or publish a single .exe:
+dotnet publish src/XilousProbe -c Release -r win-x64 --self-contained -p:PublishSingleFile=true \
+  -p:IncludeNativeLibrariesForSelfExtract=true -p:EnableCompressionInSingleFile=true -o publish   # ~73 MB, no .NET install needed
+```
+
+Or download `XilousProbe.exe` from the latest
+[release](https://github.com/Xilous/xilous-ui-probe/releases/latest) and run it from
+wherever you keep it, such as `%LOCALAPPDATA%\Programs\XilousProbe`. It is not code-signed,
+so SmartScreen asks once: **More info → Run anyway**.
+
+**It updates itself.** Every merge to main cuts a release (`.github/workflows/release.yml`).
+A released exe checks for a newer one 20 seconds after it starts and every 6 hours after
+that, verifies the download against the release's SHA-256 digest, swaps itself in place,
+and restarts, waiting until you are not mid-Point Mode. The tray menu shows the version
+and has **Check for updates**. Builds made locally never update themselves.
+
+It lives in the tray; left-click the tray icon to toggle Point Mode. Settings opens this
+extension's own settings page, so themes and copy options are shared.
+
+### Websites: the probe Chrome
+
+Type a URL and press Open. Chrome 136+ refuses DevTools on your everyday profile, so the
+app keeps a permanent profile of its own (`%LOCALAPPDATA%\XilousProbe\ChromeProfile`) that
+runs beside your normal Chrome. Sign in to Chrome there once and sync brings your
+bookmarks, extensions and passwords; logins stay after that. Opening another URL while it
+runs adds a tab.
+
+### Electron apps
+
+Add an app under **Electron apps**, as one of:
+
+- **Dev command**: a command in a working directory. electron-vite:
+  `npm run dev -- --remoteDebuggingPort {port}`; electron-forge:
+  `npm start -- -- --remote-debugging-port={port}`. The Fieldwire client is preset when
+  `Documents\fieldwire_client_ucsh` exists.
+- **Packaged .exe**: started with `--remote-debugging-port={port}` added.
+- **Attach**: just a port, for an app already running with remote debugging.
+
+A window the web pointer cannot reach (an app whose fuses block remote debugging, or a
+page that enforces Trusted Types, as VS Code does) is pointed at through UI Automation
+instead.
+
+For **file:line** in a React 19 app's pointer, the app needs a dev-only build plugin that
+stamps `data-inspector-*` or `data-source-*` attributes (React 19 dropped `_debugSource`).
+Component names work without it.
+
+### The desktop pointer
+
+```
+# app: Notepad.exe (pid 29860), window "Untitled - Notepad"
+# framework: WinUI/UWP (XAML)
+# element: MenuItem "File" (automationId: File, class: Microsoft.UI.Xaml.Controls.MenuBarItem)
+# path: Window "Untitled - Notepad" > Pane > Pane > MenuBar #MenuBar > MenuItem "File"
+# position: child 1 of 3 in MenuBar #MenuBar
+#   before MenuItem "Edit"
+# bounds: 15,62 62x48 in window, screen 72,119 62x48 (physical px)
+# state: enabled, focusable · patterns: ExpandCollapse, Invoke
+```
+
+Apps that run as administrator can only be read by an elevated probe: use **Restart as
+administrator** in the tray menu. Logs go to `%LOCALAPPDATA%\XilousProbe\xilous-probe.log`.
+
 ## Install
 
 **[Install from Chrome Web Store](https://chromewebstore.google.com/detail/igboajiogegaabhkjehjmdgmfkcopogj?utm_source=item-share-cb)**

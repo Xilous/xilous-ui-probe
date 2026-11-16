@@ -109,6 +109,10 @@
     // A stylesheet: ours ride along on every page as content scripts, so their
     // tokens are the tool's and not the page's.
     styleSheet(sheet) {
+      // The desktop app injects tokens.css and content.css as inline <style>
+      // elements, which have no href; it marks them with our prefix instead.
+      const owner = sheet && sheet.ownerNode;
+      if (owner && typeof owner.id === "string" && owner.id.startsWith(OUR_PREFIX)) return true;
       const href = (sheet && sheet.href) || "";
       if (!href) return false;
       try {
