@@ -84,7 +84,10 @@ public sealed class Updater
     /// Downloads the update next to the running exe, verifies it, and swaps it in.
     /// Returns the path to start. The running app keeps working until it restarts.
     /// </summary>
-    public async Task<string> DownloadAndStageAsync(AvailableUpdate update, CancellationToken ct = default)
+    /// <param name="progress">The download's progress, 0 to 1, then 1 once it is verified.</param>
+    /// <param name="verifying">Called when the download is complete and its digest is being checked.</param>
+    public async Task<string> DownloadAndStageAsync(AvailableUpdate update, IProgress<double>? progress = null,
+        Action? verifying = null, CancellationToken ct = default)
     {
         var exe = Environment.ProcessPath ?? throw new InvalidOperationException("The app's own path is unknown.");
         var dir = Path.GetDirectoryName(exe)!;
@@ -96,8 +99,18 @@ public sealed class Updater
             using var res = await Http.GetAsync(update.DownloadUrl, HttpCompletionOption.ResponseHeadersRead, ct);
             res.EnsureSuccessStatusCode();
             await using var body = await res.Content.ReadAsStreamAsync(ct);
-            await body.CopyToAsync(file, ct);
+            long total = update.Size > 0 ? update.Size : res.Content.Headers.ContentLength ?? 0;
+            var buffer = new byte[128 * 1024];
+            long done = 0;
+            int read;
+            while ((read = await body.ReadAsync(buffer, ct)) > 0)
+            {
+                await file.WriteAsync(buffer.AsMemory(0, read), ct);
+                done += read;
+                if (total > 0) progress?.Report(Math.Min(1, (double)done / total));
+            }
         }
+        verifying?.Invoke();
 
         var info = new FileInfo(incoming);
         if (update.Size > 0 && info.Length != update.Size)
