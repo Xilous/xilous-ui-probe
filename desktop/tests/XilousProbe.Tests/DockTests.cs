@@ -84,7 +84,7 @@ public class DockTests
         var f = Run(m, [One], 1);
         Assert.True(f.Docked);
         Assert.Equal(Side.Right, f.Side);
-        Assert.Equal(1920 - 52, f.Left, 1);
+        Assert.Equal(1920 - Dock.CollapsedSize, f.Left, 1);
         Assert.False(f.Moving);
     }
 
@@ -99,7 +99,7 @@ public class DockTests
         Assert.Equal(1920 - 340, open.Left, 0); // grew leftward, still flush with the edge
         m.SetHovered(false, 2);
         var closed = Run(m, [One], 1.5, 2);
-        Assert.Equal(52, closed.Width, 0);
+        Assert.Equal(Dock.CollapsedSize, closed.Width, 0);
     }
 
     [Fact]

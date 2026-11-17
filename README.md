@@ -35,12 +35,12 @@ and has **Check for updates**. Builds made locally never update themselves.
 ### The widget
 
 Xilous Probe is a small widget docked on an outer edge of the desktop, floating above other
-windows: collapsed, just its round button. It moves like the Xilous Usage Monitor's widget
+windows: collapsed, a see-through pill holding a ring gauge, the same as the Usage Monitor's. It moves like the Xilous Usage Monitor's widget
 (the dock motion is a port of its `dock.rs`):
 
 - **Hover** it and it expands away from its edge: pointing state, the hotkey, status and
   the version. It collapses a moment after the cursor leaves.
-- **Click** the round button to toggle Point Mode; the ring takes the theme's accent while pointing.
+- **Click** the ring to toggle Point Mode; an arc in the theme's accent sweeps round it while pointing.
 - **Drag** it anywhere, across monitors too. Near an outer edge a magnet pulls it in and it
   snaps on; let go and it carries the throw onto the nearest outer edge, never one shared by
   two monitors and never under the taskbar. It remembers its edge.

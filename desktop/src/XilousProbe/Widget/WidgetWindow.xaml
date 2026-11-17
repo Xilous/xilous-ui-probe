@@ -39,10 +39,7 @@
 
     <Canvas x:Name="Root">
         <Border x:Name="Card" Background="{DynamicResource CardBrush}" BorderBrush="{DynamicResource CardLine}"
-                CornerRadius="14,0,0,14" BorderThickness="1,1,0,1" ClipToBounds="True">
-            <Border.Effect>
-                <DropShadowEffect x:Name="Shadow" BlurRadius="18" ShadowDepth="5" Direction="270" Opacity="0.35" />
-            </Border.Effect>
+                CornerRadius="31" BorderThickness="1" ClipToBounds="True">
             <Grid>
                 <!-- The expanded content, laid out at full size, pinned to the edge's corner, fading in. -->
                 <Canvas x:Name="BodyHost">
@@ -53,10 +50,10 @@
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <Grid x:Name="Header" Grid.Row="0" Height="52" Margin="16,0">
+                    <Grid x:Name="Header" Grid.Row="0" Height="62" Margin="16,0">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition x:Name="HeaderLeft" Width="*" />
-                            <ColumnDefinition x:Name="HeaderRight" Width="40" />
+                            <ColumnDefinition x:Name="HeaderRight" Width="52" />
                         </Grid.ColumnDefinitions>
                         <StackPanel x:Name="HeaderText" Grid.Column="0" VerticalAlignment="Center">
                             <TextBlock x:Name="PointLabel" Text="Not pointing" FontSize="14" FontWeight="SemiBold" />
@@ -76,11 +73,19 @@
                 </Grid>
                 </Canvas>
 
-                <!-- The round button: always in the corner on the edge's side. Click toggles Point Mode; drag moves the widget. -->
-                <Grid x:Name="Disc" Width="52" Height="52" HorizontalAlignment="Right" VerticalAlignment="Top"
+                <!-- The ring gauge, as on the Xilous Usage Monitor: always in the corner on the edge's side.
+                     Its arc sweeps round while pointing. Click toggles Point Mode; drag moves the widget. -->
+                <Grid x:Name="Disc" Width="62" Height="62" HorizontalAlignment="Right" VerticalAlignment="Top"
                       Background="Transparent" Cursor="Hand" ToolTip="Point Mode (Ctrl+Shift+X). Drag to move.">
-                    <Ellipse x:Name="Ring" Width="34" Height="34" StrokeThickness="2" Fill="Transparent" />
-                    <Path x:Name="Crosshair" Width="18" Height="18" Stretch="Uniform" StrokeThickness="2"
+                    <Ellipse x:Name="Ring" Width="50" Height="50" StrokeThickness="5" Fill="Transparent" />
+                    <Path x:Name="Arc" Width="50" Height="50" Stretch="None" StrokeThickness="5" Opacity="0"
+                          StrokeStartLineCap="Round" StrokeEndLineCap="Round" RenderTransformOrigin="0.5,0.5"
+                          Data="M25,2.5 A22.5,22.5 0 1 1 3.6,31.95">
+                        <Path.RenderTransform>
+                            <RotateTransform x:Name="ArcSpin" />
+                        </Path.RenderTransform>
+                    </Path>
+                    <Path x:Name="Crosshair" Width="16" Height="16" Stretch="Uniform" StrokeThickness="2"
                           StrokeStartLineCap="Round" StrokeEndLineCap="Round"
                           Data="M12,5 A7,7 0 1 1 11.99,5 Z M12,1 L12,5 M12,19 L12,23 M1,12 L5,12 M19,12 L23,12" />
                     <Ellipse x:Name="Center" Width="3" Height="3" />

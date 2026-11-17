@@ -39,7 +39,7 @@ public static class Dock
     public const double ThrowReach = 0.22, MaxThrowSpeed = 6000, DragThreshold = 4;
     public const double HoverLinger = 0.3, LiftGrowth = 0.06, ThrowWindow = 0.09, ThrowStale = 0.06;
     /// <summary>The collapsed widget's side, in base pixels.</summary>
-    public const double CollapsedSize = 52;
+    public const double CollapsedSize = 62;
 
     public static bool Vertical(Side s) => s is Side.Left or Side.Right;
 

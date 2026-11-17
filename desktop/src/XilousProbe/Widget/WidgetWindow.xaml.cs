@@ -26,7 +26,10 @@ public partial class WidgetWindow : Window
     /// <summary>Room around the panel for its shadow, in DIPs.</summary>
     private const double ShadowMargin = 24;
     private const double ExpandedWidth = 300;
-    private const double Radius = 14;
+    /// <summary>The expanded card's corner radius, the usage monitor's.</summary>
+    private const double Radius = 8;
+    /// <summary>The collapsed pill's see-through background, as on the usage monitor.</summary>
+    private const double PillAlpha = 0.78;
 
     private readonly App _app;
     private readonly DockMotion _motion;
@@ -90,7 +93,6 @@ public partial class WidgetWindow : Window
         Resources["MutedBrush"] = Theme.Palette.Brush(p.Muted);
         Resources["FaintBrush"] = Theme.Palette.Brush(p.Faint);
         Resources["AccentBrush"] = Theme.Palette.Brush(p.Accent);
-        Shadow.Opacity = p.Dark ? 0.35 : 0.18;
         SetPointing(_pointing);
     }
 
@@ -146,8 +148,14 @@ public partial class WidgetWindow : Window
         var p = Theme.XilousTheme.Current;
         var accent = Theme.Palette.Brush(p.Accent);
         var muted = Theme.Palette.Brush(p.Muted);
-        Ring.Stroke = on ? accent : Theme.Palette.Brush(p.Track);
-        Ring.Fill = on ? Theme.Palette.Brush(Theme.Palette.WithAlpha(p.Accent, 0x29)) : Brushes.Transparent;
+        Ring.Stroke = Theme.Palette.Brush(p.Track);
+        Arc.Stroke = accent;
+        Arc.BeginAnimation(OpacityProperty, new System.Windows.Media.Animation.DoubleAnimation(on ? 1 : 0, TimeSpan.FromMilliseconds(220)));
+        if (on)
+            ArcSpin.BeginAnimation(RotateTransform.AngleProperty,
+                new System.Windows.Media.Animation.DoubleAnimation(0, 360, TimeSpan.FromSeconds(2.4)) { RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever });
+        else
+            ArcSpin.BeginAnimation(RotateTransform.AngleProperty, null);
         Crosshair.Stroke = on ? accent : muted;
         Center.Fill = on ? accent : muted;
         PointLabel.Text = on ? "Pointing" : "Not pointing";
@@ -278,18 +286,14 @@ public partial class WidgetWindow : Window
         var side = f.Side;
         bool onRight = docked && side == Side.Right, onBottom = docked && side == Side.Bottom;
 
-        // Flat and borderless on the edge it sits on, rounded everywhere else.
-        Card.CornerRadius = !docked ? new CornerRadius(Radius) : side switch
-        {
-            Side.Right => new CornerRadius(Radius, 0, 0, Radius),
-            Side.Left => new CornerRadius(0, Radius, Radius, 0),
-            Side.Top => new CornerRadius(0, 0, Radius, Radius),
-            _ => new CornerRadius(Radius, Radius, 0, 0),
-        };
-        var border = new Thickness(
-            docked && side == Side.Left ? 0 : 1, docked && side == Side.Top ? 0 : 1,
-            docked && side == Side.Right ? 0 : 1, docked && side == Side.Bottom ? 0 : 1);
-        Card.BorderThickness = border;
+        // A see-through pill collapsed, rounded all round like the usage monitor's, that becomes
+        // the opaque card with its corners tightening as it expands.
+        double open = Math.Clamp(f.Expanded, 0, 1);
+        Card.CornerRadius = new CornerRadius(Math.Min(c / 2 + (Radius - c / 2) * open, Math.Min(w, h) / 2));
+        var palette = Theme.XilousTheme.Current;
+        Card.Background = Theme.Palette.Brush(Theme.Palette.WithAlpha(palette.Bg, (byte)Math.Round(255 * (PillAlpha + (1 - PillAlpha) * open))));
+        Card.BorderBrush = Theme.Palette.Brush(Theme.Palette.WithAlpha(palette.Ink, (byte)Math.Round(255 * (palette.Dark ? 0.09 : 0.10) * open)));
+        var border = Card.BorderThickness;
         Card.Width = w;
         Card.Height = h;
 
@@ -305,8 +309,6 @@ public partial class WidgetWindow : Window
         Canvas.SetLeft(Card, (f.Left - winX) / s);
         Canvas.SetTop(Card, (f.Top - winY) / s);
         PlaceWindow(winX, winY, winW, winH);
-        Shadow.BlurRadius = 18 + 20 * f.Lift;
-        Shadow.Opacity = 0.35 + 0.2 * f.Lift;
 
         // The round button stays in the corner on the edge's side.
         Disc.Width = Disc.Height = c;
@@ -319,8 +321,8 @@ public partial class WidgetWindow : Window
         Canvas.SetTop(Body, onBottom ? innerH - contentH : 0);
         Body.Opacity = Math.Clamp((f.Expanded - 0.35) / 0.65, 0, 1);
         Body.IsHitTestVisible = f.Expanded > 0.9;
-        HeaderLeft.Width = onRight ? new GridLength(1, GridUnitType.Star) : new GridLength(40);
-        HeaderRight.Width = onRight ? new GridLength(40) : new GridLength(1, GridUnitType.Star);
+        HeaderLeft.Width = onRight ? new GridLength(1, GridUnitType.Star) : new GridLength(52);
+        HeaderRight.Width = onRight ? new GridLength(52) : new GridLength(1, GridUnitType.Star);
         Grid.SetColumn(HeaderText, onRight ? 0 : 1);
         Grid.SetRow(Header, onBottom ? 2 : 0);
         Grid.SetRow(Footer, onBottom ? 0 : 2);
