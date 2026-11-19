@@ -6,8 +6,9 @@ Point at any element. Copy it. Paste it into Claude Code.
 `desktop/` is a standalone Windows app (.NET 10, WPF) that points at anything on screen
 with one hotkey, **Ctrl+Shift+X**: any Windows app (Win32, WinForms, WPF, WinUI, Office,
 GP…), Electron apps and pages in any browser, all read through UI Automation as they run.
-Hover for an outline and label; click to select, then **Copy** (the pointer below),
-**Screenshot**, **Parent**, and hold **Alt** to measure.
+Hover for an outline and label; click to select, then **Copy** (the pointer below, with a
+screenshot saved beside it; a copy ends Point Mode), **Screenshot** (a PNG on the clipboard,
+staying in Point Mode), **Parent**, and hold **Alt** to measure.
 
 Esc steps back one layer at a time, as in the extension: selection, then Point Mode.
 
@@ -89,6 +90,18 @@ When nothing inside has text of its own (an icon, an empty box, a cell that only
 own name), a `# nearby:` line lists the text around it instead and names the ancestor it was
 read from. Either line holds at most eight items, at most three of them ids, and the read
 stops after 400 elements or 600 ms, so copying a whole window stays quick.
+
+Copy also saves a PNG of the element and ends the pointer with its path, so one paste gives
+a coding agent on this machine both the text and the picture:
+
+```
+# screenshot: C:\Users\you\AppData\Local\XilousProbe\shots\20261119-130502-123-Button-Save.png
+```
+
+The clipboard could hold the text and the image together, but the app you paste into would
+take only one of them. Shots are kept in `%LOCALAPPDATA%\XilousProbe\shots`, newest 50; older
+ones are deleted as new ones are taken. Once copied, Point Mode ends and the label stays a
+moment to say so; a copy that fails stays in Point Mode to try again.
 
 Apps that run as administrator can only be read by an elevated probe: use **Restart as
 administrator** in the tray menu. Logs go to `%LOCALAPPDATA%\XilousProbe\xilous-probe.log`.
