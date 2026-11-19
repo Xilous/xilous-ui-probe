@@ -23,6 +23,10 @@ public sealed class InfoWindow : OverlayWindow
     private readonly TextBlock _toast = new() { FontSize = 12, FontWeight = FontWeights.SemiBold, Margin = new Thickness(0, 8, 0, 0), Visibility = Visibility.Collapsed };
     private readonly Button _parentButton;
     private CancellationTokenSource? _toastCts;
+    private CancellationTokenSource? _farewellCts;
+
+    /// <summary>How long the card stays to confirm a Copy after Point Mode has ended.</summary>
+    private static readonly TimeSpan FarewellTime = TimeSpan.FromMilliseconds(1200);
 
     public event Action? CopyClicked;
     public event Action? ScreenshotClicked;
@@ -33,7 +37,7 @@ public sealed class InfoWindow : OverlayWindow
         SizeToContent = SizeToContent.WidthAndHeight;
         FontFamily = new FontFamily("Segoe UI Variable Text, Segoe UI");
 
-        _toolbar.Children.Add(MakeButton("Copy", "Copy a pointer for your coding agent", () => CopyClicked?.Invoke()));
+        _toolbar.Children.Add(MakeButton("Copy", "Copy a pointer for your coding agent, with a saved screenshot, and stop pointing", () => CopyClicked?.Invoke()));
         _toolbar.Children.Add(MakeButton("Screenshot", "Copy a PNG of the element", () => ScreenshotClicked?.Invoke()));
         _parentButton = MakeButton("Parent", "Select the element that contains this one", () => ParentClicked?.Invoke());
         _toolbar.Children.Add(_parentButton);
@@ -96,6 +100,7 @@ public sealed class InfoWindow : OverlayWindow
 
     public void SetInfo(ElementInfo info)
     {
+        _farewellCts?.Cancel();   // Point Mode is back: the card is in use again, not on its way out
         var (title, detail, source) = PointerFormatter.Label(info);
         _title.Text = title;
         _detail.Text = detail;
@@ -123,6 +128,22 @@ public sealed class InfoWindow : OverlayWindow
         try { await Task.Delay(1800, cts.Token); }
         catch (TaskCanceledException) { return; }
         _toast.Visibility = Visibility.Collapsed;
+    }
+
+    /// <summary>
+    /// The card's last moment after Copy has ended Point Mode: the toolbar goes, clicks pass
+    /// through to the app, the toast says what happened, and then the card hides. Showing the
+    /// card again in the meantime (Point Mode turned back on) cancels the hide.
+    /// </summary>
+    public async void Farewell(string text, bool error = false)
+    {
+        SetSelected(false, false);
+        Toast(text, error);
+        _farewellCts?.Cancel();
+        var cts = _farewellCts = new CancellationTokenSource();
+        try { await Task.Delay(FarewellTime, cts.Token); }
+        catch (TaskCanceledException) { return; }
+        HideOverlay();
     }
 
     /// <summary>

@@ -10,7 +10,9 @@ namespace XilousProbe.Uia;
 /// </summary>
 public static class PointerFormatter
 {
-    public static string Format(ElementInfo e)
+    /// <param name="e">The element.</param>
+    /// <param name="screenshot">The PNG of it Copy saved, if any. A coding agent on this machine can open it.</param>
+    public static string Format(ElementInfo e, string? screenshot = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine("```");
@@ -63,6 +65,8 @@ public static class PointerFormatter
             sb.AppendLine($"# value: {ElementStep.Clip(e.Value, 200)}");
         if (!string.IsNullOrWhiteSpace(e.HelpText))
             sb.AppendLine($"# help: {ElementStep.Clip(e.HelpText, 200)}");
+        if (!string.IsNullOrWhiteSpace(screenshot))
+            sb.AppendLine($"# screenshot: {screenshot}");
 
         sb.Append("```");
         return sb.ToString();

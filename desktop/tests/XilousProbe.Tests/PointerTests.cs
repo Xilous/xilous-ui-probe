@@ -45,6 +45,17 @@ public class PointerFormatterTests
     }
 
     [Fact]
+    public void Names_the_saved_screenshot_last()
+    {
+        var path = @"C:\Users\me\AppData\Local\XilousProbe\shots\20261119-130502-123-Button-Save.png";
+        var lines = PointerFormatter.Format(SaveButton(), path).Split(Environment.NewLine);
+
+        Assert.Equal($"# screenshot: {path}", lines[^2]);
+        Assert.Equal("```", lines[^1]);
+        Assert.DoesNotContain("# screenshot:", PointerFormatter.Format(SaveButton()));
+    }
+
+    [Fact]
     public void Leaves_out_what_is_unknown()
     {
         var bare = new ElementInfo { ControlType = "Pane", ProcessId = 7, ProcessName = "", FrameworkId = "" };

@@ -31,8 +31,11 @@ public sealed class DesktopPointer : IDisposable
     private (int X, int Y) _lastCursor = (int.MinValue, int.MinValue);
     /// <summary>The element the hover outline is on now, while one is shown.</summary>
     private PxRect? _hoverShown;
+    /// <summary>Set by a finished Copy, so the Stop it asks for leaves the card up to confirm it.</summary>
+    private bool _infoLingers;
+    private readonly ShotStore _shots = ShotStore.Default;
 
-    /// <summary>Esc at the last layer: the user wants Point Mode off.</summary>
+    /// <summary>The user is done pointing: Esc at the last layer, or a finished Copy.</summary>
     public event Action? ExitRequested;
 
     public DesktopPointer(Dispatcher dispatcher)
@@ -66,6 +69,7 @@ public sealed class DesktopPointer : IDisposable
     {
         if (_active) return;
         _active = true;
+        _infoLingers = false;
         _hooks.Install();
         _lastCursor = (int.MinValue, int.MinValue);
         _poll.Start();
@@ -90,16 +94,17 @@ public sealed class DesktopPointer : IDisposable
         _hoverShown = null;
         _alt = false;
         _engine.ClearSelection();
-        HideAll();
+        HideAll(keepInfo: _infoLingers);   // after a Copy the card hides itself once it has said so
+        _infoLingers = false;
     }
 
-    private void HideAll()
+    private void HideAll(bool keepInfo = false)
     {
         _hover.HideOverlay();
         _selection.HideOverlay();
         _measureTarget.HideOverlay();
         _redline.HideOverlay();
-        _info.HideOverlay();
+        if (!keepInfo) _info.HideOverlay();
     }
 
     private static uint ProcessAt(int x, int y)
@@ -235,19 +240,43 @@ public sealed class DesktopPointer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Copies the pointer, with the path of a screenshot saved beside it, and ends Point
+    /// Mode: a copy is the end of pointing. A failed copy stays in Point Mode to try again;
+    /// a failed screenshot still copies the text, without the path.
+    /// </summary>
     private async Task CopyAsync()
     {
         var info = await _engine.RefreshSelectedAsync() ?? _selected;
-        if (info is null) return;
+        if (info is null || !_active) return;
+
+        string? shot = null;
         try
         {
-            await ClipboardService.SetTextAsync(PointerFormatter.Format(info));
-            _info.Toast("Copied pointer");
+            // The overlays are excluded from capture, so the outline and this card are not in it.
+            var bounds = info.Bounds;
+            var label = $"{info.ControlType} {info.Name}";
+            shot = await Task.Run(() => _shots.Save(ScreenCapture.CapturePng(bounds), label, DateTime.Now));
+        }
+        catch (Exception ex)
+        {
+            App.Log($"Copy: no screenshot: {ex.Message}");
+        }
+
+        try
+        {
+            await ClipboardService.SetTextAsync(PointerFormatter.Format(info, shot));
         }
         catch (Exception ex)
         {
             _info.Toast($"Copy failed: {ex.Message}", error: true);
+            return;
         }
+        if (!_active) return;   // Point Mode was turned off while the copy was under way
+
+        _infoLingers = true;
+        _info.Farewell(shot is null ? "Copied pointer (no screenshot)" : "Copied pointer");
+        ExitRequested?.Invoke();
     }
 
     private async Task ScreenshotAsync()
