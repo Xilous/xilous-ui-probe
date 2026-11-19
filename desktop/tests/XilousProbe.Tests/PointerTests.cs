@@ -55,6 +55,49 @@ public class PointerFormatterTests
         Assert.DoesNotContain("# path:", text);
         Assert.DoesNotContain("# position:", text);
         Assert.DoesNotContain("# bounds:", text);
+        Assert.DoesNotContain("# contains:", text);
+        Assert.DoesNotContain("# nearby:", text);
+    }
+
+    private static ElementInfo Panel() => new()
+    {
+        ControlType = "Group",
+        ClassName = "MuiPaper-root MuiPaper-outlined",
+        FrameworkId = "Chrome",
+        ProcessId = 4000,
+        ProcessName = "Fieldwire Client.exe",
+        Ancestors = [new("Window", "Fieldwire Client", ""), new("Document", "Fieldwire Client", ""), new("Group", "", "")],
+    };
+
+    [Fact]
+    public void Says_what_the_element_contains_right_after_naming_it()
+    {
+        var panel = Panel() with
+        {
+            Contents = [new("Text", "Activity · 3", ""), new("Button", "Reset place", ""), new("Edit", "", "jobFilter")],
+        };
+
+        var lines = PointerFormatter.Format(panel).Split(Environment.NewLine);
+
+        var at = Array.FindIndex(lines, l => l.StartsWith("# element:"));
+        Assert.Equal("# contains: Text \"Activity · 3\", Button \"Reset place\", Edit #jobFilter", lines[at + 1]);
+        Assert.DoesNotContain("# nearby:", string.Join("\n", lines));
+    }
+
+    [Fact]
+    public void Says_what_is_around_an_element_with_no_text_and_where_it_was_read()
+    {
+        var icon = Panel() with
+        {
+            ControlType = "Image",
+            Nearby = [new("Button", "Reset place", ""), new("Button", "Close activity list", "")],
+            NearbyIn = new("Group", "", ""),
+            NearbyLevels = 1,
+        };
+        Assert.Contains("# nearby: Button \"Reset place\", Button \"Close activity list\" (in Group, the parent)", PointerFormatter.Format(icon));
+
+        var deeper = icon with { NearbyIn = new("Pane", "Toolbar", ""), NearbyLevels = 3 };
+        Assert.Contains("(in Pane \"Toolbar\", 3 levels up)", PointerFormatter.Format(deeper));
     }
 
     [Fact]
