@@ -67,6 +67,23 @@ public sealed record ElementInfo
     public IReadOnlyList<string> Patterns { get; init; } = [];
     public string Value { get; init; } = "";
 
+    /// <summary>
+    /// What the element contains that a search of the source can find: the names and
+    /// automation ids inside it, in reading order (see <see cref="TextAnchors"/>). Read for
+    /// Copy only, since it walks the element's contents.
+    /// </summary>
+    public IReadOnlyList<ElementStep> Contents { get; init; } = [];
+
+    /// <summary>
+    /// When nothing inside the element has a name (an icon, a spacer, an empty box): the
+    /// anchors around it instead, read from the nearest ancestor below the window that has any.
+    /// </summary>
+    public IReadOnlyList<ElementStep> Nearby { get; init; } = [];
+
+    /// <summary>The ancestor <see cref="Nearby"/> was read from, and how many levels up it is.</summary>
+    public ElementStep? NearbyIn { get; init; }
+    public int NearbyLevels { get; init; }
+
     /// <summary>Set when this is the top-level window itself: Select Parent has nowhere to go.</summary>
     public bool IsTopLevel { get; init; }
 

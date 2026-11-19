@@ -5,8 +5,8 @@ namespace XilousProbe.Uia;
 /// <summary>
 /// The text Copy puts on the clipboard for a desktop element. It is a pointer, in the
 /// same shape as the web pointer's: one fact per line, enough for a coding agent to
-/// find the control in source (automation id, class, path) and enough for anyone else
-/// to find it on screen (app, window, position, bounds).
+/// find the control in source (automation id, class, the text it contains, path) and
+/// enough for anyone else to find it on screen (app, window, position, bounds).
 /// </summary>
 public static class PointerFormatter
 {
@@ -23,6 +23,15 @@ public static class PointerFormatter
         if (!string.IsNullOrWhiteSpace(e.AutomationId)) ids.Add($"automationId: {e.AutomationId}");
         if (!string.IsNullOrWhiteSpace(e.ClassName)) ids.Add($"class: {e.ClassName}");
         sb.AppendLine($"# element: {e.Brief}{(ids.Count > 0 ? $" ({string.Join(", ", ids)})" : "")}");
+
+        // The text to search the source for: inside the element, or failing that, around it.
+        if (e.Contents.Count > 0)
+            sb.AppendLine($"# contains: {string.Join(", ", e.Contents)}");
+        else if (e.Nearby.Count > 0)
+        {
+            var where = e.NearbyIn is null ? "" : $" (in {e.NearbyIn}, {Levels(e.NearbyLevels)})";
+            sb.AppendLine($"# nearby: {string.Join(", ", e.Nearby)}{where}");
+        }
 
         if (e.Ancestors.Count > 0)
             sb.AppendLine($"# path: {string.Join(" > ", e.Ancestors.Select(a => a.ToString()).Append(e.Brief))}");
@@ -70,4 +79,6 @@ public static class PointerFormatter
     }
 
     private static string Or(string s, string fallback) => string.IsNullOrWhiteSpace(s) ? fallback : s;
+
+    private static string Levels(int n) => n == 1 ? "the parent" : $"{n} levels up";
 }

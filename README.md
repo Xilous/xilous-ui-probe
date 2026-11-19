@@ -75,6 +75,21 @@ Chromium app does not slow it down.
 # state: enabled, focusable · patterns: ExpandCollapse, Invoke
 ```
 
+A container often has no name of its own and a class shared by dozens of others, such as
+a card or a panel in an Electron app. For one of those, Copy also lists the text and
+automation ids inside it, in reading order, so a coding agent can search the source for
+the one you mean:
+
+```
+# element: Group (class: MuiPaper-root MuiPaper-outlined MuiPaper-rounded css-1qb2phq)
+# contains: Text "Notifications", Text "Email me when a job fails", CheckBox "Daily summary", Button #saveNotifications
+```
+
+When nothing inside has text of its own (an icon, an empty box, a cell that only repeats its
+own name), a `# nearby:` line lists the text around it instead and names the ancestor it was
+read from. Either line holds at most eight items, at most three of them ids, and the read
+stops after 400 elements or 600 ms, so copying a whole window stays quick.
+
 Apps that run as administrator can only be read by an elevated probe: use **Restart as
 administrator** in the tray menu. Logs go to `%LOCALAPPDATA%\XilousProbe\xilous-probe.log`.
 

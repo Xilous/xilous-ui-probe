@@ -147,9 +147,12 @@ public sealed class UiaEngine : IDisposable
         return Describe(_selected, detailed: true);
     });
 
-    /// <summary>Re-reads the selection, for Copy after the app has changed under it.</summary>
+    /// <summary>
+    /// Re-reads the selection for Copy, after the app may have changed under it, along with
+    /// the text it contains (which only Copy needs, so selecting never waits for it).
+    /// </summary>
     public Task<ElementInfo?> RefreshSelectedAsync() => Run(() =>
-        _selected is null ? null : Describe(_selected, detailed: true));
+        _selected is null ? null : Describe(_selected, detailed: true, anchors: true));
 
     public void ClearSelection() => _queue.Add(() => _selected = null);
 
@@ -236,7 +239,7 @@ public sealed class UiaEngine : IDisposable
     private static ElementStep StepOf(AutomationElement el) =>
         new(TypeName(el), Prop(() => el.Properties.Name.ValueOrDefault), Prop(() => el.Properties.AutomationId.ValueOrDefault));
 
-    private ElementInfo Describe(AutomationElement el, bool detailed)
+    private ElementInfo Describe(AutomationElement el, bool detailed, bool anchors = false)
     {
         uint pid = 0;
         try { pid = (uint)el.Properties.ProcessId.ValueOrDefault; } catch { }
@@ -283,12 +286,19 @@ public sealed class UiaEngine : IDisposable
         string value = "";
         try { value = el.Patterns.Value.PatternOrDefault?.Value.ValueOrDefault ?? ""; } catch { }
 
+        var steps = ancestors.Select(StepOf).ToList();
+        var (contents, nearby, nearbyAt) = anchors ? Anchors(el, info.Name, ancestors) : ([], [], -1);
+
         return info with
         {
             HelpText = Prop(() => el.Properties.HelpText.ValueOrDefault),
             WindowTitle = Prop(() => window.Properties.Name.ValueOrDefault),
             WindowBounds = RectOf(window),
-            Ancestors = ancestors.Select(StepOf).ToList(),
+            Ancestors = steps,
+            Contents = contents,
+            Nearby = nearby,
+            NearbyIn = nearbyAt >= 0 ? steps[nearbyAt] : null,
+            NearbyLevels = nearbyAt >= 0 ? ancestors.Count - nearbyAt : 0,
             Index = index,
             SiblingCount = count,
             Previous = prev,
@@ -320,6 +330,84 @@ public sealed class UiaEngine : IDisposable
             return found == 0 ? (0, 0, null, null) : (found, i, before is null ? null : StepOf(before), after is null ? null : StepOf(after));
         }
         catch { return (0, 0, null, null); }
+    }
+
+    /// <summary>How long Copy spends reading the text in and around the selection, at most.</summary>
+    private static readonly TimeSpan AnchorBudget = TimeSpan.FromMilliseconds(600);
+
+    /// <summary>How many ancestors the nearby text is looked for in, nearest first.</summary>
+    private const int MaxNearbyLevels = 3;
+
+    /// <summary>
+    /// The anchors walk brings back each child's type, name and id with the step that finds
+    /// it, one cross-process call per element instead of four.
+    /// </summary>
+    private FlaUI.Core.CacheRequest? _anchorCache;
+
+    /// <summary>
+    /// The text inside the selection, or, when it has none, the text in the nearest of its
+    /// ancestors that has some (below the window, at most <see cref="MaxNearbyLevels"/> up).
+    /// Read through the raw view, the one the click's hit test uses, so plain containers
+    /// such as a Chromium div are walked into rather than skipped.
+    /// </summary>
+    /// <returns>The contents, the nearby text, and the index in <paramref name="ancestors"/> it came from (-1 for none).</returns>
+    private (List<ElementStep>, List<ElementStep>, int) Anchors(AutomationElement el, string ownName, List<AutomationElement> ancestors)
+    {
+        if (_anchorCache is null)
+        {
+            var lib = _automation!.PropertyLibrary.Element;
+            _anchorCache = new FlaUI.Core.CacheRequest
+            {
+                TreeScope = FlaUI.Core.Definitions.TreeScope.Element,
+                // A live reference: the walk steps on from each element it is handed.
+                AutomationElementMode = FlaUI.Core.Definitions.AutomationElementMode.Full,
+                TreeFilter = FlaUI.Core.Conditions.TrueCondition.Default,
+            };
+            foreach (var p in new[] { lib.ControlType, lib.Name, lib.AutomationId })
+                _anchorCache.Add(p);
+        }
+
+        var raw = _automation!.TreeWalkerFactory.GetRawViewWalker();
+        var clock = Stopwatch.StartNew();
+        bool OutOfTime() => clock.Elapsed > AnchorBudget;
+        List<ElementStep> Scan(AutomationElement root)
+        {
+            try
+            {
+                using (_anchorCache.Activate())
+                    return TextAnchors.Collect(root, n => ChildrenOf(raw, n), StepOf, [ownName], OutOfTime);
+            }
+            catch { return []; }   // the app went away mid-walk
+        }
+
+        var contents = Scan(el);
+        if (contents.Count > 0) return (contents, [], -1);
+
+        // Never index 0, the top-level window (or the highest ancestor read): its text is the
+        // whole app's, not this element's surroundings.
+        for (int i = ancestors.Count - 1; i >= 1 && i >= ancestors.Count - MaxNearbyLevels && !OutOfTime(); i--)
+        {
+            var nearby = Scan(ancestors[i]);
+            if (nearby.Count > 0) return ([], nearby, i);
+        }
+        return ([], [], -1);
+    }
+
+    /// <summary>A node's children, one step at a time, ending early (not failing) if the app stops answering.</summary>
+    private static IEnumerable<AutomationElement> ChildrenOf(FlaUI.Core.ITreeWalker walker, AutomationElement el)
+    {
+        var child = Nav(() => walker.GetFirstChild(el));
+        while (child is not null)
+        {
+            yield return child;
+            var current = child;
+            child = Nav(() => walker.GetNextSibling(current));
+        }
+    }
+
+    private static AutomationElement? Nav(Func<AutomationElement?> step)
+    {
+        try { return step(); } catch { return null; }
     }
 
     private static T Try<T>(Func<T> read, T fallback)
