@@ -107,6 +107,8 @@ public sealed class UiaEngine : IDisposable
                 TreeScope = FlaUI.Core.Definitions.TreeScope.Element,
                 // Cached values only: the hover never keeps a live reference into the target app.
                 AutomationElementMode = FlaUI.Core.Definitions.AutomationElementMode.None,
+                // The raw view, which the click's hit test shares (see SafeFromPoint).
+                TreeFilter = FlaUI.Core.Conditions.TrueCondition.Default,
             };
             foreach (var p in new[] { lib.ControlType, lib.Name, lib.AutomationId, lib.ClassName, lib.FrameworkId, lib.BoundingRectangle, lib.ProcessId })
                 _hoverCache.Add(p);
@@ -159,11 +161,31 @@ public sealed class UiaEngine : IDisposable
         catch { return false; }
     }
 
+    /// <summary>
+    /// The click's hit test, under a cache request with the hover's tree filter (the raw view),
+    /// so a click selects exactly what the hover outlined. A plain ElementFromPoint answers in
+    /// UIA's control view, which leaves out every element that is not a control. In a Chromium
+    /// or Electron app that includes plain containers such as a popover panel, and a click on
+    /// one lands on whatever control lies under it, often the whole page.
+    /// </summary>
+    private FlaUI.Core.CacheRequest? _selectCache;
+
     private AutomationElement? SafeFromPoint(int x, int y)
     {
+        _selectCache ??= new FlaUI.Core.CacheRequest
+        {
+            TreeScope = FlaUI.Core.Definitions.TreeScope.Element,
+            // A live reference, unlike the hover's: Parent, Copy and the details read through it.
+            AutomationElementMode = FlaUI.Core.Definitions.AutomationElementMode.Full,
+            TreeFilter = FlaUI.Core.Conditions.TrueCondition.Default,
+        };
         try
         {
-            var el = _automation!.FromPoint(new DPoint(x, y));
+            AutomationElement? el;
+            // Only the hit test runs under the request. While one is active FlaUI reads every
+            // property from the cache, so everything after it reads live from the app instead.
+            using (_selectCache.Activate())
+                el = _automation!.FromPoint(new DPoint(x, y));
             if (el is null) return null;
             uint pid = (uint)el.Properties.ProcessId.ValueOrDefault;
             if (pid == _ownPid || pid == 0) return null;
